@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.petcommunity.mapper.user.UserMapper"><resultMap id="entity" type="com.petcommunity.entity.UserEntity"><id property="id" column="id"/><result property="username" column="username"/><result property="passwordHash" column="password_hash"/><result property="nickname" column="nickname"/><result property="avatarMediaId" column="avatar_media_id"/><result property="phone" column="phone"/><result property="location" column="location"/><result property="status" column="status"/><result property="role" column="role"/><result property="mustChangePassword" column="must_change_password"/><result property="authVersion" column="auth_version"/><result property="version" column="version"/><result property="createdAt" column="created_at"/><result property="updatedAt" column="updated_at"/></resultMap>
+ <select id="findById" resultMap="entity">SELECT * FROM sys_user WHERE id=#{id}</select>
+ <select id="lockById" resultMap="entity">SELECT * FROM sys_user WHERE id=#{id} FOR UPDATE</select>
+ <select id="findByUsername" resultMap="entity">SELECT * FROM sys_user WHERE username=#{username}</select>
+ <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+  INSERT INTO sys_user(username,password_hash,nickname) VALUES(#{username},#{passwordHash},#{nickname})
+ </insert>
+ <update id="updateProfile">UPDATE sys_user SET nickname=#{nickname},avatar_media_id=#{avatarMediaId},phone=#{phone},location=#{location},version=version+1,updated_at=UTC_TIMESTAMP(3) WHERE id=#{id} AND version=#{version}</update>
+</mapper>

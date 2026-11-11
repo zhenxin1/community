@@ -1,0 +1,4873 @@
+{
+  "version": "1.1.0",
+  "date": "2026-11-11",
+  "mysqlMinimum": "8.0.17",
+  "tables": [
+    {
+      "name": "sys_user",
+      "module": "账号权限",
+      "title": "用户账号与资料",
+      "columns": [
+        {
+          "name": "id",
+          "type": "BIGINT",
+          "comment": "主键，自增，接口输出十进制字符串",
+          "nullable": false,
+          "default": null,
+          "extra": "AUTO_INCREMENT",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "username",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "小写账号，唯一",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "password_hash",
+          "type": "VARCHAR(255) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "带算法标识的单向密码哈希，绝不返回接口",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "nickname",
+          "type": "VARCHAR(24)",
+          "comment": "昵称",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "avatar_media_id",
+          "type": "BIGINT",
+          "comment": "头像媒体 ID，未设置为 NULL",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "phone",
+          "type": "VARCHAR(32)",
+          "comment": "联系方式，可为空字符串",
+          "nullable": false,
+          "default": "''",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "location",
+          "type": "VARCHAR(100)",
+          "comment": "所在地，可为空字符串",
+          "nullable": false,
+          "default": "''",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "账号状态：ACTIVE/FROZEN",
+          "nullable": false,
+          "default": "'ACTIVE'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "must_change_password",
+          "type": "TINYINT",
+          "comment": "管理员重置后是否必须修改密码",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "auth_version",
+          "type": "INT",
+          "comment": "会话认证版本，冻结或改密时递增",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "version",
+          "type": "INT",
+          "comment": "乐观锁，业务修改时由 Service 显式加 1",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME(3)",
+          "comment": "创建时间，UTC",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "updated_at",
+          "type": "DATETIME(3)",
+          "comment": "更新时间，UTC，由 Service 显式维护",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "role",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "身份：USER 普通用户，ADMIN 管理员",
+          "nullable": false,
+          "default": "'USER'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        }
+      ],
+      "pk": [
+        "id"
+      ],
+      "unique": [
+        [
+          "uk_user_username",
+          [
+            "username"
+          ]
+        ]
+      ],
+      "indexes": [
+        [
+          "idx_user_status_created",
+          [
+            "status",
+            "created_at",
+            "id"
+          ]
+        ],
+        [
+          "idx_user_role_status",
+          [
+            "role",
+            "status",
+            "id"
+          ]
+        ]
+      ],
+      "checks": [
+        "REGEXP_LIKE(`username`, '^[a-z0-9_]{3,24}$', 'c')",
+        "CHAR_LENGTH(`nickname`) BETWEEN 1 AND 24",
+        "`auth_version` >= 0",
+        "`status` IN ('ACTIVE', 'FROZEN')",
+        "`must_change_password` IN (0,1)",
+        "`version` >= 0",
+        "`role` IN ('USER','ADMIN')"
+      ],
+      "relations": [
+        [
+          "avatar_media_id",
+          "media_file",
+          "id",
+          "逻辑外键，避免用户与媒体循环创建依赖"
+        ]
+      ],
+      "note": "普通用户和管理员共用账号表，通过 role 区分。注册固定为 USER；ADMIN 可操作管理端，不再提供自定义角色及逐项授权。冻结或角色变更递增 auth_version，现有会话失效。"
+    },
+    {
+      "name": "media_file",
+      "module": "公共支撑",
+      "title": "文件元信息与业务绑定",
+      "columns": [
+        {
+          "name": "id",
+          "type": "BIGINT",
+          "comment": "主键，自增，接口输出十进制字符串",
+          "nullable": false,
+          "default": null,
+          "extra": "AUTO_INCREMENT",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "owner_id",
+          "type": "BIGINT",
+          "comment": "上传者 ID",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "business_type",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "业务用途：AVATAR/PET/POST/DIARY/HELP/PRODUCT",
+          "nullable": false,
+          "default": "'AVATAR'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "business_id",
+          "type": "BIGINT",
+          "comment": "绑定业务 ID；未绑定为 NULL",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "sort_order",
+          "type": "SMALLINT",
+          "comment": "资源内展示顺序，头像 0，其余 1–9",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "storage_key",
+          "type": "VARCHAR(255) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "文件存储相对键，不返回磁盘路径",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "original_name",
+          "type": "VARCHAR(255)",
+          "comment": "原文件名，仅供管理内部使用",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "mime_type",
+          "type": "VARCHAR(80) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "经文件特征校验后的 MIME",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "size_bytes",
+          "type": "BIGINT",
+          "comment": "文件字节数",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "生命周期：TEMP/BOUND/DELETED",
+          "nullable": false,
+          "default": "'TEMP'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "active_business_id",
+          "type": "BIGINT",
+          "comment": "仅有效绑定参与展示位置唯一约束",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": "CASE WHEN `status`='BOUND' THEN `business_id` ELSE NULL END"
+        },
+        {
+          "name": "cleanup_after",
+          "type": "DATETIME(3)",
+          "comment": "允许清理文件的 UTC 时间；有效绑定为空",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME(3)",
+          "comment": "创建时间，UTC",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "updated_at",
+          "type": "DATETIME(3)",
+          "comment": "更新时间，UTC，由 Service 显式维护",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        }
+      ],
+      "pk": [
+        "id"
+      ],
+      "unique": [
+        [
+          "uk_media_storage_key",
+          [
+            "storage_key"
+          ]
+        ],
+        [
+          "uk_media_bound_sort",
+          [
+            "business_type",
+            "active_business_id",
+            "sort_order"
+          ]
+        ]
+      ],
+      "indexes": [
+        [
+          "idx_media_owner",
+          [
+            "owner_id",
+            "status",
+            "created_at"
+          ]
+        ],
+        [
+          "idx_media_cleanup",
+          [
+            "status",
+            "cleanup_after",
+            "id"
+          ]
+        ]
+      ],
+      "checks": [
+        "`business_type` IN ('AVATAR', 'PET', 'POST', 'DIARY', 'HELP', 'PRODUCT')",
+        "`status` IN ('TEMP', 'BOUND', 'DELETED')",
+        "(`status`='TEMP' AND `business_id` IS NULL AND `sort_order` IS NULL) OR (`status`='BOUND' AND `business_id` IS NOT NULL AND `sort_order` IS NOT NULL) OR `status`='DELETED'",
+        "`sort_order` IS NULL OR (`business_type`='AVATAR' AND `sort_order`=0) OR (`business_type`<>'AVATAR' AND `sort_order` BETWEEN 1 AND 9)",
+        "(`mime_type` IN ('image/jpeg','image/png','image/webp','image/gif') AND `size_bytes` BETWEEN 1 AND 5242880) OR (`business_type` NOT IN ('AVATAR','PRODUCT') AND `mime_type` IN ('video/mp4','video/webm') AND `size_bytes` BETWEEN 1 AND 20971520)"
+      ],
+      "relations": [
+        [
+          "business_id",
+          "按 business_type 指向 sys_user / adoption_pet / community_post / shop_product",
+          "id",
+          "多态逻辑外键，Service 校验归属、用途、权限"
+        ]
+      ],
+      "note": "文件本体放文件系统或对象存储，MySQL 只保存元信息。DELETED 保留原关联便于禁止读取，生成列释放旧展示位置。"
+    },
+    {
+      "name": "user_notice",
+      "module": "公共支撑",
+      "title": "用户站内消息",
+      "columns": [
+        {
+          "name": "id",
+          "type": "BIGINT",
+          "comment": "主键，自增，接口输出十进制字符串",
+          "nullable": false,
+          "default": null,
+          "extra": "AUTO_INCREMENT",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "recipient_id",
+          "type": "BIGINT",
+          "comment": "收件人",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "title",
+          "type": "VARCHAR(100)",
+          "comment": "标题",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "content",
+          "type": "TEXT",
+          "comment": "接收人可见的摘要正文",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "business_type",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "业务类型：ADOPTION/COMMENT/ORDER/REFUND/REPORT/SYSTEM",
+          "nullable": false,
+          "default": "'ADOPTION'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "business_id",
+          "type": "BIGINT",
+          "comment": "关联业务 ID，平台公告为 NULL",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "broadcast_id",
+          "type": "BIGINT",
+          "comment": "群发主记录 ID，普通业务消息为空",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "user_notice",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "is_read",
+          "type": "TINYINT",
+          "comment": "是否已读",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "read_at",
+          "type": "DATETIME(3)",
+          "comment": "已读时间",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME(3)",
+          "comment": "创建时间，UTC",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "is_broadcast",
+          "type": "TINYINT",
+          "comment": "1 群发主记录；0 实际收件消息",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "target_type",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "群发范围，仅群发主记录填写",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "recipient_count",
+          "type": "INT",
+          "comment": "群发主记录的实际收件人数；普通消息为 0",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "created_by",
+          "type": "BIGINT",
+          "comment": "群发管理员；普通业务消息为空",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        }
+      ],
+      "pk": [
+        "id"
+      ],
+      "unique": [
+        [
+          "uk_notice_broadcast_recipient",
+          [
+            "broadcast_id",
+            "recipient_id"
+          ]
+        ]
+      ],
+      "indexes": [
+        [
+          "idx_notice_recipient_read",
+          [
+            "recipient_id",
+            "is_read",
+            "created_at",
+            "id"
+          ]
+        ],
+        [
+          "idx_notice_recipient_created",
+          [
+            "recipient_id",
+            "created_at",
+            "id"
+          ]
+        ],
+        [
+          "idx_notice_recipient_type",
+          [
+            "recipient_id",
+            "business_type",
+            "created_at",
+            "id"
+          ]
+        ],
+        [
+          "idx_notice_broadcast",
+          [
+            "is_broadcast",
+            "created_at",
+            "id"
+          ]
+        ]
+      ],
+      "checks": [
+        "`business_type` IN ('ADOPTION', 'COMMENT', 'ORDER', 'REFUND', 'REPORT', 'SYSTEM')",
+        "(`is_read`=0 AND `read_at` IS NULL) OR (`is_read`=1 AND `read_at` IS NOT NULL)",
+        "`is_read` IN (0,1)",
+        "`is_broadcast` IN (0,1)",
+        "`recipient_count`>=0",
+        "(`is_broadcast`=1 AND `recipient_id` IS NULL AND `broadcast_id` IS NULL AND `created_by` IS NOT NULL AND `target_type` IS NOT NULL AND `target_type` IN ('ALL','USERS') AND `business_type`='SYSTEM' AND `is_read`=0) OR (`is_broadcast`=0 AND `recipient_id` IS NOT NULL AND `target_type` IS NULL AND `created_by` IS NULL AND `recipient_count`=0)"
+      ],
+      "relations": [],
+      "note": "群发主记录与收件消息共表。先建 is_broadcast=1 的主记录，再建立每个用户的消息并关联 broadcast_id；均在同事务提交。收件查询必须限定 recipient_id=当前用户 AND is_broadcast=0；Service 验证 broadcast_id 只指向主记录。允许收件人数为 0 的主记录。"
+    },
+    {
+      "name": "user_favorite",
+      "module": "公共支撑",
+      "title": "宠物与社区收藏",
+      "columns": [
+        {
+          "name": "user_id",
+          "type": "BIGINT",
+          "comment": "用户 ID",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "target_type",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "收藏对象：PET/POST",
+          "nullable": false,
+          "default": "'PET'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "target_id",
+          "type": "BIGINT",
+          "comment": "对象 ID",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME(3)",
+          "comment": "创建时间，UTC",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        }
+      ],
+      "pk": [
+        "user_id",
+        "target_type",
+        "target_id"
+      ],
+      "unique": [],
+      "indexes": [
+        [
+          "idx_favorite_user_created",
+          [
+            "user_id",
+            "created_at",
+            "target_type",
+            "target_id"
+          ]
+        ],
+        [
+          "idx_favorite_target",
+          [
+            "target_type",
+            "target_id"
+          ]
+        ]
+      ],
+      "checks": [
+        "`target_type` IN ('PET', 'POST')",
+        "`target_id` > 0"
+      ],
+      "relations": [
+        [
+          "target_id",
+          "adoption_pet / community_post",
+          "id",
+          "多态逻辑外键；详情与展示标题每次按资源权限查询"
+        ]
+      ],
+      "note": "不复制收藏标题或正文；内容不可用时返回固定占位，取消收藏物理删除此关系。"
+    },
+    {
+      "name": "api_idempotency",
+      "module": "公共支撑",
+      "title": "幂等请求记录",
+      "columns": [
+        {
+          "name": "id",
+          "type": "BIGINT",
+          "comment": "主键，自增，接口输出十进制字符串",
+          "nullable": false,
+          "default": null,
+          "extra": "AUTO_INCREMENT",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "user_id",
+          "type": "BIGINT",
+          "comment": "用户 ID",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "http_method",
+          "type": "VARCHAR(8) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "HTTP 方法",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "request_path",
+          "type": "VARCHAR(255) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "包含实际 ID 的规范请求路径",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "idempotency_key",
+          "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "客户端 UUID",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "request_hash",
+          "type": "BINARY(32)",
+          "comment": "规范化请求 SHA-256 摘要，包含请求体和有业务含义的查询参数",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "state",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "执行状态：PROCESSING/SUCCEEDED",
+          "nullable": false,
+          "default": "'PROCESSING'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "http_status",
+          "type": "INT",
+          "comment": "成功响应 HTTP 状态",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "response_ciphertext",
+          "type": "MEDIUMBLOB",
+          "comment": "成功响应加密字节，含 nonce 与认证标签；PROCESSING 为空",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "encryption_key_id",
+          "type": "VARCHAR(80) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "应用侧加密密钥版本标识",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "expires_at",
+          "type": "DATETIME(3)",
+          "comment": "24 小时幂等缓存到期时间",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME(3)",
+          "comment": "创建时间，UTC",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "updated_at",
+          "type": "DATETIME(3)",
+          "comment": "更新时间，UTC，由 Service 显式维护",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        }
+      ],
+      "pk": [
+        "id"
+      ],
+      "unique": [
+        [
+          "uk_idem_scope",
+          [
+            "user_id",
+            "http_method",
+            "request_path",
+            "idempotency_key"
+          ]
+        ]
+      ],
+      "indexes": [
+        [
+          "idx_idem_expiry",
+          [
+            "expires_at",
+            "id"
+          ]
+        ]
+      ],
+      "checks": [
+        "`state` IN ('PROCESSING', 'SUCCEEDED')",
+        "(`state`='PROCESSING' AND `http_status` IS NULL AND `response_ciphertext` IS NULL AND `encryption_key_id` IS NULL) OR (`state`='SUCCEEDED' AND `http_status` IS NOT NULL AND `http_status`=200 AND `response_ciphertext` IS NOT NULL AND `encryption_key_id` IS NOT NULL)"
+      ],
+      "relations": [],
+      "note": "先认证鉴权，再查重。成功记录与业务同事务提交；失败事务回滚记录。应用密钥不在数据库保存，防止临时密码幂等响应明文落库。"
+    },
+    {
+      "name": "operation_log",
+      "module": "公共支撑",
+      "title": "管理员操作日志",
+      "columns": [
+        {
+          "name": "id",
+          "type": "BIGINT",
+          "comment": "主键，自增，接口输出十进制字符串",
+          "nullable": false,
+          "default": null,
+          "extra": "AUTO_INCREMENT",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "operator_id",
+          "type": "BIGINT",
+          "comment": "操作管理员",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "operation",
+          "type": "VARCHAR(80) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "固定操作编码",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "target_type",
+          "type": "VARCHAR(40) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "对象类型",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "target_id",
+          "type": "BIGINT",
+          "comment": "对象 ID，可为空",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "reason",
+          "type": "VARCHAR(2000)",
+          "comment": "不含秘密和私人正文的安全操作说明",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "result",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "执行结果：SUCCESS/FAILURE",
+          "nullable": false,
+          "default": "'SUCCESS'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "request_id",
+          "type": "VARCHAR(80) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "链路追踪号",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME(3)",
+          "comment": "创建时间，UTC",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        }
+      ],
+      "pk": [
+        "id"
+      ],
+      "unique": [],
+      "indexes": [
+        [
+          "idx_log_created",
+          [
+            "created_at",
+            "id"
+          ]
+        ],
+        [
+          "idx_log_operator",
+          [
+            "operator_id",
+            "created_at",
+            "id"
+          ]
+        ],
+        [
+          "idx_log_target",
+          [
+            "target_type",
+            "target_id",
+            "created_at",
+            "id"
+          ]
+        ],
+        [
+          "idx_log_request",
+          [
+            "request_id"
+          ]
+        ]
+      ],
+      "checks": [
+        "`result` IN ('SUCCESS', 'FAILURE')"
+      ],
+      "relations": [],
+      "note": "只追加查询；失败日志在业务回滚后独立事务记录。应用不给日志表 UPDATE/DELETE 权限。"
+    },
+    {
+      "name": "adoption_pet",
+      "module": "领养",
+      "title": "宠物档案与发布",
+      "columns": [
+        {
+          "name": "id",
+          "type": "BIGINT",
+          "comment": "主键，自增，接口输出十进制字符串",
+          "nullable": false,
+          "default": null,
+          "extra": "AUTO_INCREMENT",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "publisher_id",
+          "type": "BIGINT",
+          "comment": "发布者",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "name",
+          "type": "VARCHAR(60)",
+          "comment": "宠物名",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "species",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "种类：CAT/DOG/OTHER",
+          "nullable": false,
+          "default": "'CAT'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "breed",
+          "type": "VARCHAR(60)",
+          "comment": "品种",
+          "nullable": false,
+          "default": "''",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "age_months",
+          "type": "INT",
+          "comment": "月龄",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "sex",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "性别：MALE/FEMALE/UNKNOWN",
+          "nullable": false,
+          "default": "'MALE'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "weight_grams",
+          "type": "INT",
+          "comment": "体重克",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "location",
+          "type": "VARCHAR(100)",
+          "comment": "所在地",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "health",
+          "type": "VARCHAR(1000)",
+          "comment": "健康状况",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "personality",
+          "type": "VARCHAR(1000)",
+          "comment": "性格",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "habits",
+          "type": "VARCHAR(1000)",
+          "comment": "习惯",
+          "nullable": false,
+          "default": "''",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "medical_history",
+          "type": "VARCHAR(1000)",
+          "comment": "病史",
+          "nullable": false,
+          "default": "''",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "adoption_requirements",
+          "type": "VARCHAR(2000)",
+          "comment": "领养条件",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "review_status",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "发布审核状态：DRAFT/PENDING/PUBLISHED/REJECTED/OFF_SHELF",
+          "nullable": false,
+          "default": "'DRAFT'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "adoption_status",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "领养状态：AVAILABLE/RESERVED/ADOPTED",
+          "nullable": false,
+          "default": "'AVAILABLE'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "review_reason",
+          "type": "VARCHAR(500)",
+          "comment": "最新审核或下架说明",
+          "nullable": false,
+          "default": "''",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "version",
+          "type": "INT",
+          "comment": "乐观锁，业务修改时由 Service 显式加 1",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME(3)",
+          "comment": "创建时间，UTC",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "updated_at",
+          "type": "DATETIME(3)",
+          "comment": "更新时间，UTC，由 Service 显式维护",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        }
+      ],
+      "pk": [
+        "id"
+      ],
+      "unique": [
+        [
+          "uk_pet_id_publisher",
+          [
+            "id",
+            "publisher_id"
+          ]
+        ]
+      ],
+      "indexes": [
+        [
+          "idx_pet_public",
+          [
+            "review_status",
+            "adoption_status",
+            "created_at",
+            "id"
+          ]
+        ],
+        [
+          "idx_pet_species_age",
+          [
+            "review_status",
+            "species",
+            "age_months",
+            "id"
+          ]
+        ],
+        [
+          "idx_pet_publisher",
+          [
+            "publisher_id",
+            "review_status",
+            "created_at",
+            "id"
+          ]
+        ]
+      ],
+      "checks": [
+        "`species` IN ('CAT', 'DOG', 'OTHER')",
+        "`sex` IN ('MALE', 'FEMALE', 'UNKNOWN')",
+        "`review_status` IN ('DRAFT', 'PENDING', 'PUBLISHED', 'REJECTED', 'OFF_SHELF')",
+        "`adoption_status` IN ('AVAILABLE', 'RESERVED', 'ADOPTED')",
+        "`age_months` BETWEEN 0 AND 600",
+        "`weight_grams` BETWEEN 1 AND 500000",
+        "`version` >= 0"
+      ],
+      "relations": [],
+      "note": "图片和视频通过 media_file.business_type=PET 且 business_id=id 关联，不使用逗号拼接图片 ID。"
+    },
+    {
+      "name": "adoption_need",
+      "module": "领养",
+      "title": "领养需求与偏好",
+      "columns": [
+        {
+          "name": "id",
+          "type": "BIGINT",
+          "comment": "主键，自增，接口输出十进制字符串",
+          "nullable": false,
+          "default": null,
+          "extra": "AUTO_INCREMENT",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "user_id",
+          "type": "BIGINT",
+          "comment": "用户 ID",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "species",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "希望种类：CAT/DOG/OTHER",
+          "nullable": false,
+          "default": "'CAT'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "sex",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "性别偏好：ANY/MALE/FEMALE",
+          "nullable": false,
+          "default": "'ANY'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "min_age_months",
+          "type": "INT",
+          "comment": "月龄下界",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "max_age_months",
+          "type": "INT",
+          "comment": "月龄上界",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "location",
+          "type": "VARCHAR(100)",
+          "comment": "所在地偏好",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "description",
+          "type": "VARCHAR(2000)",
+          "comment": "需求和饲养说明",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "expires_at",
+          "type": "DATETIME(3)",
+          "comment": "有效截止时间",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "需求状态：ACTIVE/EXPIRED/CLOSED",
+          "nullable": false,
+          "default": "'ACTIVE'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "version",
+          "type": "INT",
+          "comment": "乐观锁，业务修改时由 Service 显式加 1",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME(3)",
+          "comment": "创建时间，UTC",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "updated_at",
+          "type": "DATETIME(3)",
+          "comment": "更新时间，UTC，由 Service 显式维护",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        }
+      ],
+      "pk": [
+        "id"
+      ],
+      "unique": [],
+      "indexes": [
+        [
+          "idx_need_user",
+          [
+            "user_id",
+            "status",
+            "created_at",
+            "id"
+          ]
+        ],
+        [
+          "idx_need_expire",
+          [
+            "status",
+            "expires_at",
+            "id"
+          ]
+        ],
+        [
+          "idx_need_public",
+          [
+            "status",
+            "species",
+            "created_at",
+            "id"
+          ]
+        ]
+      ],
+      "checks": [
+        "`species` IN ('CAT', 'DOG', 'OTHER')",
+        "`sex` IN ('ANY', 'MALE', 'FEMALE')",
+        "`status` IN ('ACTIVE', 'EXPIRED', 'CLOSED')",
+        "`min_age_months` BETWEEN 0 AND 600",
+        "`max_age_months` BETWEEN `min_age_months` AND 600",
+        "`version` >= 0"
+      ],
+      "relations": [],
+      "note": "有效期最多 180 天、最多 3 条有效需求，使用用户行锁和当前时间检查；不能把 NOW() 写入 CHECK 来判断自动过期。"
+    },
+    {
+      "name": "adoption_application",
+      "module": "领养",
+      "title": "领养申请与完成记录",
+      "columns": [
+        {
+          "name": "id",
+          "type": "BIGINT",
+          "comment": "主键，自增，接口输出十进制字符串",
+          "nullable": false,
+          "default": null,
+          "extra": "AUTO_INCREMENT",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "pet_id",
+          "type": "BIGINT",
+          "comment": "申请宠物",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "adoption_pet",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "applicant_id",
+          "type": "BIGINT",
+          "comment": "申请人",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "publisher_id",
+          "type": "BIGINT",
+          "comment": "发布者，保存不可变关联",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "housing",
+          "type": "VARCHAR(1000)",
+          "comment": "住房条件",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "experience",
+          "type": "VARCHAR(1000)",
+          "comment": "养宠经验",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "reason",
+          "type": "VARCHAR(1000)",
+          "comment": "申请说明",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "contact_phone",
+          "type": "VARCHAR(32)",
+          "comment": "仅双方和授权管理端可见",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "申请状态：PENDING/APPROVED/IN_PROGRESS/COMPLETED/REJECTED/WITHDRAWN/CANCELLED",
+          "nullable": false,
+          "default": "'PENDING'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "decision_reason",
+          "type": "VARCHAR(500)",
+          "comment": "审核或取消说明",
+          "nullable": false,
+          "default": "''",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "active_applicant_id",
+          "type": "BIGINT",
+          "comment": "同宠物同申请人只能一个有效申请",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": "CASE WHEN `status` IN ('PENDING','APPROVED','IN_PROGRESS') THEN `applicant_id` ELSE NULL END"
+        },
+        {
+          "name": "selected_pet_id",
+          "type": "BIGINT",
+          "comment": "同宠物只能一个选定或完成申请",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": "CASE WHEN `status` IN ('APPROVED','IN_PROGRESS','COMPLETED') THEN `pet_id` ELSE NULL END"
+        },
+        {
+          "name": "version",
+          "type": "INT",
+          "comment": "乐观锁，业务修改时由 Service 显式加 1",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME(3)",
+          "comment": "创建时间，UTC",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "updated_at",
+          "type": "DATETIME(3)",
+          "comment": "更新时间，UTC，由 Service 显式维护",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "progress",
+          "type": "JSON",
+          "comment": "小型申请进度数组；每项 id/status/note/createdAt/actorId，禁止含其他申请人资料",
+          "nullable": false,
+          "default": "(JSON_ARRAY())",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        }
+      ],
+      "pk": [
+        "id"
+      ],
+      "unique": [
+        [
+          "uk_application_active",
+          [
+            "pet_id",
+            "active_applicant_id"
+          ]
+        ],
+        [
+          "uk_application_selected",
+          [
+            "selected_pet_id"
+          ]
+        ],
+        [
+          "uk_application_participants",
+          [
+            "id",
+            "applicant_id",
+            "publisher_id"
+          ]
+        ]
+      ],
+      "indexes": [
+        [
+          "idx_application_pet",
+          [
+            "pet_id",
+            "status",
+            "created_at",
+            "id"
+          ]
+        ],
+        [
+          "idx_application_applicant",
+          [
+            "applicant_id",
+            "status",
+            "created_at",
+            "id"
+          ]
+        ],
+        [
+          "idx_application_publisher",
+          [
+            "publisher_id",
+            "status",
+            "created_at",
+            "id"
+          ]
+        ]
+      ],
+      "checks": [
+        "`status` IN ('PENDING', 'APPROVED', 'IN_PROGRESS', 'COMPLETED', 'REJECTED', 'WITHDRAWN', 'CANCELLED')",
+        "`applicant_id` <> `publisher_id`",
+        "`version` >= 0",
+        "JSON_TYPE(`progress`)='ARRAY' AND JSON_LENGTH(`progress`)<=100"
+      ],
+      "relations": [
+        [
+          [
+            "pet_id",
+            "publisher_id"
+          ],
+          "adoption_pet",
+          [
+            "id",
+            "publisher_id"
+          ],
+          "物理复合外键，发布者必须匹配宠物档案"
+        ]
+      ],
+      "note": "申请状态和 progress 在同一事务维护；最多 100 项，只记录状态变更，达到上限拒绝后续追加并人工处理，不静默丢弃历史。"
+    },
+    {
+      "name": "adoption_conversation",
+      "module": "领养",
+      "title": "宠物相关双方会话",
+      "columns": [
+        {
+          "name": "id",
+          "type": "BIGINT",
+          "comment": "主键，自增，接口输出十进制字符串",
+          "nullable": false,
+          "default": null,
+          "extra": "AUTO_INCREMENT",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "pet_id",
+          "type": "BIGINT",
+          "comment": "关联宠物",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "adoption_pet",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "participant_low_id",
+          "type": "BIGINT",
+          "comment": "较小参与者 ID",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "participant_high_id",
+          "type": "BIGINT",
+          "comment": "较大参与者 ID",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "last_message_id",
+          "type": "BIGINT",
+          "comment": "最近消息 ID，无消息为空",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME(3)",
+          "comment": "创建时间，UTC",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "updated_at",
+          "type": "DATETIME(3)",
+          "comment": "更新时间，UTC，由 Service 显式维护",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "low_last_read_message_id",
+          "type": "BIGINT",
+          "comment": "对应参与者的已读位置，NULL 表示未读；仅允许前移",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "high_last_read_message_id",
+          "type": "BIGINT",
+          "comment": "对应参与者的已读位置，NULL 表示未读；仅允许前移",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        }
+      ],
+      "pk": [
+        "id"
+      ],
+      "unique": [
+        [
+          "uk_conversation_pair",
+          [
+            "pet_id",
+            "participant_low_id",
+            "participant_high_id"
+          ]
+        ]
+      ],
+      "indexes": [
+        [
+          "idx_conversation_low",
+          [
+            "participant_low_id",
+            "updated_at",
+            "id"
+          ]
+        ],
+        [
+          "idx_conversation_high",
+          [
+            "participant_high_id",
+            "updated_at",
+            "id"
+          ]
+        ]
+      ],
+      "checks": [
+        "`participant_low_id` < `participant_high_id`"
+      ],
+      "relations": [
+        [
+          "last_message_id",
+          "adoption_message",
+          "id",
+          "逻辑外键，必须属于本会话"
+        ],
+        [
+          "low_last_read_message_id",
+          "adoption_message",
+          "id",
+          "逻辑关联，Service 验证消息属于当前会话"
+        ],
+        [
+          "high_last_read_message_id",
+          "adoption_message",
+          "id",
+          "逻辑关联，Service 验证消息属于当前会话"
+        ]
+      ],
+      "note": "仅支持两人会话，已读位置直接存两列；未读数按会话内对方发送且 ID 大于已读位置的消息统计。"
+    },
+    {
+      "name": "adoption_message",
+      "module": "领养",
+      "title": "会话私信",
+      "columns": [
+        {
+          "name": "id",
+          "type": "BIGINT",
+          "comment": "主键，自增，接口输出十进制字符串",
+          "nullable": false,
+          "default": null,
+          "extra": "AUTO_INCREMENT",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "conversation_id",
+          "type": "BIGINT",
+          "comment": "会话",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "adoption_conversation",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "sender_id",
+          "type": "BIGINT",
+          "comment": "发送人，Service 校验为参与者",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "client_message_id",
+          "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "客户端消息 UUID",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "content",
+          "type": "VARCHAR(2000)",
+          "comment": "私信纯文本",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME(3)",
+          "comment": "创建时间，UTC",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        }
+      ],
+      "pk": [
+        "id"
+      ],
+      "unique": [
+        [
+          "uk_message_client",
+          [
+            "sender_id",
+            "client_message_id"
+          ]
+        ]
+      ],
+      "indexes": [
+        [
+          "idx_message_conversation",
+          [
+            "conversation_id",
+            "id"
+          ]
+        ],
+        [
+          "idx_message_unread",
+          [
+            "conversation_id",
+            "sender_id",
+            "id"
+          ]
+        ]
+      ],
+      "checks": [
+        "CHAR_LENGTH(`content`) BETWEEN 1 AND 2000"
+      ],
+      "relations": [],
+      "note": "消息不设计管理端读取接口，日志不得记录正文。重复 UUID 必须比对会话与内容。"
+    },
+    {
+      "name": "adoption_appointment",
+      "module": "领养",
+      "title": "领养见面预约",
+      "columns": [
+        {
+          "name": "id",
+          "type": "BIGINT",
+          "comment": "主键，自增，接口输出十进制字符串",
+          "nullable": false,
+          "default": null,
+          "extra": "AUTO_INCREMENT",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "application_id",
+          "type": "BIGINT",
+          "comment": "关联申请",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "adoption_application",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "applicant_id",
+          "type": "BIGINT",
+          "comment": "申请人，来自申请",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "publisher_id",
+          "type": "BIGINT",
+          "comment": "发布者，来自申请",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "creator_id",
+          "type": "BIGINT",
+          "comment": "提出预约者",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "starts_at",
+          "type": "DATETIME(3)",
+          "comment": "UTC 开始时间",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "ends_at",
+          "type": "DATETIME(3)",
+          "comment": "UTC 结束时间",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "location",
+          "type": "VARCHAR(200)",
+          "comment": "地点",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "note",
+          "type": "VARCHAR(500)",
+          "comment": "补充说明",
+          "nullable": false,
+          "default": "''",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "预约状态：REQUESTED/CONFIRMED/CANCELLED/COMPLETED",
+          "nullable": false,
+          "default": "'REQUESTED'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "cancel_reason",
+          "type": "VARCHAR(500)",
+          "comment": "取消说明",
+          "nullable": false,
+          "default": "''",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "version",
+          "type": "INT",
+          "comment": "乐观锁，业务修改时由 Service 显式加 1",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME(3)",
+          "comment": "创建时间，UTC",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "updated_at",
+          "type": "DATETIME(3)",
+          "comment": "更新时间，UTC，由 Service 显式维护",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        }
+      ],
+      "pk": [
+        "id"
+      ],
+      "unique": [],
+      "indexes": [
+        [
+          "idx_appointment_application",
+          [
+            "application_id",
+            "status",
+            "id"
+          ]
+        ],
+        [
+          "idx_appointment_applicant",
+          [
+            "applicant_id",
+            "status",
+            "starts_at",
+            "id"
+          ]
+        ],
+        [
+          "idx_appointment_publisher",
+          [
+            "publisher_id",
+            "status",
+            "starts_at",
+            "id"
+          ]
+        ]
+      ],
+      "checks": [
+        "`status` IN ('REQUESTED', 'CONFIRMED', 'CANCELLED', 'COMPLETED')",
+        "`creator_id` IN (`applicant_id`,`publisher_id`)",
+        "`starts_at` < `ends_at`",
+        "TIMESTAMPDIFF(MICROSECOND,`starts_at`,`ends_at`) <= 14400000000",
+        "`version` >= 0"
+      ],
+      "relations": [
+        [
+          [
+            "application_id",
+            "applicant_id",
+            "publisher_id"
+          ],
+          "adoption_application",
+          [
+            "id",
+            "applicant_id",
+            "publisher_id"
+          ],
+          "物理复合外键，预约双方须等于申请双方"
+        ]
+      ],
+      "note": "跨行预约重叠不能由普通 CHECK 完成；双方用户行锁加 [start,end) 区间查询保证。"
+    },
+    {
+      "name": "adoption_complaint",
+      "module": "领养",
+      "title": "领养投诉与反馈",
+      "columns": [
+        {
+          "name": "id",
+          "type": "BIGINT",
+          "comment": "主键，自增，接口输出十进制字符串",
+          "nullable": false,
+          "default": null,
+          "extra": "AUTO_INCREMENT",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "application_id",
+          "type": "BIGINT",
+          "comment": "关联申请",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "adoption_application",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "reporter_id",
+          "type": "BIGINT",
+          "comment": "投诉人，必须是申请双方之一",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "reason",
+          "type": "VARCHAR(2000)",
+          "comment": "投诉说明",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "处理状态：PENDING/RESOLVED/REJECTED",
+          "nullable": false,
+          "default": "'PENDING'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "result",
+          "type": "VARCHAR(2000)",
+          "comment": "处理反馈",
+          "nullable": false,
+          "default": "''",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "handled_by",
+          "type": "BIGINT",
+          "comment": "处理管理员",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "handled_at",
+          "type": "DATETIME(3)",
+          "comment": "处理时间",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "pending_reporter_id",
+          "type": "BIGINT",
+          "comment": "同人同申请最多一条待处理投诉",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": "CASE WHEN `status`='PENDING' THEN `reporter_id` ELSE NULL END"
+        },
+        {
+          "name": "version",
+          "type": "INT",
+          "comment": "乐观锁，业务修改时由 Service 显式加 1",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME(3)",
+          "comment": "创建时间，UTC",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "updated_at",
+          "type": "DATETIME(3)",
+          "comment": "更新时间，UTC，由 Service 显式维护",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        }
+      ],
+      "pk": [
+        "id"
+      ],
+      "unique": [
+        [
+          "uk_complaint_pending",
+          [
+            "application_id",
+            "pending_reporter_id"
+          ]
+        ]
+      ],
+      "indexes": [
+        [
+          "idx_complaint_reporter",
+          [
+            "reporter_id",
+            "created_at",
+            "id"
+          ]
+        ],
+        [
+          "idx_complaint_status",
+          [
+            "status",
+            "created_at",
+            "id"
+          ]
+        ]
+      ],
+      "checks": [
+        "`status` IN ('PENDING', 'RESOLVED', 'REJECTED')",
+        "`version` >= 0"
+      ],
+      "relations": [],
+      "note": ""
+    },
+    {
+      "name": "community_category",
+      "module": "社区",
+      "title": "社区分类",
+      "columns": [
+        {
+          "name": "id",
+          "type": "BIGINT",
+          "comment": "主键，自增，接口输出十进制字符串",
+          "nullable": false,
+          "default": null,
+          "extra": "AUTO_INCREMENT",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "name",
+          "type": "VARCHAR(40)",
+          "comment": "分类名",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "sort",
+          "type": "INT",
+          "comment": "排序值",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "enabled",
+          "type": "TINYINT",
+          "comment": "是否启用",
+          "nullable": false,
+          "default": "1",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "version",
+          "type": "INT",
+          "comment": "乐观锁，业务修改时由 Service 显式加 1",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME(3)",
+          "comment": "创建时间，UTC",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "updated_at",
+          "type": "DATETIME(3)",
+          "comment": "更新时间，UTC，由 Service 显式维护",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        }
+      ],
+      "pk": [
+        "id"
+      ],
+      "unique": [
+        [
+          "uk_community_category_name",
+          [
+            "name"
+          ]
+        ]
+      ],
+      "indexes": [
+        [
+          "idx_community_category_sort",
+          [
+            "enabled",
+            "sort",
+            "id"
+          ]
+        ]
+      ],
+      "checks": [
+        "`sort` >= 0",
+        "`enabled` IN (0,1)",
+        "`version` >= 0"
+      ],
+      "relations": [],
+      "note": ""
+    },
+    {
+      "name": "community_post",
+      "module": "社区",
+      "title": "帖子日记求助主表",
+      "columns": [
+        {
+          "name": "id",
+          "type": "BIGINT",
+          "comment": "主键，自增，接口输出十进制字符串",
+          "nullable": false,
+          "default": null,
+          "extra": "AUTO_INCREMENT",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "author_id",
+          "type": "BIGINT",
+          "comment": "作者",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "kind",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "内容类型：POST/DIARY/HELP",
+          "nullable": false,
+          "default": "'POST'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "title",
+          "type": "VARCHAR(100)",
+          "comment": "标题",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "content",
+          "type": "TEXT",
+          "comment": "正文纯文本，1–10000 字",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "category_id",
+          "type": "BIGINT",
+          "comment": "分类",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "community_category",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "pet_name",
+          "type": "VARCHAR(60)",
+          "comment": "日记宠物名，其他类型可为空",
+          "nullable": false,
+          "default": "''",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "visibility",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "可见范围：PUBLIC/PRIVATE",
+          "nullable": false,
+          "default": "'PUBLIC'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "link",
+          "type": "VARCHAR(2048)",
+          "comment": "可选 HTTP/HTTPS 链接",
+          "nullable": false,
+          "default": "''",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "review_status",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "审核状态：DRAFT/PENDING/PUBLISHED/REJECTED/OFF_SHELF",
+          "nullable": false,
+          "default": "'DRAFT'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "review_reason",
+          "type": "VARCHAR(500)",
+          "comment": "审核或下架说明",
+          "nullable": false,
+          "default": "''",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "resolved",
+          "type": "TINYINT",
+          "comment": "HELP 是否已解决",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "is_deleted",
+          "type": "TINYINT",
+          "comment": "内容逻辑删除标记",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "deleted_at",
+          "type": "DATETIME(3)",
+          "comment": "逻辑删除时间",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "version",
+          "type": "INT",
+          "comment": "乐观锁，业务修改时由 Service 显式加 1",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME(3)",
+          "comment": "创建时间，UTC",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "updated_at",
+          "type": "DATETIME(3)",
+          "comment": "更新时间，UTC，由 Service 显式维护",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "tags",
+          "type": "JSON",
+          "comment": "最多 5 个去重标签，每个 1–20 字，由 Service 校验",
+          "nullable": false,
+          "default": "(JSON_ARRAY())",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        }
+      ],
+      "pk": [
+        "id"
+      ],
+      "unique": [],
+      "indexes": [
+        [
+          "idx_post_public",
+          [
+            "is_deleted",
+            "visibility",
+            "review_status",
+            "created_at",
+            "id"
+          ]
+        ],
+        [
+          "idx_post_category",
+          [
+            "category_id",
+            "is_deleted",
+            "visibility",
+            "review_status",
+            "created_at",
+            "id"
+          ]
+        ],
+        [
+          "idx_post_author",
+          [
+            "author_id",
+            "is_deleted",
+            "created_at",
+            "id"
+          ]
+        ],
+        [
+          "idx_post_kind",
+          [
+            "kind",
+            "is_deleted",
+            "visibility",
+            "review_status",
+            "created_at",
+            "id"
+          ]
+        ]
+      ],
+      "checks": [
+        "`kind` IN ('POST', 'DIARY', 'HELP')",
+        "`visibility` IN ('PUBLIC', 'PRIVATE')",
+        "`review_status` IN ('DRAFT', 'PENDING', 'PUBLISHED', 'REJECTED', 'OFF_SHELF')",
+        "`visibility`='PUBLIC' OR `kind`='DIARY'",
+        "`kind`<>'DIARY' OR CHAR_LENGTH(`pet_name`) BETWEEN 1 AND 60",
+        "`kind`='HELP' OR `resolved`=0",
+        "CHAR_LENGTH(`title`) BETWEEN 1 AND 100",
+        "CHAR_LENGTH(`content`) BETWEEN 1 AND 10000",
+        "(`is_deleted`=0 AND `deleted_at` IS NULL) OR (`is_deleted`=1 AND `deleted_at` IS NOT NULL)",
+        "`resolved` IN (0,1)",
+        "`is_deleted` IN (0,1)",
+        "`version` >= 0",
+        "JSON_TYPE(`tags`)='ARRAY' AND JSON_LENGTH(`tags`)<=5"
+      ],
+      "relations": [],
+      "note": "POST/DIARY/HELP 共用内容表，通过 kind 区分；标签为 JSON 字符串数组，不单独维护标签字典和关联表。课程规模按 JSON_CONTAINS 精确筛选。"
+    },
+    {
+      "name": "community_comment",
+      "module": "社区",
+      "title": "评论与一层回复",
+      "columns": [
+        {
+          "name": "id",
+          "type": "BIGINT",
+          "comment": "主键，自增，接口输出十进制字符串",
+          "nullable": false,
+          "default": null,
+          "extra": "AUTO_INCREMENT",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "post_id",
+          "type": "BIGINT",
+          "comment": "所属内容",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "community_post",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "author_id",
+          "type": "BIGINT",
+          "comment": "真实评论作者，删除占位响应中隐藏",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "parent_id",
+          "type": "BIGINT",
+          "comment": "顶级评论 ID，顶级本身为空",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "community_comment",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "content",
+          "type": "VARCHAR(1000)",
+          "comment": "正文，删除时改为固定占位且不返回原文",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "is_deleted",
+          "type": "TINYINT",
+          "comment": "逻辑删除标记",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "deleted_at",
+          "type": "DATETIME(3)",
+          "comment": "删除时间",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "delete_reason",
+          "type": "VARCHAR(500)",
+          "comment": "本人删除或违规移除说明",
+          "nullable": false,
+          "default": "''",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "version",
+          "type": "INT",
+          "comment": "乐观锁，业务修改时由 Service 显式加 1",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME(3)",
+          "comment": "创建时间，UTC",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "updated_at",
+          "type": "DATETIME(3)",
+          "comment": "更新时间，UTC，由 Service 显式维护",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        }
+      ],
+      "pk": [
+        "id"
+      ],
+      "unique": [
+        [
+          "uk_comment_post_id",
+          [
+            "post_id",
+            "id"
+          ]
+        ]
+      ],
+      "indexes": [
+        [
+          "idx_comment_post",
+          [
+            "post_id",
+            "id"
+          ]
+        ],
+        [
+          "idx_comment_parent",
+          [
+            "parent_id",
+            "id"
+          ]
+        ],
+        [
+          "idx_comment_author",
+          [
+            "author_id",
+            "created_at",
+            "id"
+          ]
+        ]
+      ],
+      "checks": [
+        "CHAR_LENGTH(`content`) BETWEEN 1 AND 1000",
+        "(`is_deleted`=0 AND `deleted_at` IS NULL) OR (`is_deleted`=1 AND `deleted_at` IS NOT NULL)",
+        "`is_deleted` IN (0,1)",
+        "`version` >= 0"
+      ],
+      "relations": [
+        [
+          [
+            "post_id",
+            "parent_id"
+          ],
+          "community_comment",
+          [
+            "post_id",
+            "id"
+          ],
+          "物理复合外键，同帖回复；顶级 parent_id 为 NULL"
+        ]
+      ],
+      "note": "是否只回复顶级、父评论是否删除、内容是否可见由 Service 判断；删除不级联删除回复。"
+    },
+    {
+      "name": "community_like",
+      "module": "社区",
+      "title": "社区点赞",
+      "columns": [
+        {
+          "name": "user_id",
+          "type": "BIGINT",
+          "comment": "用户 ID",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "post_id",
+          "type": "BIGINT",
+          "comment": "被点赞内容",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "community_post",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME(3)",
+          "comment": "创建时间，UTC",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        }
+      ],
+      "pk": [
+        "user_id",
+        "post_id"
+      ],
+      "unique": [],
+      "indexes": [
+        [
+          "idx_like_post",
+          [
+            "post_id",
+            "user_id"
+          ]
+        ]
+      ],
+      "checks": [],
+      "relations": [],
+      "note": ""
+    },
+    {
+      "name": "community_report",
+      "module": "社区",
+      "title": "内容或评论举报",
+      "columns": [
+        {
+          "name": "id",
+          "type": "BIGINT",
+          "comment": "主键，自增，接口输出十进制字符串",
+          "nullable": false,
+          "default": null,
+          "extra": "AUTO_INCREMENT",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "reporter_id",
+          "type": "BIGINT",
+          "comment": "举报人",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "target_type",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "举报对象：POST/COMMENT",
+          "nullable": false,
+          "default": "'POST'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "target_id",
+          "type": "BIGINT",
+          "comment": "帖子或评论 ID",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "reason",
+          "type": "VARCHAR(500)",
+          "comment": "举报说明",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "处理状态：PENDING/RESOLVED/REJECTED",
+          "nullable": false,
+          "default": "'PENDING'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "result",
+          "type": "VARCHAR(2000)",
+          "comment": "管理员反馈",
+          "nullable": false,
+          "default": "''",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "handled_by",
+          "type": "BIGINT",
+          "comment": "处理人",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "handled_at",
+          "type": "DATETIME(3)",
+          "comment": "处理时间",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "pending_reporter_id",
+          "type": "BIGINT",
+          "comment": "同人同目标最多一个待处理举报",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": "CASE WHEN `status`='PENDING' THEN `reporter_id` ELSE NULL END"
+        },
+        {
+          "name": "version",
+          "type": "INT",
+          "comment": "乐观锁，业务修改时由 Service 显式加 1",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME(3)",
+          "comment": "创建时间，UTC",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "updated_at",
+          "type": "DATETIME(3)",
+          "comment": "更新时间，UTC，由 Service 显式维护",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        }
+      ],
+      "pk": [
+        "id"
+      ],
+      "unique": [
+        [
+          "uk_report_pending",
+          [
+            "target_type",
+            "target_id",
+            "pending_reporter_id"
+          ]
+        ]
+      ],
+      "indexes": [
+        [
+          "idx_report_reporter",
+          [
+            "reporter_id",
+            "created_at",
+            "id"
+          ]
+        ],
+        [
+          "idx_report_status",
+          [
+            "status",
+            "created_at",
+            "id"
+          ]
+        ]
+      ],
+      "checks": [
+        "`target_type` IN ('POST', 'COMMENT')",
+        "`status` IN ('PENDING', 'RESOLVED', 'REJECTED')",
+        "`target_id` > 0",
+        "`version` >= 0"
+      ],
+      "relations": [
+        [
+          "target_id",
+          "community_post / community_comment",
+          "id",
+          "多态逻辑外键，举报时重新检查资源可见性"
+        ]
+      ],
+      "note": ""
+    },
+    {
+      "name": "shop_category",
+      "module": "商城",
+      "title": "商品分类",
+      "columns": [
+        {
+          "name": "id",
+          "type": "BIGINT",
+          "comment": "主键，自增，接口输出十进制字符串",
+          "nullable": false,
+          "default": null,
+          "extra": "AUTO_INCREMENT",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "name",
+          "type": "VARCHAR(40)",
+          "comment": "分类名称",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "sort",
+          "type": "INT",
+          "comment": "排序值",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "enabled",
+          "type": "TINYINT",
+          "comment": "是否启用",
+          "nullable": false,
+          "default": "1",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "version",
+          "type": "INT",
+          "comment": "乐观锁，业务修改时由 Service 显式加 1",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME(3)",
+          "comment": "创建时间，UTC",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "updated_at",
+          "type": "DATETIME(3)",
+          "comment": "更新时间，UTC，由 Service 显式维护",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        }
+      ],
+      "pk": [
+        "id"
+      ],
+      "unique": [
+        [
+          "uk_shop_category_name",
+          [
+            "name"
+          ]
+        ]
+      ],
+      "indexes": [
+        [
+          "idx_shop_category_sort",
+          [
+            "enabled",
+            "sort",
+            "id"
+          ]
+        ]
+      ],
+      "checks": [
+        "`sort` >= 0",
+        "`enabled` IN (0,1)",
+        "`version` >= 0"
+      ],
+      "relations": [],
+      "note": ""
+    },
+    {
+      "name": "shop_product",
+      "module": "商城",
+      "title": "商品与当前可售库存",
+      "columns": [
+        {
+          "name": "id",
+          "type": "BIGINT",
+          "comment": "主键，自增，接口输出十进制字符串",
+          "nullable": false,
+          "default": null,
+          "extra": "AUTO_INCREMENT",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "category_id",
+          "type": "BIGINT",
+          "comment": "分类",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "shop_category",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "name",
+          "type": "VARCHAR(100)",
+          "comment": "商品名",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "comment": "商品描述，1–10000 字",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "price_cents",
+          "type": "BIGINT",
+          "comment": "当前单价，分",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "stock",
+          "type": "INT",
+          "comment": "可售库存",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "销售状态：OFF_SHELF/ON_SHELF",
+          "nullable": false,
+          "default": "'OFF_SHELF'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "created_by",
+          "type": "BIGINT",
+          "comment": "创建管理员",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "updated_by",
+          "type": "BIGINT",
+          "comment": "最近修改管理员",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "version",
+          "type": "INT",
+          "comment": "乐观锁，业务修改时由 Service 显式加 1",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME(3)",
+          "comment": "创建时间，UTC",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "updated_at",
+          "type": "DATETIME(3)",
+          "comment": "更新时间，UTC，由 Service 显式维护",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        }
+      ],
+      "pk": [
+        "id"
+      ],
+      "unique": [],
+      "indexes": [
+        [
+          "idx_product_public",
+          [
+            "status",
+            "created_at",
+            "id"
+          ]
+        ],
+        [
+          "idx_product_category",
+          [
+            "category_id",
+            "status",
+            "created_at",
+            "id"
+          ]
+        ],
+        [
+          "idx_product_price",
+          [
+            "status",
+            "price_cents",
+            "id"
+          ]
+        ]
+      ],
+      "checks": [
+        "`status` IN ('OFF_SHELF', 'ON_SHELF')",
+        "`price_cents` BETWEEN 1 AND 9999999999",
+        "`stock` BETWEEN 0 AND 1000000",
+        "CHAR_LENGTH(`description`) BETWEEN 1 AND 10000",
+        "`version` >= 0"
+      ],
+      "relations": [],
+      "note": "不设计 SKU、多商家或预留库存，购物车不扣库存。图片由 PRODUCT 媒体绑定。"
+    },
+    {
+      "name": "shop_cart_item",
+      "module": "商城",
+      "title": "用户购物车",
+      "columns": [
+        {
+          "name": "id",
+          "type": "BIGINT",
+          "comment": "主键，自增，接口输出十进制字符串",
+          "nullable": false,
+          "default": null,
+          "extra": "AUTO_INCREMENT",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "user_id",
+          "type": "BIGINT",
+          "comment": "用户 ID",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "product_id",
+          "type": "BIGINT",
+          "comment": "商品",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "shop_product",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "quantity",
+          "type": "INT",
+          "comment": "最终数量",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME(3)",
+          "comment": "创建时间，UTC",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "updated_at",
+          "type": "DATETIME(3)",
+          "comment": "更新时间，UTC，由 Service 显式维护",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        }
+      ],
+      "pk": [
+        "id"
+      ],
+      "unique": [
+        [
+          "uk_cart_user_product",
+          [
+            "user_id",
+            "product_id"
+          ]
+        ]
+      ],
+      "indexes": [
+        [
+          "idx_cart_user",
+          [
+            "user_id",
+            "id"
+          ]
+        ]
+      ],
+      "checks": [
+        "`quantity` BETWEEN 1 AND 99"
+      ],
+      "relations": [],
+      "note": ""
+    },
+    {
+      "name": "user_address",
+      "module": "商城",
+      "title": "用户收货地址",
+      "columns": [
+        {
+          "name": "id",
+          "type": "BIGINT",
+          "comment": "主键，自增，接口输出十进制字符串",
+          "nullable": false,
+          "default": null,
+          "extra": "AUTO_INCREMENT",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "user_id",
+          "type": "BIGINT",
+          "comment": "用户 ID",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "recipient",
+          "type": "VARCHAR(40)",
+          "comment": "收件人",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "phone",
+          "type": "VARCHAR(32)",
+          "comment": "电话",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "province",
+          "type": "VARCHAR(40)",
+          "comment": "省",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "city",
+          "type": "VARCHAR(40)",
+          "comment": "市",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "district",
+          "type": "VARCHAR(40)",
+          "comment": "区县",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "detail",
+          "type": "VARCHAR(200)",
+          "comment": "详细地址",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "is_default",
+          "type": "TINYINT",
+          "comment": "是否默认",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "default_user_id",
+          "type": "BIGINT",
+          "comment": "每个用户至多一个默认地址",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": "CASE WHEN `is_default`=1 THEN `user_id` ELSE NULL END"
+        },
+        {
+          "name": "version",
+          "type": "INT",
+          "comment": "乐观锁，业务修改时由 Service 显式加 1",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME(3)",
+          "comment": "创建时间，UTC",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "updated_at",
+          "type": "DATETIME(3)",
+          "comment": "更新时间，UTC，由 Service 显式维护",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        }
+      ],
+      "pk": [
+        "id"
+      ],
+      "unique": [
+        [
+          "uk_address_default",
+          [
+            "default_user_id"
+          ]
+        ]
+      ],
+      "indexes": [
+        [
+          "idx_address_user",
+          [
+            "user_id",
+            "id"
+          ]
+        ]
+      ],
+      "checks": [
+        "`is_default` IN (0,1)",
+        "`version` >= 0"
+      ],
+      "relations": [],
+      "note": "用户行锁保证最多 20 条且有地址时恰好一个默认；删除地址为物理删除，订单独立快照不受影响。切换默认先清旧默认再设新默认，均在同一事务。"
+    },
+    {
+      "name": "shop_order",
+      "module": "商城",
+      "title": "订单与收货地址快照",
+      "columns": [
+        {
+          "name": "id",
+          "type": "BIGINT",
+          "comment": "主键，自增，接口输出十进制字符串",
+          "nullable": false,
+          "default": null,
+          "extra": "AUTO_INCREMENT",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "order_no",
+          "type": "VARCHAR(40) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "唯一业务订单号",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "buyer_id",
+          "type": "BIGINT",
+          "comment": "购买人",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "total_cents",
+          "type": "BIGINT",
+          "comment": "订单总额，含零运费",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "shipping_fee_cents",
+          "type": "BIGINT",
+          "comment": "运费，当前固定 0",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "订单状态：WAIT_SHIPMENT/SHIPPED/COMPLETED/CANCELLED/REFUNDING/REFUNDED",
+          "nullable": false,
+          "default": "'WAIT_SHIPMENT'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "payment_mode",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "模拟购买方式：MOCK",
+          "nullable": false,
+          "default": "'MOCK'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "paid_at",
+          "type": "DATETIME(3)",
+          "comment": "模拟购买成功时间",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "address_id_snapshot",
+          "type": "BIGINT",
+          "comment": "原地址 ID，仅作快照不建立外键",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "recipient_snapshot",
+          "type": "VARCHAR(40)",
+          "comment": "下单时收件人",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "phone_snapshot",
+          "type": "VARCHAR(32)",
+          "comment": "下单时电话",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "province_snapshot",
+          "type": "VARCHAR(40)",
+          "comment": "下单时省",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "city_snapshot",
+          "type": "VARCHAR(40)",
+          "comment": "下单时市",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "district_snapshot",
+          "type": "VARCHAR(40)",
+          "comment": "下单时区县",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "detail_snapshot",
+          "type": "VARCHAR(200)",
+          "comment": "下单时详细地址",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "address_default_snapshot",
+          "type": "TINYINT",
+          "comment": "下单时地址是否默认",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "address_version_snapshot",
+          "type": "INT",
+          "comment": "下单时地址版本",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "shipping_company",
+          "type": "VARCHAR(60)",
+          "comment": "物流公司，未发货为空",
+          "nullable": false,
+          "default": "''",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "tracking_number",
+          "type": "VARCHAR(100)",
+          "comment": "物流单号，未发货为空",
+          "nullable": false,
+          "default": "''",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "shipped_at",
+          "type": "DATETIME(3)",
+          "comment": "发货时间",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "completed_at",
+          "type": "DATETIME(3)",
+          "comment": "确认收货时间",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "cancelled_at",
+          "type": "DATETIME(3)",
+          "comment": "取消时间",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "cancel_reason",
+          "type": "VARCHAR(500)",
+          "comment": "取消说明",
+          "nullable": false,
+          "default": "''",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "version",
+          "type": "INT",
+          "comment": "乐观锁，业务修改时由 Service 显式加 1",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME(3)",
+          "comment": "创建时间，UTC",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "updated_at",
+          "type": "DATETIME(3)",
+          "comment": "更新时间，UTC，由 Service 显式维护",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "payment_status",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "本版模拟购买成功，不接第三方支付",
+          "nullable": false,
+          "default": "'SUCCESS'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "refund_amount_cents",
+          "type": "BIGINT",
+          "comment": "已退金额，分；只支持整单退款",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "refunded_at",
+          "type": "DATETIME(3)",
+          "comment": "模拟退款完成时间，UTC",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        }
+      ],
+      "pk": [
+        "id"
+      ],
+      "unique": [
+        [
+          "uk_order_no",
+          [
+            "order_no"
+          ]
+        ]
+      ],
+      "indexes": [
+        [
+          "idx_order_buyer",
+          [
+            "buyer_id",
+            "status",
+            "created_at",
+            "id"
+          ]
+        ],
+        [
+          "idx_order_buyer_created",
+          [
+            "buyer_id",
+            "created_at",
+            "id"
+          ]
+        ],
+        [
+          "idx_order_status",
+          [
+            "status",
+            "created_at",
+            "id"
+          ]
+        ]
+      ],
+      "checks": [
+        "`status` IN ('WAIT_SHIPMENT', 'SHIPPED', 'COMPLETED', 'CANCELLED', 'REFUNDING', 'REFUNDED')",
+        "`payment_mode`='MOCK'",
+        "`total_cents` BETWEEN 1 AND 9999999999",
+        "`shipping_fee_cents`=0",
+        "`address_version_snapshot` >= 0",
+        "`address_default_snapshot` IN (0,1)",
+        "`version` >= 0",
+        "`payment_status`='SUCCESS'",
+        "(`status` IN ('CANCELLED','REFUNDED') AND `refund_amount_cents`=`total_cents` AND `refunded_at` IS NOT NULL) OR (`status` NOT IN ('CANCELLED','REFUNDED') AND `refund_amount_cents`=0 AND `refunded_at` IS NULL)"
+      ],
+      "relations": [],
+      "note": "创建订单时直接模拟购买成功，订单和库存同事务提交。模拟付款/退款结果、关键里程碑时间直接保存在本表；退款申请与审核在 shop_refund。取消和退款时以订单状态及行锁保证只回补一次库存。无第三方资金流。"
+    },
+    {
+      "name": "shop_order_item",
+      "module": "商城",
+      "title": "订单商品快照",
+      "columns": [
+        {
+          "name": "id",
+          "type": "BIGINT",
+          "comment": "主键，自增，接口输出十进制字符串",
+          "nullable": false,
+          "default": null,
+          "extra": "AUTO_INCREMENT",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "order_id",
+          "type": "BIGINT",
+          "comment": "订单",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "shop_order",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "product_id",
+          "type": "BIGINT",
+          "comment": "原商品 ID，商品只下架不删除",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "shop_product",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "name_snapshot",
+          "type": "VARCHAR(100)",
+          "comment": "下单时商品名称",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "quantity",
+          "type": "INT",
+          "comment": "购买数量",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "unit_price_cents",
+          "type": "BIGINT",
+          "comment": "下单时单价，分",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "subtotal_cents",
+          "type": "BIGINT",
+          "comment": "行金额，分",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME(3)",
+          "comment": "创建时间，UTC",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        }
+      ],
+      "pk": [
+        "id"
+      ],
+      "unique": [
+        [
+          "uk_order_product",
+          [
+            "order_id",
+            "product_id"
+          ]
+        ]
+      ],
+      "indexes": [],
+      "checks": [
+        "`quantity` BETWEEN 1 AND 99",
+        "`unit_price_cents` BETWEEN 1 AND 9999999999",
+        "`subtotal_cents` BETWEEN 1 AND 9999999999",
+        "`subtotal_cents`=`quantity`*`unit_price_cents`"
+      ],
+      "relations": [],
+      "note": "订单 items 1–50 项且各商品唯一；总额等于明细合计由 Service 核算，跨行总和不能由单行 CHECK 保证。"
+    },
+    {
+      "name": "shop_refund",
+      "module": "商城",
+      "title": "发货后整单退款申请",
+      "columns": [
+        {
+          "name": "id",
+          "type": "BIGINT",
+          "comment": "主键，自增，接口输出十进制字符串",
+          "nullable": false,
+          "default": null,
+          "extra": "AUTO_INCREMENT",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "order_id",
+          "type": "BIGINT",
+          "comment": "订单",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "shop_order",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "applicant_id",
+          "type": "BIGINT",
+          "comment": "买家",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "amount_cents",
+          "type": "BIGINT",
+          "comment": "服务端订单全额，分",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "reason",
+          "type": "VARCHAR(500)",
+          "comment": "退款原因",
+          "nullable": false,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "退款状态：REQUESTED/APPROVED/REJECTED/SUCCESS",
+          "nullable": false,
+          "default": "'REQUESTED'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "decision_reason",
+          "type": "VARCHAR(500)",
+          "comment": "审核反馈",
+          "nullable": false,
+          "default": "''",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "restocked",
+          "type": "TINYINT",
+          "comment": "是否已恢复库存",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "previous_order_status",
+          "type": "VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin",
+          "comment": "申请前订单状态：SHIPPED/COMPLETED",
+          "nullable": false,
+          "default": "'SHIPPED'",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "handled_by",
+          "type": "BIGINT",
+          "comment": "处理管理员",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": [
+            "sys_user",
+            "id"
+          ],
+          "generated": null
+        },
+        {
+          "name": "handled_at",
+          "type": "DATETIME(3)",
+          "comment": "处理时间",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "open_order_id",
+          "type": "BIGINT",
+          "comment": "同订单只能有一条处理中或成功退款",
+          "nullable": true,
+          "default": null,
+          "extra": "",
+          "ref": null,
+          "generated": "CASE WHEN `status` IN ('REQUESTED','APPROVED','SUCCESS') THEN `order_id` ELSE NULL END"
+        },
+        {
+          "name": "version",
+          "type": "INT",
+          "comment": "乐观锁，业务修改时由 Service 显式加 1",
+          "nullable": false,
+          "default": "0",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "created_at",
+          "type": "DATETIME(3)",
+          "comment": "创建时间，UTC",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        },
+        {
+          "name": "updated_at",
+          "type": "DATETIME(3)",
+          "comment": "更新时间，UTC，由 Service 显式维护",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(3)",
+          "extra": "",
+          "ref": null,
+          "generated": null
+        }
+      ],
+      "pk": [
+        "id"
+      ],
+      "unique": [
+        [
+          "uk_refund_open_order",
+          [
+            "open_order_id"
+          ]
+        ]
+      ],
+      "indexes": [
+        [
+          "idx_refund_applicant",
+          [
+            "applicant_id",
+            "created_at",
+            "id"
+          ]
+        ],
+        [
+          "idx_refund_order",
+          [
+            "order_id",
+            "id"
+          ]
+        ],
+        [
+          "idx_refund_status",
+          [
+            "status",
+            "created_at",
+            "id"
+          ]
+        ]
+      ],
+      "checks": [
+        "`status` IN ('REQUESTED', 'APPROVED', 'REJECTED', 'SUCCESS')",
+        "`previous_order_status` IN ('SHIPPED', 'COMPLETED')",
+        "`amount_cents` BETWEEN 1 AND 9999999999",
+        "`restocked`=0 OR `status`='SUCCESS'",
+        "`restocked` IN (0,1)",
+        "`version` >= 0"
+      ],
+      "relations": [],
+      "note": "拒绝后可重新申请。未发货取消只写订单与模拟资金流水，不写此退款申请表。"
+    }
+  ],
+  "foreignKeys": [
+    [
+      "media_file",
+      [
+        "owner_id"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "user_notice",
+      [
+        "recipient_id"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "user_notice",
+      [
+        "broadcast_id"
+      ],
+      "user_notice",
+      [
+        "id"
+      ]
+    ],
+    [
+      "user_notice",
+      [
+        "created_by"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "user_favorite",
+      [
+        "user_id"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "api_idempotency",
+      [
+        "user_id"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "operation_log",
+      [
+        "operator_id"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "adoption_pet",
+      [
+        "publisher_id"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "adoption_need",
+      [
+        "user_id"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "adoption_application",
+      [
+        "pet_id"
+      ],
+      "adoption_pet",
+      [
+        "id"
+      ]
+    ],
+    [
+      "adoption_application",
+      [
+        "applicant_id"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "adoption_application",
+      [
+        "publisher_id"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "adoption_application",
+      [
+        "pet_id",
+        "publisher_id"
+      ],
+      "adoption_pet",
+      [
+        "id",
+        "publisher_id"
+      ]
+    ],
+    [
+      "adoption_conversation",
+      [
+        "pet_id"
+      ],
+      "adoption_pet",
+      [
+        "id"
+      ]
+    ],
+    [
+      "adoption_conversation",
+      [
+        "participant_low_id"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "adoption_conversation",
+      [
+        "participant_high_id"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "adoption_message",
+      [
+        "conversation_id"
+      ],
+      "adoption_conversation",
+      [
+        "id"
+      ]
+    ],
+    [
+      "adoption_message",
+      [
+        "sender_id"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "adoption_appointment",
+      [
+        "application_id"
+      ],
+      "adoption_application",
+      [
+        "id"
+      ]
+    ],
+    [
+      "adoption_appointment",
+      [
+        "applicant_id"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "adoption_appointment",
+      [
+        "publisher_id"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "adoption_appointment",
+      [
+        "creator_id"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "adoption_appointment",
+      [
+        "application_id",
+        "applicant_id",
+        "publisher_id"
+      ],
+      "adoption_application",
+      [
+        "id",
+        "applicant_id",
+        "publisher_id"
+      ]
+    ],
+    [
+      "adoption_complaint",
+      [
+        "application_id"
+      ],
+      "adoption_application",
+      [
+        "id"
+      ]
+    ],
+    [
+      "adoption_complaint",
+      [
+        "reporter_id"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "adoption_complaint",
+      [
+        "handled_by"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "community_post",
+      [
+        "author_id"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "community_post",
+      [
+        "category_id"
+      ],
+      "community_category",
+      [
+        "id"
+      ]
+    ],
+    [
+      "community_comment",
+      [
+        "post_id"
+      ],
+      "community_post",
+      [
+        "id"
+      ]
+    ],
+    [
+      "community_comment",
+      [
+        "author_id"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "community_comment",
+      [
+        "parent_id"
+      ],
+      "community_comment",
+      [
+        "id"
+      ]
+    ],
+    [
+      "community_comment",
+      [
+        "post_id",
+        "parent_id"
+      ],
+      "community_comment",
+      [
+        "post_id",
+        "id"
+      ]
+    ],
+    [
+      "community_like",
+      [
+        "user_id"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "community_like",
+      [
+        "post_id"
+      ],
+      "community_post",
+      [
+        "id"
+      ]
+    ],
+    [
+      "community_report",
+      [
+        "reporter_id"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "community_report",
+      [
+        "handled_by"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "shop_product",
+      [
+        "category_id"
+      ],
+      "shop_category",
+      [
+        "id"
+      ]
+    ],
+    [
+      "shop_product",
+      [
+        "created_by"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "shop_product",
+      [
+        "updated_by"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "shop_cart_item",
+      [
+        "user_id"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "shop_cart_item",
+      [
+        "product_id"
+      ],
+      "shop_product",
+      [
+        "id"
+      ]
+    ],
+    [
+      "user_address",
+      [
+        "user_id"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "shop_order",
+      [
+        "buyer_id"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "shop_order_item",
+      [
+        "order_id"
+      ],
+      "shop_order",
+      [
+        "id"
+      ]
+    ],
+    [
+      "shop_order_item",
+      [
+        "product_id"
+      ],
+      "shop_product",
+      [
+        "id"
+      ]
+    ],
+    [
+      "shop_refund",
+      [
+        "order_id"
+      ],
+      "shop_order",
+      [
+        "id"
+      ]
+    ],
+    [
+      "shop_refund",
+      [
+        "applicant_id"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ],
+    [
+      "shop_refund",
+      [
+        "handled_by"
+      ],
+      "sys_user",
+      [
+        "id"
+      ]
+    ]
+  ]
+}

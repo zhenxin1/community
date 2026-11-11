@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.petcommunity.mapper.user.MediaMapper"><resultMap id="entity" type="com.petcommunity.entity.MediaEntity"><id property="id" column="id"/><result property="ownerId" column="owner_id"/><result property="businessType" column="business_type"/><result property="businessId" column="business_id"/><result property="sortOrder" column="sort_order"/><result property="storageKey" column="storage_key"/><result property="originalName" column="original_name"/><result property="mimeType" column="mime_type"/><result property="sizeBytes" column="size_bytes"/><result property="status" column="status"/><result property="cleanupAfter" column="cleanup_after"/><result property="createdAt" column="created_at"/><result property="updatedAt" column="updated_at"/></resultMap>
+ <select id="findById" resultMap="entity">SELECT * FROM media_file WHERE id=#{id}</select>
+ <select id="lockById" resultMap="entity">SELECT * FROM media_file WHERE id=#{id} FOR UPDATE</select>
+ <insert id="insert" useGeneratedKeys="true" keyProperty="id">INSERT INTO media_file(owner_id,business_type,storage_key,original_name,mime_type,size_bytes,status,cleanup_after) VALUES(#{ownerId},'AVATAR',#{storageKey},#{originalName},#{mimeType},#{sizeBytes},'TEMP',#{cleanupAfter})</insert>
+ <update id="bindAvatar">UPDATE media_file SET business_id=#{userId},sort_order=0,status='BOUND',cleanup_after=NULL,updated_at=UTC_TIMESTAMP(3) WHERE id=#{id}</update>
+ <update id="markDeleted">UPDATE media_file SET status='DELETED',cleanup_after=#{cleanupAfter},updated_at=UTC_TIMESTAMP(3) WHERE id=#{id}</update>
+ <select id="expired" resultType="java.lang.Long">SELECT id FROM media_file WHERE status IN ('TEMP','DELETED') AND cleanup_after &lt;= #{now} ORDER BY id LIMIT 100</select>
+ <delete id="delete">DELETE FROM media_file WHERE id=#{id}</delete>
+</mapper>

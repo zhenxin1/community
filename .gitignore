@@ -1,0 +1,12 @@
+.runtime/
+.cache/
+**/target/
+frontend/node_modules/
+frontend/dist/
+storage/uploads/
+.env
+.env.*
+!.env.example
+*.log
+.idea/
+.vscode/
