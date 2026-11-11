@@ -77,6 +77,7 @@ npm run dev
 
 ## 文档
 
+- [功能需求清单（五大模块）](docs/requirements/01-功能需求清单.md)
 - [Git 与 AI 协作管理手册](docs/collaboration/01-Git与AI协作管理手册.md)
 - [本期功能与实现说明](docs/development/01-注册登录与个人资料.md)
 - [完整接口文档](docs/api/README.md)
