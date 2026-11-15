@@ -1,0 +1,3 @@
+package com.example.petadoptioncommunity;
+import org.junit.jupiter.api.Test;import static org.junit.jupiter.api.Assertions.*;import com.example.petadoptioncommunity.shop.Pricing;
+class PricingTest {@Test void boundaryAndRounding(){assertEquals(21600L,Pricing.calculate(30000).get("payable"));assertEquals(41600L,Pricing.calculate(60000).get("payable"));assertEquals(96000L,Pricing.calculate(150000).get("payable"));assertEquals(23999L,Pricing.calculate(29999).get("payable"));assertEquals(1L,Pricing.calculate(1).get("payable"));} @Test void rejectsUnbounded(){assertThrows(RuntimeException.class,()->Pricing.calculate(-1));}}
