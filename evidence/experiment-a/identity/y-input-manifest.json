@@ -1,0 +1,1270 @@
+[
+  {
+    "path": ".gitattributes",
+    "sha256": "18BE76F9008AF08719BE1D98D291E1286907AD6DF86E7BD4E2DBED4CE0903FE8"
+  },
+  {
+    "path": ".gitignore",
+    "sha256": "566030D0D838B11DC7BA18334A5C87C47AE180782C6A7BF522F3ACC7CCAA4251"
+  },
+  {
+    "path": "mvnw",
+    "sha256": "CAE96CEF89EBEA3531221F4AE17C23CF8EDF67D00EAE8306D4186AE1BBED4D02"
+  },
+  {
+    "path": "mvnw.cmd",
+    "sha256": "46EEDB8419BD14FE70D5BB2916D7B6F51806E51B39D5B76A42610384CA929C1C"
+  },
+  {
+    "path": "pom.xml",
+    "sha256": "861D5ED8A075DF40F3731FF8F5CB79FCF5C9B9DBA589B6E84B51E2BEBD5BF1C1"
+  },
+  {
+    "path": ".agents\\skills\\bmad-advanced-elicitation\\customize.toml",
+    "sha256": "480798B227F1316850E5F4BAE41D01BDA6B7AC83F9F904D0CE3F43EE6CD9B11E"
+  },
+  {
+    "path": ".agents\\skills\\bmad-advanced-elicitation\\SKILL.md",
+    "sha256": "0219F618EA10BD9BD121FB5C27A6A9D378D2EC641B1C872E899E89F303A2F138"
+  },
+  {
+    "path": ".agents\\skills\\bmad-advanced-elicitation\\assets\\methods.csv",
+    "sha256": "C5647754013CE04B5F225C6083BF49D4418F5FBD3B5EBC818E6323DDBFFB863F"
+  },
+  {
+    "path": ".agents\\skills\\bmad-advanced-elicitation\\scripts\\pick_methods.py",
+    "sha256": "DCEEC5D895A03FE031AD846C1B6387B39A4F4EAE155EBB520C3A3482179B9510"
+  },
+  {
+    "path": ".agents\\skills\\bmad-advanced-elicitation\\scripts\\tests\\test_pick_methods.py",
+    "sha256": "97E3FE6FC8C64B7F62DA10A66C0719487D3703DF66314E455257A684D3FB98A2"
+  },
+  {
+    "path": ".agents\\skills\\bmad-agent-analyst\\customize.toml",
+    "sha256": "EAED9EFBFF9CC115B83D5D263B19B9E0202B5B30FA9C4321D18F8C401CBFE85E"
+  },
+  {
+    "path": ".agents\\skills\\bmad-agent-analyst\\SKILL.md",
+    "sha256": "763A09FBA21D6BE36AFB5A58CBA375F2AE95B78CE50C6D0D60AF9BDF4EFF182D"
+  },
+  {
+    "path": ".agents\\skills\\bmad-agent-architect\\customize.toml",
+    "sha256": "3C95D1FB331A635A8E689AED7EED7D929E7E4BF88085D732574F4E6E7E95B2E9"
+  },
+  {
+    "path": ".agents\\skills\\bmad-agent-architect\\SKILL.md",
+    "sha256": "EC054792EBD98E1BA57EEC0EA52C30A4A3F8D686269972C7D8CDD54D744A426C"
+  },
+  {
+    "path": ".agents\\skills\\bmad-agent-dev\\customize.toml",
+    "sha256": "B3BE272CDC1A9DB28B2704DADED0A7F022388B5C8B93578CFD39106B458034A3"
+  },
+  {
+    "path": ".agents\\skills\\bmad-agent-dev\\SKILL.md",
+    "sha256": "1BECC6912101A707752CDF14716366320400B8B367C12FE2C78B446B033DEE74"
+  },
+  {
+    "path": ".agents\\skills\\bmad-agent-pm\\customize.toml",
+    "sha256": "58C14AEFB6C70513CC063763058817B01B887CAE37C87015EED336EB3E36876E"
+  },
+  {
+    "path": ".agents\\skills\\bmad-agent-pm\\SKILL.md",
+    "sha256": "FB78B4B8472EAA3DD9FB03F3D10DE74F4F95637D68E50415371A7CB4A9D99BB0"
+  },
+  {
+    "path": ".agents\\skills\\bmad-agent-ux-designer\\customize.toml",
+    "sha256": "0C14A4FF7979976E22A8BFCDAA5ABAF43A15CD211AACE3172E380BA7AC8F0BBF"
+  },
+  {
+    "path": ".agents\\skills\\bmad-agent-ux-designer\\SKILL.md",
+    "sha256": "380E6398A2F2E7107537BDC4CDF9AC12214D0670AFC45F19645CF3AB76F35347"
+  },
+  {
+    "path": ".agents\\skills\\bmad-architecture\\customize.toml",
+    "sha256": "D03B3783AA6E4C659AE0BD5E60AD1D922A0058C7FB502972A4E3B28DB934B517"
+  },
+  {
+    "path": ".agents\\skills\\bmad-architecture\\SKILL.md",
+    "sha256": "7D52F75FDF85264F9E3F0FC6A1067BFEC3A814B592D453292C274C10D8BDC9C8"
+  },
+  {
+    "path": ".agents\\skills\\bmad-architecture\\assets\\spine-template.md",
+    "sha256": "0BC3A5FEA101644A19BC268DE5F237EF92699D2399E2853CC75C15C252DC7C04"
+  },
+  {
+    "path": ".agents\\skills\\bmad-architecture\\references\\headless.md",
+    "sha256": "D6D0D79C3FE12C1ABF2E8AAC161E28D14C19646F840117EFC591A45D984C70E1"
+  },
+  {
+    "path": ".agents\\skills\\bmad-architecture\\references\\reviewer-gate.md",
+    "sha256": "81657C8908699BEE8FD144551FBCFCBB88FED634877B9B9C26786B56A40BBCA5"
+  },
+  {
+    "path": ".agents\\skills\\bmad-architecture\\scripts\\lint_spine.py",
+    "sha256": "F6EFAA619A533B5F29F9BE3A09957C52DBFD7CC7B933FFB7419298C062A9D02D"
+  },
+  {
+    "path": ".agents\\skills\\bmad-architecture\\scripts\\tests\\test_lint_spine.py",
+    "sha256": "447FD80502AF80342D82F75DD7D989480EC7E2D244F95B780F43F5916626A034"
+  },
+  {
+    "path": ".agents\\skills\\bmad-brainstorming\\customize.toml",
+    "sha256": "47B6377CF6CD66D736087F4A7DBFCEA9036C722106826BE3AF900D3CE6EF0F63"
+  },
+  {
+    "path": ".agents\\skills\\bmad-brainstorming\\SKILL.md",
+    "sha256": "4E5CA051C42350698D103FC6BFEF1FDB9499090D1F9AF0071F50A729376A4E04"
+  },
+  {
+    "path": ".agents\\skills\\bmad-brainstorming\\assets\\brain-icons.json",
+    "sha256": "8DB86CEAC6B7056F2BCCD896E96B90118BAFC6A2FF4B65F1F924BF7A880C056A"
+  },
+  {
+    "path": ".agents\\skills\\bmad-brainstorming\\assets\\brain-methods.csv",
+    "sha256": "FFF112EABCA1A9CB8B190F8314BC47678BECC5782A2372E11C83DAA0E33B6DFD"
+  },
+  {
+    "path": ".agents\\skills\\bmad-brainstorming\\assets\\brain-selector.html",
+    "sha256": "C8BB63BB645D6235ADE3E56D0E929654E06AB63E53DF91B8092FF602D8EA25E3"
+  },
+  {
+    "path": ".agents\\skills\\bmad-brainstorming\\references\\converge.md",
+    "sha256": "6EF99538200D99963671807BAC2A561BC1647A046EBC3CD623E9F85D43CBCAB4"
+  },
+  {
+    "path": ".agents\\skills\\bmad-brainstorming\\references\\finalize.md",
+    "sha256": "B9B3BD3AB3E0C35B4E4A8018D302F06E6FE287F949BB0A0E60F09A862300D9E1"
+  },
+  {
+    "path": ".agents\\skills\\bmad-brainstorming\\references\\headless.md",
+    "sha256": "9E4D4C0E94E9B369C0742BD412E424A85DE6A559CB564A2BF598AAA66ECDE08E"
+  },
+  {
+    "path": ".agents\\skills\\bmad-brainstorming\\references\\in-chat-techniques.md",
+    "sha256": "72949CDF391DA5775C9A5B5FD65A2A0A042AF3C3FD170E56A13B54B91E356BE5"
+  },
+  {
+    "path": ".agents\\skills\\bmad-brainstorming\\references\\mode-autonomous.md",
+    "sha256": "BDBB452EFA92D49471AAFBAA72301D90FA73FE4876E1BE6EF28DD13A4D5FFFB1"
+  },
+  {
+    "path": ".agents\\skills\\bmad-brainstorming\\references\\mode-facilitator.md",
+    "sha256": "FF400F1FE59E34935C30F75F359A1D7AED12C9E85FB2ACA1054C8D89C4F7328D"
+  },
+  {
+    "path": ".agents\\skills\\bmad-brainstorming\\references\\mode-partner.md",
+    "sha256": "E301D09F48B41A532482DBFC8468F963BC1579CF4A4440EA03249A4694EC7EFA"
+  },
+  {
+    "path": ".agents\\skills\\bmad-brainstorming\\references\\resume.md",
+    "sha256": "573393E71054C6FB1E118856B7A48A5BAA0B8A5FC14D5820FA4D889CBC15D9BD"
+  },
+  {
+    "path": ".agents\\skills\\bmad-brainstorming\\scripts\\brain.py",
+    "sha256": "973BDF2F60DE8544F417EA2387A1796820403E88A37AEFE3663E483DCA2127B7"
+  },
+  {
+    "path": ".agents\\skills\\bmad-brainstorming\\scripts\\tests\\test_brain.py",
+    "sha256": "C9A68AA2D94CDDA4B969C0465285F1E4FEE3A8C86FDD90F1396C0080D2E9A488"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build\\compile-epic-context.md",
+    "sha256": "B76743F29011226904823CCBB0ECEB34479A18E2F421930E82FEDC8A21798771"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build\\customize.toml",
+    "sha256": "B312EE3F096046576F7E76DD6EB20408785FAA18B5190590D552E919A882DAE1"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build\\SKILL.md",
+    "sha256": "BCF2128F429953BA033D0ABDAC1B979F07AF8B6159A1D5D920F6AD306C71D85B"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build\\spec-template.md",
+    "sha256": "085A34C6E52A093956C554D6A8A1715F6BB47F6AD35F6975131823F45D781AA4"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build\\step-01-clarify-and-route.md",
+    "sha256": "56C5F84CAAA5F0B1F22C108401C78BFABB86E1F7758E228700910EECA8D03CD0"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build\\step-02-plan.md",
+    "sha256": "1DCC2D935451513B4C2BFEAF4F48C0D78C57749FD6E92E5B63B7F43085A46B30"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build\\step-03-implement.md",
+    "sha256": "A4899B354861684FEA32C182C8676C104B4DE7C66E007CE6738936BF201E892D"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build\\step-04-review.md",
+    "sha256": "F4C0D63B40310F6C9B056F13A8A1CF6DA39C4FA50FA8E695D2E45253DCBD4569"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build\\step-05-present.md",
+    "sha256": "EF817128F3AB8C3476AD12DD8B5309C3D92DBA5149EC32E2726BD10D0346DA3B"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build\\step-oneshot.md",
+    "sha256": "C56E6D8F61012DC4968F3E1D61928C208CFE284CD712B1974DD30EBFBA3750D9"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build\\sync-sprint-status.md",
+    "sha256": "CCF7682643E313BD8EF37D0E5CBF3192D9107663D377E2DC399A9B38A58D8CA5"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build\\workflow.md",
+    "sha256": "5A80CDBFF88CC0A866B7816223835D29934CE7B3BA4F7D4038BD3053DB696DE1"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build\\references\\claims-check.md",
+    "sha256": "5B3D40C7C685EEF0AE2EDF706CC058D9B195C9E138FF926105F560918047B6FE"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build\\references\\deletion-check.md",
+    "sha256": "2690305265A71A83C46F3F35F2C972552D440447D9FC3E5AC20B5F728CD7749B"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build\\review-prompts\\edge-case-hunter.md",
+    "sha256": "B9D4B3AE284B71FEDF8064391EF03535EF0A34BC4DDE892A2B03EA484F0280F2"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build\\review-prompts\\verification-gap.md",
+    "sha256": "561382B2C19466C2EE761E2160015E3A5386FF9A79D6E03E940EA70496C875EA"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build-auto\\compile-epic-context.md",
+    "sha256": "E2A3520EA191AF8EF9F00FA5B4D8BEFC2E6D1859A95EDF6344C409850654F2A8"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build-auto\\customize.toml",
+    "sha256": "3FF30D9A8BD006A01D9D64FB2D0F4EB3230F3A5CCC60F57943B6D1C5B2B06973"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build-auto\\SKILL.md",
+    "sha256": "6ABF4274238EA5E164624446169F6245422D30E539DE124CFE23A84B372BA717"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build-auto\\spec-template.md",
+    "sha256": "D74290DDBFDC597C39B3430A18527804C3DC07BCEF51A449341740E2686BBD83"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build-auto\\step-01-clarify-and-route.md",
+    "sha256": "9C5F633889DD908D9FF95E39E913E641699D011D009D8BF729A150B5A3B7D774"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build-auto\\step-02-plan.md",
+    "sha256": "25A3E2E9060DD307D9EED5ADCDF714408FC73E9D556B0C8A7B390759C1A57FD5"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build-auto\\step-03-implement.md",
+    "sha256": "61CF6CAB0F1C408DAF5A9FD0BF4E0419F7A0914B954BBD17B1A280BBCA3DFBF1"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build-auto\\step-04-review.md",
+    "sha256": "6F40EF031FC7CFFA71F8F9DCA58F7449F0479EA22A806BA8AA264D9C346F0538"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build-auto\\workflow.md",
+    "sha256": "92E3446B0CE763FD9CF335AAACF375C4B47CCEFF1A2CE355A8C55173260EE477"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build-auto\\references\\claims-check.md",
+    "sha256": "5B3D40C7C685EEF0AE2EDF706CC058D9B195C9E138FF926105F560918047B6FE"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build-auto\\references\\deletion-check.md",
+    "sha256": "2690305265A71A83C46F3F35F2C972552D440447D9FC3E5AC20B5F728CD7749B"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build-auto\\review-prompts\\edge-case-hunter.md",
+    "sha256": "B9D4B3AE284B71FEDF8064391EF03535EF0A34BC4DDE892A2B03EA484F0280F2"
+  },
+  {
+    "path": ".agents\\skills\\bmad-build-auto\\review-prompts\\verification-gap.md",
+    "sha256": "561382B2C19466C2EE761E2160015E3A5386FF9A79D6E03E940EA70496C875EA"
+  },
+  {
+    "path": ".agents\\skills\\bmad-checkpoint-preview\\SKILL.md",
+    "sha256": "E66F64F21B5FA02949FA0B9C309A11F8EC0E08CF2CF707FF3F5EE9538B225068"
+  },
+  {
+    "path": ".agents\\skills\\bmad-code-review\\customize.toml",
+    "sha256": "FF4FA0AA76A9718583DED901A5C596C29ADED897A5C0479B87752160B9D2BA23"
+  },
+  {
+    "path": ".agents\\skills\\bmad-code-review\\SKILL.md",
+    "sha256": "EE3DCA014A3AE02E1C96D8903DD9E26A56F2C681D7E6497DF96F3D4F8B9BD7AC"
+  },
+  {
+    "path": ".agents\\skills\\bmad-code-review\\references\\claims-check.md",
+    "sha256": "E7A26D72F810D7CC9796047574632F1A51D83118E2B112004E9FC8907145FF83"
+  },
+  {
+    "path": ".agents\\skills\\bmad-code-review\\references\\deletion-check.md",
+    "sha256": "2690305265A71A83C46F3F35F2C972552D440447D9FC3E5AC20B5F728CD7749B"
+  },
+  {
+    "path": ".agents\\skills\\bmad-code-review\\review-prompts\\edge-case-hunter.md",
+    "sha256": "18B23F2C4F7ADC537F43156D8A03C002F86113D3F95C4A5D3DBBFA7E6766FF50"
+  },
+  {
+    "path": ".agents\\skills\\bmad-code-review\\review-prompts\\verification-gap.md",
+    "sha256": "EF01D8B3CC49CA9CB673808DAA220432279D08433581235952829FEDA1A99E4C"
+  },
+  {
+    "path": ".agents\\skills\\bmad-code-review\\steps\\step-01-gather-context.md",
+    "sha256": "1CFB70C948BC6CA09BAC97A75AFCEA725EB0F34AEF2E100FF79807B34557249C"
+  },
+  {
+    "path": ".agents\\skills\\bmad-code-review\\steps\\step-02-review.md",
+    "sha256": "036BB65D45F74B21303E16381625D82901CC2E951922CAF910FC9D2C60C87587"
+  },
+  {
+    "path": ".agents\\skills\\bmad-code-review\\steps\\step-03-triage.md",
+    "sha256": "7CADC2475C1D227CB188EB6B210731035B7C805B1A4E82CEB08139740677E15E"
+  },
+  {
+    "path": ".agents\\skills\\bmad-code-review\\steps\\step-04-present.md",
+    "sha256": "C9D04E8B2BF153E782FE92DEC61C991FDD8CC0B33B8FB4AA5AB0B8C8C048ECC0"
+  },
+  {
+    "path": ".agents\\skills\\bmad-correct-course\\checklist.md",
+    "sha256": "93B788CBA72FEB78F46C69590B985BEDC623FE0F873D928012F75F9E083D8327"
+  },
+  {
+    "path": ".agents\\skills\\bmad-correct-course\\customize.toml",
+    "sha256": "7D71F834A4EBE176605361257B84745A7EB7AD1A46246037D5F9115ACD0CA2FF"
+  },
+  {
+    "path": ".agents\\skills\\bmad-correct-course\\SKILL.md",
+    "sha256": "9E8D5FAB7B07227AF35D3E482A1C4A61A7AB754F7269277D8E8F34624B3CB446"
+  },
+  {
+    "path": ".agents\\skills\\bmad-create-architecture\\customize.toml",
+    "sha256": "DE3C67886F710A1FB2B95D633391D3D337091D0C7B705954A461069E6084F149"
+  },
+  {
+    "path": ".agents\\skills\\bmad-create-architecture\\SKILL.md",
+    "sha256": "4391685CD251A1E05881071DC3453D5F983C124D9F18375D361FE4F6365CE524"
+  },
+  {
+    "path": ".agents\\skills\\bmad-create-epics-and-stories\\customize.toml",
+    "sha256": "D0811D3B0C723780196DA92720A004F9B715F0D62F0EA23B3101BFBFBAE28FF8"
+  },
+  {
+    "path": ".agents\\skills\\bmad-create-epics-and-stories\\SKILL.md",
+    "sha256": "E47D6571E9C4FF1A7B445E3084B3F2C087DD31945B31911B3D79214625D73A4E"
+  },
+  {
+    "path": ".agents\\skills\\bmad-create-epics-and-stories\\steps\\step-01-validate-prerequisites.md",
+    "sha256": "A161CEE356F5DC478D0CFAE66062F66D5D8F1D4E5D17123E66AD05223F54EB47"
+  },
+  {
+    "path": ".agents\\skills\\bmad-create-epics-and-stories\\steps\\step-02-design-epics.md",
+    "sha256": "78E9D1618975A32070EAA582F293ECAA7C6F82164BC23FD39AC3CE4B85C9E9DB"
+  },
+  {
+    "path": ".agents\\skills\\bmad-create-epics-and-stories\\steps\\step-03-create-stories.md",
+    "sha256": "BA717EF72DB102A3FF9C9F29D2719D923891FE38FC6283762663AF4F3DEACF82"
+  },
+  {
+    "path": ".agents\\skills\\bmad-create-epics-and-stories\\steps\\step-04-final-validation.md",
+    "sha256": "2146917AD8323BACB81FC5A4F8C1BEB6631ADAED57CF96BD425F0C5620FA5386"
+  },
+  {
+    "path": ".agents\\skills\\bmad-create-epics-and-stories\\templates\\epics-template.md",
+    "sha256": "D9B38BBB5C6D96E86B285A43EAE05F74B7B80B75D86CC41E303DD1F767C22FD0"
+  },
+  {
+    "path": ".agents\\skills\\bmad-create-prd\\customize.toml",
+    "sha256": "3E530DE25D073F6BDE590CC52B16FA25E4CB2E43ACD17D726790EBA4BFDFAD7C"
+  },
+  {
+    "path": ".agents\\skills\\bmad-create-prd\\SKILL.md",
+    "sha256": "31E6E76D9580C912C9FE6C61CB1E1237102DAFEB1C16138C24040F2AA3ACADB4"
+  },
+  {
+    "path": ".agents\\skills\\bmad-create-story\\checklist.md",
+    "sha256": "857ECA22066CD80F2116CDEF29A894113D0772DE97DF230FC269FDDB2D25A1C7"
+  },
+  {
+    "path": ".agents\\skills\\bmad-create-story\\customize.toml",
+    "sha256": "53256D410B086FF2E3DA844BBE6973455053E2FD79032CCA82325E8539459C49"
+  },
+  {
+    "path": ".agents\\skills\\bmad-create-story\\discover-inputs.md",
+    "sha256": "19C9B1D6635FC013C8CE62C266CB72314206BEB832E397B9B6C17C94DF697AC1"
+  },
+  {
+    "path": ".agents\\skills\\bmad-create-story\\SKILL.md",
+    "sha256": "B486F8030D900AF0D5E9D0F49DCB8C39E362C9BBA7BDAB1E31E99F251F104CC9"
+  },
+  {
+    "path": ".agents\\skills\\bmad-create-story\\template.md",
+    "sha256": "31C35D74F9C84250B0B3574CA02C3041B243342E365E1C190A2D27B9971E9AAB"
+  },
+  {
+    "path": ".agents\\skills\\bmad-customize\\SKILL.md",
+    "sha256": "81C57878249CA86C81A4F78CB130099F6FEDBA464CC103F4EA4FAA281B702EB6"
+  },
+  {
+    "path": ".agents\\skills\\bmad-customize\\scripts\\list_customizable_skills.py",
+    "sha256": "3B3D389151D41F199279D7226FDF0C00FBDF96F546F6A25842E6F3F357009648"
+  },
+  {
+    "path": ".agents\\skills\\bmad-customize\\scripts\\tests\\test_list_customizable_skills.py",
+    "sha256": "B62A3F195D4D08929A29A38BF656F0FC3D48923BDBD278683A79149E4952FF39"
+  },
+  {
+    "path": ".agents\\skills\\bmad-deep-recon\\customize.toml",
+    "sha256": "C51DC489BDD7F407ED1F9025AC4E3B1287EDE7CC745B9B25AB153A80399C49B0"
+  },
+  {
+    "path": ".agents\\skills\\bmad-deep-recon\\SKILL.md",
+    "sha256": "1306487DF2AF72A4C983C937E24AD13BCF16000A5E05E1563BCA33EC7D90A8DA"
+  },
+  {
+    "path": ".agents\\skills\\bmad-deep-recon\\assets\\research.template.md",
+    "sha256": "E70F1881DD4E0F8606C74180EF824142B7C98F94C0581F9CE925772A529C2AA8"
+  },
+  {
+    "path": ".agents\\skills\\bmad-deep-recon\\references\\draft.md",
+    "sha256": "9F9588AEB77F0021501951BF43CF84DA59EDE633E32CFB70740E1968792C7F50"
+  },
+  {
+    "path": ".agents\\skills\\bmad-deep-recon\\references\\finalize.md",
+    "sha256": "5D37B2684E9DDF1C621FCE1D8357E84FA7A72B273DE63D936BB622E8D82B9A1F"
+  },
+  {
+    "path": ".agents\\skills\\bmad-deep-recon\\references\\html-briefing.md",
+    "sha256": "C4E90F5BA06C53A8CA741C5873BB263298C5680F79D999AF38A5D1105A11AB09"
+  },
+  {
+    "path": ".agents\\skills\\bmad-deep-recon\\references\\lifecycle.md",
+    "sha256": "E2DA93FD0BB5063D88E5EE0BDE14AE62FBEAFB41D59F24F0AA5CB33A7839AE30"
+  },
+  {
+    "path": ".agents\\skills\\bmad-deep-recon\\references\\process.md",
+    "sha256": "EB8A6DDD7F5A96BA9658345630309FB11C3CE0F01556C8F44D0C0CBC0D9C9731"
+  },
+  {
+    "path": ".agents\\skills\\bmad-deep-recon\\references\\run.md",
+    "sha256": "1E8763845B44AD76A4493E63DD2493F39C810E741A298E4FA6692E3DD8DE045D"
+  },
+  {
+    "path": ".agents\\skills\\bmad-deep-recon\\references\\selection.md",
+    "sha256": "4927638720201571521BDBB1E3EF71EB892F00BEDB7A6FCA4C870177110BDDFF"
+  },
+  {
+    "path": ".agents\\skills\\bmad-deep-recon\\references\\synthesis.md",
+    "sha256": "0313CDB67A1CAF3C04027382A7BB91B95418DDD59F1D8E3D6A8837800431228E"
+  },
+  {
+    "path": ".agents\\skills\\bmad-deep-recon\\references\\verification.md",
+    "sha256": "06A7C812CD5A983B377A24561B2189DE5CA7424EAD312696927B5B7A49992290"
+  },
+  {
+    "path": ".agents\\skills\\bmad-deep-recon\\scripts\\recon_kit.py",
+    "sha256": "6297B6DE20F39C42DA06698AC694CB173780FA8B0867B49D9241359ECCA857AC"
+  },
+  {
+    "path": ".agents\\skills\\bmad-deep-recon\\scripts\\tests\\test_recon_kit.py",
+    "sha256": "62ED9C0DDEAD7076935767D9093FCB2A7534016AB1A1ED5FF634CF4CFBACC4C0"
+  },
+  {
+    "path": ".agents\\skills\\bmad-deep-recon\\types\\academic-lit.md",
+    "sha256": "50A9B43B76EEB3EBC61B8586840227294723F605B0EE3F705B7D520228144834"
+  },
+  {
+    "path": ".agents\\skills\\bmad-deep-recon\\types\\competitive.md",
+    "sha256": "519749AEA0145EF47A6312D44957EE29C7945C2433A54DB108D8AF62419293A9"
+  },
+  {
+    "path": ".agents\\skills\\bmad-deep-recon\\types\\domain.md",
+    "sha256": "FFC3A8E2254A2F87D34DEE5F5DF65E3933A8EBE8923BD33ECF5A8B4DD358AE2F"
+  },
+  {
+    "path": ".agents\\skills\\bmad-deep-recon\\types\\market.md",
+    "sha256": "D19F819B4E31E5EC947656666E2AF91F6D1AB34D30C0EC19594A7C2928C6BF1E"
+  },
+  {
+    "path": ".agents\\skills\\bmad-deep-recon\\types\\technical.md",
+    "sha256": "75CC8040EF5D6DDA816B734B024606E49A09805807C3C238F0E41BBDB71FB6E6"
+  },
+  {
+    "path": ".agents\\skills\\bmad-deep-recon\\types\\user-voice.md",
+    "sha256": "ED70726AE6AEB1C721C09CAF6A43B05893BD423D1E01A53724B96CFC25C4E88E"
+  },
+  {
+    "path": ".agents\\skills\\bmad-dev-auto\\SKILL.md",
+    "sha256": "F6CC4476DC128B09F521675F25A0616C15471A5F967340DECEE2563A6A7D855D"
+  },
+  {
+    "path": ".agents\\skills\\bmad-dev-story\\checklist.md",
+    "sha256": "277B5B2157D37162ED6EB1B4CDFE08BB4100FE719994A8AC8D019339A458995B"
+  },
+  {
+    "path": ".agents\\skills\\bmad-dev-story\\customize.toml",
+    "sha256": "D0E3BE105CAAA69EBAE8610EB11B92BD0CA982AE844D1D700932E0D8B99E6028"
+  },
+  {
+    "path": ".agents\\skills\\bmad-dev-story\\SKILL.md",
+    "sha256": "54930821AFA3223A500012AE9469399CED9A0D8444DC05AD363AA9F1491F15E8"
+  },
+  {
+    "path": ".agents\\skills\\bmad-document-project\\SKILL.md",
+    "sha256": "20D6439833FCD6A0A6F64A5AB0F391A3BA2A124DC4EE570208233F7430A155FD"
+  },
+  {
+    "path": ".agents\\skills\\bmad-domain-research\\SKILL.md",
+    "sha256": "AD771B9A60E38DF1442128AE966B69EF4E2A81199CF64BA9445662A7912A7BA9"
+  },
+  {
+    "path": ".agents\\skills\\bmad-edit-prd\\customize.toml",
+    "sha256": "C598E3BADBFB3FB62D4134EE2AC55B84196C704FA6A999A5BE57060412BB5A66"
+  },
+  {
+    "path": ".agents\\skills\\bmad-edit-prd\\SKILL.md",
+    "sha256": "6D7C565B8BF107EB43C2E56F5827CB48C96BFB7F0B1310EC5B9DBCC33A99ED3B"
+  },
+  {
+    "path": ".agents\\skills\\bmad-editorial-review\\customize.toml",
+    "sha256": "5F9958C480846A7716EB75CDCD62FAEF63B21E45E215B9EE4846809764430F45"
+  },
+  {
+    "path": ".agents\\skills\\bmad-editorial-review\\SKILL.md",
+    "sha256": "167480084DC4D4111C089E26A500D9DC510E1E0DFE69C6CFE74633BD6FB8AB46"
+  },
+  {
+    "path": ".agents\\skills\\bmad-editorial-review-prose\\SKILL.md",
+    "sha256": "CB90D2BBB867079D2F09AAB01E899862D1DD62E123FCC52F447792B1A3CA4EF4"
+  },
+  {
+    "path": ".agents\\skills\\bmad-editorial-review-structure\\SKILL.md",
+    "sha256": "44F45E6EDB29787E81F50B2716819840601F2A7927623AC212189F07798A4615"
+  },
+  {
+    "path": ".agents\\skills\\bmad-forge-idea\\customize.toml",
+    "sha256": "EECB1649CEDADB27C458C9F718F03CBC2CD5A6FC44B144DEF7DB070CBC4702A7"
+  },
+  {
+    "path": ".agents\\skills\\bmad-forge-idea\\SKILL.md",
+    "sha256": "38A59FD4E412EA7E82293C41762DCD8AA9497FD8FC14CC37788113DA4180F60C"
+  },
+  {
+    "path": ".agents\\skills\\bmad-forge-idea\\scripts\\resolve_personas.py",
+    "sha256": "A46CA2C062F2224B7FF3FE8DF6D44889D2C8E934CBC635097DCB40F2BB6A2E9C"
+  },
+  {
+    "path": ".agents\\skills\\bmad-forge-idea\\scripts\\tests\\test_resolve_personas.py",
+    "sha256": "0951E645F8D7959188F5CE20A50921EF778372B7404D082D4023AFDE3D62BAA1"
+  },
+  {
+    "path": ".agents\\skills\\bmad-generate-project-context\\SKILL.md",
+    "sha256": "5A86182B40FC7166B2328530505F4D8223C990070BC8E20577FA8C9643BAED88"
+  },
+  {
+    "path": ".agents\\skills\\bmad-help\\SKILL.md",
+    "sha256": "4B1335DA1E07BEC086FA2C9A48AF28C6B97F3EEDB7923ACC61561CC1C4292E40"
+  },
+  {
+    "path": ".agents\\skills\\bmad-market-research\\SKILL.md",
+    "sha256": "9A275E223A2F26E175BE3B586BA6D458E3D90799ADBA35C68651ACFCC0C61577"
+  },
+  {
+    "path": ".agents\\skills\\bmad-party-mode\\customize.toml",
+    "sha256": "EBF7074E3D8599B310628F5B45D7950240689BA78D22257BB04CC5D143624A0B"
+  },
+  {
+    "path": ".agents\\skills\\bmad-party-mode\\SKILL.md",
+    "sha256": "13229FD271FF431B4E172D1D8303503F8CEF56FAB5A4C148225364AE5BFFAC5E"
+  },
+  {
+    "path": ".agents\\skills\\bmad-party-mode\\references\\create-party.md",
+    "sha256": "E07D407C233BF9F9EF706391F7640D886FA7698622D11B5C67B5377163187566"
+  },
+  {
+    "path": ".agents\\skills\\bmad-party-mode\\references\\mode-agent-team.md",
+    "sha256": "586F9489A7A9AE83E3DD4B7928AFCD25195B07AB51364173504494EC1BD0063D"
+  },
+  {
+    "path": ".agents\\skills\\bmad-party-mode\\references\\mode-auto.md",
+    "sha256": "D1FEC74CA09616EB60186BCC1DC51896F224A67FC200115DE3757C365F19DE35"
+  },
+  {
+    "path": ".agents\\skills\\bmad-party-mode\\references\\mode-subagent.md",
+    "sha256": "E5ADB51B3562F8CC5B40874FFF95FBA57CCE2935755995ACCBA1B8BFA0F77321"
+  },
+  {
+    "path": ".agents\\skills\\bmad-party-mode\\references\\party-memory.md",
+    "sha256": "08EA2B1AD7A4FF3B52DAAFA3D8ECF37FC9A269E440DF0430D508DFA23ECBE397"
+  },
+  {
+    "path": ".agents\\skills\\bmad-party-mode\\scripts\\resolve_party.py",
+    "sha256": "AB3C3053C2C21C0B134860576FEAD91D4AD2B89AE791726C66DC689BC841716C"
+  },
+  {
+    "path": ".agents\\skills\\bmad-party-mode\\scripts\\tests\\test_resolve_party.py",
+    "sha256": "A4D012D268CEFB39249E57B4EAD2D68B5F03F190080D39A2E047F148CF3F8D53"
+  },
+  {
+    "path": ".agents\\skills\\bmad-prd\\customize.toml",
+    "sha256": "D9E53036AD48E81058446070C0B3D0CC08252F38CA0FD1D3FC3003E601B5F056"
+  },
+  {
+    "path": ".agents\\skills\\bmad-prd\\SKILL.md",
+    "sha256": "6EA3F263A7B1155FF34F1E34D18F3CF42E99380DFBAA04996595633DD4976EBA"
+  },
+  {
+    "path": ".agents\\skills\\bmad-prd\\assets\\headless-schemas.md",
+    "sha256": "5B733EABD3819ABC0F1DF9C650BDDF65F5F4D28A8613898B0C9F101ACF7BC8C4"
+  },
+  {
+    "path": ".agents\\skills\\bmad-prd\\assets\\prd-template.md",
+    "sha256": "199A9F34B99477AF1EE8D43775B722F4900BA5EF4A02A02A417F7D97F59FA38F"
+  },
+  {
+    "path": ".agents\\skills\\bmad-prd\\assets\\prd-validation-checklist.md",
+    "sha256": "7192BC5E73D0E602085B3728E9E645326CBED022220E4574D9D0A7CBD246D3EE"
+  },
+  {
+    "path": ".agents\\skills\\bmad-prd\\assets\\validation-report-template.html",
+    "sha256": "E52CA6AFFEE703CE3C7CA0ABFF9AFA51D7C37B9803ACDB5052BE919348A6BEAA"
+  },
+  {
+    "path": ".agents\\skills\\bmad-prd\\references\\headless.md",
+    "sha256": "E2E29AFCAE938EE826A73906E0BCD3BDF3134D087D5A4B36919958EFA19E9713"
+  },
+  {
+    "path": ".agents\\skills\\bmad-prd\\references\\validate.md",
+    "sha256": "63395EF1C9FEC99F685B960F739E5FB57BAC96CDD4BE01AC38E2FC63A385F89D"
+  },
+  {
+    "path": ".agents\\skills\\bmad-prfaq\\bmad-manifest.json",
+    "sha256": "B6CEF97DBF45AF6EFB4E9553C2E72F11050705708AED006A146B3EE42DFF6D02"
+  },
+  {
+    "path": ".agents\\skills\\bmad-prfaq\\customize.toml",
+    "sha256": "401D81C9E383F05881A9684233A3C8AF17709A0AFCF48C79152CACBFB957A949"
+  },
+  {
+    "path": ".agents\\skills\\bmad-prfaq\\SKILL.md",
+    "sha256": "57EECC8B7375481D55E1CCC22B3CD77A2E82CC0E347FEE641C025D81D5C8F785"
+  },
+  {
+    "path": ".agents\\skills\\bmad-prfaq\\agents\\artifact-analyzer.md",
+    "sha256": "44D342A041A2143FF1E1FC19CB0DEBC5B7E56B92DD29A26B33834BFF30249E85"
+  },
+  {
+    "path": ".agents\\skills\\bmad-prfaq\\agents\\web-researcher.md",
+    "sha256": "8B530A75744F72F4D189BB8634C00DAEB97AEC02AAB2DAA63DF3D4814B27E3B9"
+  },
+  {
+    "path": ".agents\\skills\\bmad-prfaq\\assets\\prfaq-template.md",
+    "sha256": "6D4913F8D12FCB4D48508ECE462E6F102262C1DA66DF0AC26274A69FB747385E"
+  },
+  {
+    "path": ".agents\\skills\\bmad-prfaq\\references\\customer-faq.md",
+    "sha256": "41019FB027EBD56872C6AC666C26F475513494A807EA28883CA3B3FAF273AF7C"
+  },
+  {
+    "path": ".agents\\skills\\bmad-prfaq\\references\\internal-faq.md",
+    "sha256": "6EF930C6A945870B4DBD6F12B88E0EA51423087982F589957B604D784B091A20"
+  },
+  {
+    "path": ".agents\\skills\\bmad-prfaq\\references\\press-release.md",
+    "sha256": "BFE73D617B0B756360C7C9D187354C9BEA2D47278AAD3DB17F3AD2296B9520F7"
+  },
+  {
+    "path": ".agents\\skills\\bmad-prfaq\\references\\verdict.md",
+    "sha256": "E3A1C11EFFD806B745BA5134FBC0986C3330472563E2ACA06BC40315542B1946"
+  },
+  {
+    "path": ".agents\\skills\\bmad-product-brief\\customize.toml",
+    "sha256": "EDCCC09CE5D3BDC3256FEA0EE627C4CD1E4DF5C505F76E22FDEBD9B46FF474C3"
+  },
+  {
+    "path": ".agents\\skills\\bmad-product-brief\\SKILL.md",
+    "sha256": "0CBEA72E7962640EB20B4453827088419CF7505648B509E56EAA8EB66852636F"
+  },
+  {
+    "path": ".agents\\skills\\bmad-product-brief\\assets\\brief-template.md",
+    "sha256": "AFE1CCA8293C3EFC7339A9BC562BDA43DB84B7653CB8BF7872DCD8543AFD94D8"
+  },
+  {
+    "path": ".agents\\skills\\bmad-project-context\\customize.toml",
+    "sha256": "E3F65326F45B189E72F5A3F4722AAF60655AEAFE78A7AEABE5908D02348B8EEC"
+  },
+  {
+    "path": ".agents\\skills\\bmad-project-context\\SKILL.md",
+    "sha256": "8391FDEF733D9F4833C3977DBB46BFED003CBB34BE04DE9F2830D12A61A1C056"
+  },
+  {
+    "path": ".agents\\skills\\bmad-project-context\\references\\best-practices.md",
+    "sha256": "CC98E9A4F21A70E15C9170A2CAA2E1D4DA3BE1C84AB7F827CD43DF001E36B512"
+  },
+  {
+    "path": ".agents\\skills\\bmad-project-context\\references\\template.md",
+    "sha256": "E1554C4109F012FF3DCF92F72441BC831B4F0253BD7D77274946965952E731C3"
+  },
+  {
+    "path": ".agents\\skills\\bmad-qa-generate-e2e-tests\\checklist.md",
+    "sha256": "3BE8258747D56C98605844CDEAA975BE096093F13593DE2C9FB0131D1A1C40CA"
+  },
+  {
+    "path": ".agents\\skills\\bmad-qa-generate-e2e-tests\\customize.toml",
+    "sha256": "C08502D8265A81C21808745CE568FCEC56A3BA6FC75CCEC3CB17B72401EFF02D"
+  },
+  {
+    "path": ".agents\\skills\\bmad-qa-generate-e2e-tests\\SKILL.md",
+    "sha256": "9411DD950294D3C35B365EF147D380A5B8B2423C0DC22D1A4265A6700141153E"
+  },
+  {
+    "path": ".agents\\skills\\bmad-quick-dev\\SKILL.md",
+    "sha256": "79C306F47E4F12AE39F6B835AC87EC2DB767F762938F6B37359413AE7C7F8D56"
+  },
+  {
+    "path": ".agents\\skills\\bmad-retrospective\\customize.toml",
+    "sha256": "2B5DEF14AF698EEC17B457D17C4CE3ACEAB570F38A7082E3E5E9470F9029C948"
+  },
+  {
+    "path": ".agents\\skills\\bmad-retrospective\\SKILL.md",
+    "sha256": "DED21F2F747EC4B339696D23958817D0F0A5D4D6145321F50FFC6BD2D3C1D2B5"
+  },
+  {
+    "path": ".agents\\skills\\bmad-retrospective\\references\\acceptance-verdict.md",
+    "sha256": "4B359998F770F16FE3D705A9C536932F08513DB6209C97B9332BFC96680A82BD"
+  },
+  {
+    "path": ".agents\\skills\\bmad-retrospective\\references\\aggregate-views.md",
+    "sha256": "3C31F48ADEAA73B22A7C4385F9D0CEA096269D15806D19EA4B209C0C25F093B4"
+  },
+  {
+    "path": ".agents\\skills\\bmad-retrospective\\references\\evidence-gathering.md",
+    "sha256": "95D72EE37FE2616ADA600F155A291F293DECD517401871801FF701C2A8ACB160"
+  },
+  {
+    "path": ".agents\\skills\\bmad-retrospective\\references\\retro-document.md",
+    "sha256": "DD4C11CAD79369FFF0B8ED5BFA8901C7B21CB60291EF125F7673F01FEC93D322"
+  },
+  {
+    "path": ".agents\\skills\\bmad-retrospective\\references\\team-discussion.md",
+    "sha256": "B6F0EF1FCF59E4774143383ABBD102A0F21AB2C6E537C37C0AE36808070C2C3B"
+  },
+  {
+    "path": ".agents\\skills\\bmad-retrospective\\scripts\\git_evidence.py",
+    "sha256": "80F77E8BC59814619E42932424451963E56381B54786BF19DE5F9E169483BB00"
+  },
+  {
+    "path": ".agents\\skills\\bmad-retrospective\\scripts\\sprint_status.py",
+    "sha256": "39C8A373A14718E9A0390BD776B181142A2D14105E21ACB96155CDBB770F6DDA"
+  },
+  {
+    "path": ".agents\\skills\\bmad-retrospective\\scripts\\tests\\test_git_evidence.py",
+    "sha256": "B3B318DCA7A400E137EE8169EB870AFDADABC8F941A7D5AFA243DF11DA3DD42E"
+  },
+  {
+    "path": ".agents\\skills\\bmad-retrospective\\scripts\\tests\\test_sprint_status.py",
+    "sha256": "9745E72080A4EFF9A44F5C2BEE5F1F8CA021B44C4FBD77D109C5B6F85A74B2C2"
+  },
+  {
+    "path": ".agents\\skills\\bmad-retrospective\\scripts\\tests\\fixtures\\sprint-status-template.yaml",
+    "sha256": "F88469EA84643CE6E7398C4CB69EFFB73315662E0D9BDC20C43F562B8977E121"
+  },
+  {
+    "path": ".agents\\skills\\bmad-review\\customize.toml",
+    "sha256": "217FF20C501C090BB480715FE7148BA94B683DD03C013CCBB8138AF63F56C1CF"
+  },
+  {
+    "path": ".agents\\skills\\bmad-review\\SKILL.md",
+    "sha256": "8C6D907FD35395AA7038956B393EE819039142E13D045B8593E136D858227BA3"
+  },
+  {
+    "path": ".agents\\skills\\bmad-review\\references\\editorial-common.md",
+    "sha256": "86A487365B3AE646AFA09C70F329FD50210CA3737873CB62C19C9992BF4B7815"
+  },
+  {
+    "path": ".agents\\skills\\bmad-review\\references\\lens-adversarial.md",
+    "sha256": "F04181BA5958D3B52ACD49D0F762085E887E72722857346B192FF1F275A03A06"
+  },
+  {
+    "path": ".agents\\skills\\bmad-review\\references\\lens-edge-case-hunter.md",
+    "sha256": "615135CA2C388CBA8E546C006C1A19198471267F8A7CB9CAD5EB7CC5D688C2A3"
+  },
+  {
+    "path": ".agents\\skills\\bmad-review\\references\\lens-prose.md",
+    "sha256": "5D54B690479664F83CF322067FC850BC0A54C7BA75F92D302075044516B8BA36"
+  },
+  {
+    "path": ".agents\\skills\\bmad-review\\references\\lens-structure.md",
+    "sha256": "691227F4AFB66D2E8FBAB5DB2FC72FC688C1DBAC179F1A6CED4D9DD83AF2A93A"
+  },
+  {
+    "path": ".agents\\skills\\bmad-review\\references\\lens-verification-gap.md",
+    "sha256": "74F727667EB16D0F666552D0DF6B5ED769B40BE70A1174B4917C5FC97FFEF95D"
+  },
+  {
+    "path": ".agents\\skills\\bmad-review\\references\\structure-models.md",
+    "sha256": "D2B1CDC902D13C21D9FC6670F272BBF4ADD0BC00346D599E87E7E2F435C3DDAC"
+  },
+  {
+    "path": ".agents\\skills\\bmad-review\\scripts\\word_metrics.py",
+    "sha256": "E31891107705FFDA96029A83309C30F3A9018C0D5FFBA8099281E07E4968AFEC"
+  },
+  {
+    "path": ".agents\\skills\\bmad-review\\scripts\\tests\\test_word_metrics.py",
+    "sha256": "832C4303AFE6ACAFFD972C74FA12B2BDFB575676D2F211C02C7BA0593F5F2346"
+  },
+  {
+    "path": ".agents\\skills\\bmad-review-adversarial-general\\SKILL.md",
+    "sha256": "E1210245458661AC556E1DAA0F805F63337126A5772762994BCEFC3D66C82EE8"
+  },
+  {
+    "path": ".agents\\skills\\bmad-review-edge-case-hunter\\SKILL.md",
+    "sha256": "5F3A74590DEEA297976278A21B956DA1506C31455C8B5CAF0B291A60AA2CEC3D"
+  },
+  {
+    "path": ".agents\\skills\\bmad-review-verification-gap\\SKILL.md",
+    "sha256": "E005397C60681D834DB01068E7780028CC66D3185D6720AE27CAD89D2B832A27"
+  },
+  {
+    "path": ".agents\\skills\\bmad-spec\\customize.toml",
+    "sha256": "FF31EBC7C5D2733E4C7B5B140D23D69FB772A266F8B39CC8715C9B31A65B3355"
+  },
+  {
+    "path": ".agents\\skills\\bmad-spec\\SKILL.md",
+    "sha256": "7338FEB7010824154E1EE30E309D5A6845CE6329C1ECFE390FBDFB5B6D0C13AC"
+  },
+  {
+    "path": ".agents\\skills\\bmad-spec\\assets\\headless-schemas.md",
+    "sha256": "4C791E19BF3DC07872C7AFA874B90712C2994FB4A36C112C7AE5A13875CC074A"
+  },
+  {
+    "path": ".agents\\skills\\bmad-spec\\assets\\spec-template.md",
+    "sha256": "16AB24DAA8FD09ADA371408351B44AE7B3337F45B17C46394B6DFD8AE73549EA"
+  },
+  {
+    "path": ".agents\\skills\\bmad-spec\\assets\\stories-schema.md",
+    "sha256": "73B58F20E674A806EF733ADACC3A2A26CCA1D5E3628BE57B8F34BB675BB659B9"
+  },
+  {
+    "path": ".agents\\skills\\bmad-sprint-planning\\customize.toml",
+    "sha256": "05842D580A507EB79D77EEE0F29BBE6D5F7A0CF66EBA55F1A31BDEB40455707A"
+  },
+  {
+    "path": ".agents\\skills\\bmad-sprint-planning\\SKILL.md",
+    "sha256": "E5E1D3BBA1895D669C4B10B19A833A82765F363BBCF77D2AF1F281921998E070"
+  },
+  {
+    "path": ".agents\\skills\\bmad-sprint-planning\\sprint-status-template.yaml",
+    "sha256": "F88469EA84643CE6E7398C4CB69EFFB73315662E0D9BDC20C43F562B8977E121"
+  },
+  {
+    "path": ".agents\\skills\\bmad-sprint-planning\\references\\fix-sprint-status.md",
+    "sha256": "968DF189C766A41792B15821AA505815479DBCBB13726CCE9F518EC4AC0D959A"
+  },
+  {
+    "path": ".agents\\skills\\bmad-sprint-planning\\references\\generate-tracking.md",
+    "sha256": "8F780B91BF9C9BE7081442A8BCF4A12B97077054DE4508F964F297CA06C24EC6"
+  },
+  {
+    "path": ".agents\\skills\\bmad-sprint-planning\\references\\readiness-gate.md",
+    "sha256": "519F558F5107412D8BDFADF885CEA12C455C53E1562F7D7330AD80BEE13349EC"
+  },
+  {
+    "path": ".agents\\skills\\bmad-sprint-planning\\references\\status-view.md",
+    "sha256": "71160CC3CF14CC3EAAE4C1AAB674E5E64690EAA8BAD06446B80FCF30EEA826F4"
+  },
+  {
+    "path": ".agents\\skills\\bmad-sprint-planning\\references\\validate.md",
+    "sha256": "7CDD1EF0E1ABE7C0A351C307DFC6B82A53A0294492809C8C34BDD236504F4D9F"
+  },
+  {
+    "path": ".agents\\skills\\bmad-sprint-planning\\scripts\\sprint_plan.py",
+    "sha256": "3343F95C1F2EE38665FCEA0CAE2A221271208AE09BE23BF9F15A6640C2DD4034"
+  },
+  {
+    "path": ".agents\\skills\\bmad-sprint-planning\\scripts\\tests\\test_sprint_plan.py",
+    "sha256": "65785A2EEA28ACAC2767ACE8AB6ECFB9C7141F3815AA2DA7D3BF24438EFA477F"
+  },
+  {
+    "path": ".agents\\skills\\bmad-sprint-status\\customize.toml",
+    "sha256": "741473FF7A964AEAA8E38F6D6910DDCD5DE6521A67E44DCC41B8A5D8D92AE676"
+  },
+  {
+    "path": ".agents\\skills\\bmad-sprint-status\\SKILL.md",
+    "sha256": "6517E77EE6457D14A74B36B1AE503D3DC8B4E653652EB77963E04715E45E9B88"
+  },
+  {
+    "path": ".agents\\skills\\bmad-technical-research\\SKILL.md",
+    "sha256": "55B702CB9901510D3BD3025A83DF87D5DC8EE628D1C5FC38EF377645106FC438"
+  },
+  {
+    "path": ".agents\\skills\\bmad-ux\\customize.toml",
+    "sha256": "F49A63ADC2AEB7C6C3E959325920E84EFB48A876A112871FDD378F3049F3E139"
+  },
+  {
+    "path": ".agents\\skills\\bmad-ux\\SKILL.md",
+    "sha256": "F1C5F6889274F58E2092B28017723F1298C64B201BF9F1BC19DA8090FEDC61B9"
+  },
+  {
+    "path": ".agents\\skills\\bmad-ux\\assets\\color-themes.md",
+    "sha256": "D77B55B4139EB8CBD4635F078ED0E6D37CC867CA337CE1844ED207A4430750F8"
+  },
+  {
+    "path": ".agents\\skills\\bmad-ux\\assets\\design-directions.md",
+    "sha256": "E23538CE58969028E4333727A4C4840E0ABA3DF6D718D6A64F613FEA7C972AF4"
+  },
+  {
+    "path": ".agents\\skills\\bmad-ux\\assets\\design-example-editorial.md",
+    "sha256": "ED10853FF4E43D044423FBAF5B24741DB714354C3B314A5E0DC7163D556D4FF3"
+  },
+  {
+    "path": ".agents\\skills\\bmad-ux\\assets\\design-example-mobile.md",
+    "sha256": "BAE5DDFE11C4B55C3134CBD567D4FC810FEA389475EB3605FEDD96124FE33B13"
+  },
+  {
+    "path": ".agents\\skills\\bmad-ux\\assets\\design-example-shadcn.md",
+    "sha256": "BA189DF9538B87B6FC7023BE22E734C86BA97178DE52E2B37A9527A9C82EBFCC"
+  },
+  {
+    "path": ".agents\\skills\\bmad-ux\\assets\\excalidraw-wireframe.md",
+    "sha256": "E59663E39D4ECE59EF1009ED332889BE535317F5EA2F51B382747F61CDBA4CA0"
+  },
+  {
+    "path": ".agents\\skills\\bmad-ux\\assets\\experience-example-mobile.md",
+    "sha256": "55551A226425849CE317D795A78CD15103BCBC65EE7BDDF92A1C6FC12C466E8B"
+  },
+  {
+    "path": ".agents\\skills\\bmad-ux\\assets\\experience-example-shadcn.md",
+    "sha256": "6BEA729B3619CDD806005FC63C8910CAF551C9367B9A00B45DB277AE7F7E296F"
+  },
+  {
+    "path": ".agents\\skills\\bmad-ux\\assets\\headless-schemas.md",
+    "sha256": "C446C3FA353794AFA37C8B09CE6072735A5595EC63A43EE265E40ADAAABAFC4C"
+  },
+  {
+    "path": ".agents\\skills\\bmad-ux\\assets\\key-screens.md",
+    "sha256": "7CBFC0DC30327B93F306023FD2897D715DE1B60A876FABFDD0A7D9A7F24AD0FE"
+  },
+  {
+    "path": ".agents\\skills\\bmad-ux\\assets\\validation-report-template.html",
+    "sha256": "429F4A7E5ACF189409518CC6782E833DD30A89E83CD4821B89AE731BFA01C8B1"
+  },
+  {
+    "path": ".agents\\skills\\bmad-ux\\references\\creative-tools.md",
+    "sha256": "88C46D0574F33CA1CCFD806C0FECF0953D4186E9F4BCE7B41E1C448DA93CF3A8"
+  },
+  {
+    "path": ".agents\\skills\\bmad-ux\\references\\design-md-spec.md",
+    "sha256": "034015963AE97A0BFF286ED17F8BEB39FC97496A81B91FD4D446DF3CF64419F0"
+  },
+  {
+    "path": ".agents\\skills\\bmad-ux\\references\\headless.md",
+    "sha256": "3DAD2A8A75DC3653D03BEE207B4C64047F21F42D3CB8C07B6F37BB89BF88D9C6"
+  },
+  {
+    "path": ".agents\\skills\\bmad-ux\\references\\validate.md",
+    "sha256": "B7CAA6AFECBF42E0E58558CE63B907E477D4EF4237D4F2027266A5D68CEAF37B"
+  },
+  {
+    "path": ".agents\\skills\\bmad-validate-prd\\customize.toml",
+    "sha256": "122C4E9E8083C51A29424C90AD6F714415F9D306A224C16A81CC8D2AB941E550"
+  },
+  {
+    "path": ".agents\\skills\\bmad-validate-prd\\SKILL.md",
+    "sha256": "8F3F1A1EA20645D20484F584064173D31A0E12BF105C7451B9E08349FA3FB45D"
+  },
+  {
+    "path": ".agents\\skills\\bmad-walkthrough\\customize.toml",
+    "sha256": "5CD3DF01BAEABB212AD0E325A971752A57DD7C353EDE67A1ECB5B1A710F01BE4"
+  },
+  {
+    "path": ".agents\\skills\\bmad-walkthrough\\generate-trail.md",
+    "sha256": "22F0871297D7A79A6418E095067F1EB5FB64E912C06A2C74630B5DAFF2619C2C"
+  },
+  {
+    "path": ".agents\\skills\\bmad-walkthrough\\SKILL.md",
+    "sha256": "33F8C68F41BBB2FE19C4566990F7C30A1D9640E5745D18462E0EC72447616659"
+  },
+  {
+    "path": ".agents\\skills\\bmad-walkthrough\\step-01-orientation.md",
+    "sha256": "B0DB21DCC9FAB52326125816FD5ACBD2E000690C441556E4D27EDD92D94B0CDA"
+  },
+  {
+    "path": ".agents\\skills\\bmad-walkthrough\\step-02-walkthrough.md",
+    "sha256": "E6B4D15F860A43133AB4300DD3EB3CC349617918A1731A38E0278A9FB7122566"
+  },
+  {
+    "path": ".agents\\skills\\bmad-walkthrough\\step-03-detail-pass.md",
+    "sha256": "A600082776E0B6BADACE8EF9A4E5B06BA357DB34537FFFB92A163DB9C4C90736"
+  },
+  {
+    "path": ".agents\\skills\\bmad-walkthrough\\step-04-testing.md",
+    "sha256": "F48F6549CE52BDF7E5193F74F3B122305EBB36B16FC24D3FC688AA625E12B0CD"
+  },
+  {
+    "path": ".agents\\skills\\bmad-walkthrough\\step-05-wrapup.md",
+    "sha256": "7278538237EAE56D4B56F5F2046C821619AC436B4AE62DDBD9FC6AE5A3ADA71A"
+  },
+  {
+    "path": ".mvn\\wrapper\\maven-wrapper.properties",
+    "sha256": "79F38E73124D4F57D59A3550EC8A123B01B9CC630270C4BB15628DD7924E8BE6"
+  },
+  {
+    "path": "scripts\\GenerateUnicodeRanges.java",
+    "sha256": "9B77828B7A5364E5A5F457C05989C1D82B69227D235D00E2DD2AFC766AF5957C"
+  },
+  {
+    "path": "scripts\\test-identity.ps1",
+    "sha256": "62A3A76A458E61F96B76520425E87155C4FB11CE39EFED628D15C1237DD1764B"
+  },
+  {
+    "path": "src\\main\\java\\com\\example\\petadoptioncommunity\\PetAdoptionCommunityApplication.java",
+    "sha256": "D31883773FC3B6A8A1D49C3C37CFD86F2715D6C31E30B92664AACC7DC82C60CE"
+  },
+  {
+    "path": "src\\main\\java\\com\\example\\petadoptioncommunity\\identity\\AccountRules.java",
+    "sha256": "19FB4CD97E19CA6DDD2E395112BF16BDCFF62C7FC29047F745B52A7CA7E569C0"
+  },
+  {
+    "path": "src\\main\\java\\com\\example\\petadoptioncommunity\\identity\\IdentityMapper.java",
+    "sha256": "AC0AD5A823BCB9C0CCC4CADB56557FB1B8BD5A60FE83A285016EABFDB71FF489"
+  },
+  {
+    "path": "src\\main\\java\\com\\example\\petadoptioncommunity\\identity\\IdentityPort.java",
+    "sha256": "1FCC8D38F9B6A18CF42EE1A51F0B278CD6ABD3608710744FF9357AD2269B3B6C"
+  },
+  {
+    "path": "src\\main\\java\\com\\example\\petadoptioncommunity\\identity\\IdentityService.java",
+    "sha256": "E65C60C13CC1A7DF8033F09A8D1BEDADA9422C6AA79770BC01A2DE669C7C65B4"
+  },
+  {
+    "path": "src\\main\\java\\com\\example\\petadoptioncommunity\\identity\\PasswordConfiguration.java",
+    "sha256": "6EA08A501E85A49FB8D2CC2D1D85AD0E426FC26D73B609643DAA2719139F44D3"
+  },
+  {
+    "path": "src\\main\\java\\com\\example\\petadoptioncommunity\\identity\\UnicodeCategories.java",
+    "sha256": "256263DFCA99A46CB3D83694157303EE213546614055BA958C8CEB09BBE837F1"
+  },
+  {
+    "path": "src\\main\\java\\com\\example\\petadoptioncommunity\\operations\\Offline.java",
+    "sha256": "466FC90FCBCB179CCC56545271EF2533F930C48C04DC8E291469B671948F886A"
+  },
+  {
+    "path": "src\\main\\java\\com\\example\\petadoptioncommunity\\operations\\SchemaGuard.java",
+    "sha256": "F49DD90948E0F3A5A43962EE47501EB466A91C61A4970DB1545AEBE297CEE3F6"
+  },
+  {
+    "path": "src\\main\\java\\com\\example\\petadoptioncommunity\\security\\SecurityConfiguration.java",
+    "sha256": "7E99B8F5D83CA145DB7700D5710354C771A52D56F12F1B9C55BCB789295F75D1"
+  },
+  {
+    "path": "src\\main\\java\\com\\example\\petadoptioncommunity\\web\\ApiFailure.java",
+    "sha256": "CEFCC7E445991D7C53DE18EE702416FC60412607ED702029B9649D10008A6876"
+  },
+  {
+    "path": "src\\main\\java\\com\\example\\petadoptioncommunity\\web\\AuthController.java",
+    "sha256": "5CBFD38B2BD19022854686B1E16DAFAF4838C7D5B979738471B0E7E1A2EF88D4"
+  },
+  {
+    "path": "src\\main\\java\\com\\example\\petadoptioncommunity\\web\\Errors.java",
+    "sha256": "0F02BADB09D3C5EEF992D315212AC9C4740090E116C0FB2B5536EE9C56B925C2"
+  },
+  {
+    "path": "src\\main\\java\\com\\example\\petadoptioncommunity\\web\\MeController.java",
+    "sha256": "E0A62ADA1EEA4CBD82BDAB7FB25E9CA40C3031562B25D54956A30FAD42CB11B2"
+  },
+  {
+    "path": "src\\main\\resources\\application.properties",
+    "sha256": "42E9A0C5BEB6A6975D51690E02335E9E1CB931EECBCE8D0081E9486CDB891FDA"
+  },
+  {
+    "path": "src\\main\\resources\\db\\migrations\\checksums.properties",
+    "sha256": "053A07089D28DE508BAD779EB5B4C33B8EF609C09095066F267A11FF6549A350"
+  },
+  {
+    "path": "src\\main\\resources\\db\\migrations\\V001_identity.sql",
+    "sha256": "D3D6C24919827C6EAF71FF06ADE6264C189A23CCADAAD5CD12951B2FFA2B5F13"
+  },
+  {
+    "path": "src\\main\\resources\\identity\\unicode-java17.json",
+    "sha256": "E3E16BC5D29DD487CF63D96B36116D74AC5AD0CFB0D0AD23A03DDB63BD834FB7"
+  },
+  {
+    "path": "src\\test\\java\\com\\example\\petadoptioncommunity\\IdentityMysqlTest.java",
+    "sha256": "38D7D8E4A64F6FBB0BCED2CEF969E836AEB7F2F506E98734F9E5B43D50966CA5"
+  },
+  {
+    "path": "src\\test\\java\\com\\example\\petadoptioncommunity\\PetAdoptionCommunityApplicationTests.java",
+    "sha256": "4676D96C44321ACFBE903619E1CEC55A94E080BDBA1CBBF3D3626D2B9E9DE297"
+  },
+  {
+    "path": "src\\test\\java\\com\\example\\petadoptioncommunity\\UnicodeCategoriesTest.java",
+    "sha256": "78BDED96F108C0A32808532B97A861C3AD5C33AC8A214DE37973CFE1974FEE7C"
+  },
+  {
+    "path": "vue1\\.gitignore",
+    "sha256": "25841C84026D2DEEA1051AE64211B41BC92E20B4A4EF5897D779B82865BBD15D"
+  },
+  {
+    "path": "vue1\\babel.config.js",
+    "sha256": "2216D08F80A2DDC1382902DBEDC589E792B5D4A80DA8F244448BB4140447FFA8"
+  },
+  {
+    "path": "vue1\\jsconfig.json",
+    "sha256": "F9FBF1D145F2EA40AC3DFE34B3E491BA52170F74F232717386D23FD7875A17C3"
+  },
+  {
+    "path": "vue1\\package-lock.json",
+    "sha256": "2F9A1F6DA70412A453E8C5ACECD0613CF293BB835061AE4F39EC4ADF4A84251E"
+  },
+  {
+    "path": "vue1\\package.json",
+    "sha256": "B1363F458C78C3A49BC311BB8E2DB545FD3EE70676BC26E63012042C6C7B88F7"
+  },
+  {
+    "path": "vue1\\README.md",
+    "sha256": "422B0FAFCC22C9ABA6DE678148691F8749D2E829F160B41EB9AEF969276273D9"
+  },
+  {
+    "path": "vue1\\vue.config.js",
+    "sha256": "7C1895CE720D5E4895277A9ADD957A0E0BD91EF80DEAEC28A321E8EF22A512F3"
+  },
+  {
+    "path": "vue1\\public\\favicon.ico",
+    "sha256": "DB74AB0B78338C1F778F8398C45F4103C99AEA0E845A3118A7750B4EEAFD3445"
+  },
+  {
+    "path": "vue1\\public\\index.html",
+    "sha256": "40423EB9263670141709E039AB44B3571FE0502590ADD1FCAB7F298EC82D24AB"
+  },
+  {
+    "path": "vue1\\src\\App.vue",
+    "sha256": "13AA1CC1F34BA19D032E1585A9AB2E2FE284382456D9B4AE8FCB6680D1B57921"
+  },
+  {
+    "path": "vue1\\src\\main.js",
+    "sha256": "ADE4E6ADE0DF33597D58EE6CE74A8DAB8A3B741914AD5B699F78DFC302A26A2B"
+  },
+  {
+    "path": "vue1\\src\\api\\client.js",
+    "sha256": "5747A38EA48E5FECBDFC542D412EE1C4E728637C21463411777FB72C45C39B3F"
+  },
+  {
+    "path": "vue1\\src\\assets\\logo.png",
+    "sha256": "03D6D6DA2545D3B3402855B8E721B779ABAA87D113E69D9329EA6EA6325A83CE"
+  },
+  {
+    "path": "vue1\\src\\components\\HelloWorld.vue",
+    "sha256": "6B1C0E88420CBDB9F339C3EF04BFC5B3DD14D2AF676D1A6291445C8B1CA2475B"
+  },
+  {
+    "path": "vue1\\src\\state\\session.js",
+    "sha256": "96299D170C04A5190297FCD2F892EED0C0DD639787618DC123282D0E0B5F4F9C"
+  },
+  {
+    "path": "vue1\\src\\validation\\account.js",
+    "sha256": "4270884F6E428D743640D1071F537A5C8B549BE349EFB76A120AB1614D9EB7E5"
+  },
+  {
+    "path": "vue1\\src\\validation\\unicode.js",
+    "sha256": "25527DE1AA9C558D5035A7F461A040A581230FB1A25031013635A8F534E209ED"
+  },
+  {
+    "path": "vue1\\tests\\account-flow.js",
+    "sha256": "90E36A56434393039911983856D997322954B6FA81C4BCEEBF5D4F63D1B5324C"
+  },
+  {
+    "path": "vue1\\tests\\profile-adapter.js",
+    "sha256": "CCB0BCA2DDAB34C63FE7D83802FF85425D2C99945ACA5F9682B537157935EB8E"
+  },
+  {
+    "path": "vue1\\tests\\profile-flow.js",
+    "sha256": "309B1FF543C08320C445CF77628A93F451962F17B50AE5E7CC9CB4A7971B03A7"
+  },
+  {
+    "path": "vue1\\tests\\unicode-parity.js",
+    "sha256": "940735EE058B4E2F27679CC353DE403288A6D2A133F87F61354971B8DDFDD4FB"
+  },
+  {
+    "path": "_bmad\\config.toml",
+    "sha256": "6A2979B03A69EC40F117DEAFDDD3BD418D3F327245CDD32805CEA31673C83274"
+  },
+  {
+    "path": "_bmad\\config.user.toml",
+    "sha256": "EF1DE061B169E29FCAED5175C951B2DEBBB0E0F260BD486AC415F475930E916A"
+  },
+  {
+    "path": "_bmad\\bmm\\config.yaml",
+    "sha256": "2D49EC6328009B8D0373119352DF0C7D5BFC93BDF966C6FC8DF0322FD4BD1DD0"
+  },
+  {
+    "path": "_bmad\\bmm\\module-help.csv",
+    "sha256": "1C77E3AEC906D75DE5A8DDD4996BCA18EAFCA0B772FEBF1E949B0ED6E8785577"
+  },
+  {
+    "path": "_bmad\\bmm\\v6-shims\\README.md",
+    "sha256": "A0E869601307A54CE3CCC258220ED69E9268E7CCDD7933FCCCFB4DD23D108701"
+  },
+  {
+    "path": "_bmad\\core\\config.yaml",
+    "sha256": "93C7C63DF2D769CB19A3F250AE50D623B3B7C2BA974EA5682BA94755CC2348BF"
+  },
+  {
+    "path": "_bmad\\core\\module-help.csv",
+    "sha256": "02DB37CCE044D13D5F15FC2D493A0060B8899FC3D7A41CAC8904B511C3B7C6B9"
+  },
+  {
+    "path": "_bmad\\core\\v6-shims\\README.md",
+    "sha256": "BF29838E2CDB98900AF4BCD1013315FEAD122747C53E8F4FD33CD64566E3665E"
+  },
+  {
+    "path": "_bmad\\custom\\.gitignore",
+    "sha256": "62E672B383A6C4C3728720EF843B7740141D5E551C17CEE3D56618D910CD7935"
+  },
+  {
+    "path": "_bmad\\custom\\config.toml",
+    "sha256": "628B8DCD4952D617E9F094E0BA1386B3536B5AA869F0DD1CE748D02B600C0CE7"
+  },
+  {
+    "path": "_bmad\\render\\.gitignore",
+    "sha256": "4BB38BE6D6D9EF0D2F9BCC339850FF48D821ECCFA739369402B354C9BA946EA2"
+  },
+  {
+    "path": "_bmad\\scripts\\config_utils.py",
+    "sha256": "ADC773C4DC4A68B63B254E71F4ABA2E6776A385E742202C8EE2EEA622EDCC24B"
+  },
+  {
+    "path": "_bmad\\scripts\\memlog.py",
+    "sha256": "BFC2DB87FB36AA6A7353D31D9B08CF040C337F2771B5CA45333807876880179C"
+  },
+  {
+    "path": "_bmad\\scripts\\render_skill.py",
+    "sha256": "B7BEEEB6B6886B5452B14EF04FE4B866DA44DD4100BAA93F92D2D023A9AB4672"
+  },
+  {
+    "path": "_bmad\\scripts\\resolve_config.py",
+    "sha256": "570ECF69356A655612591CA887165703FDD7E08B58C1060B4E565B5B68264E5E"
+  },
+  {
+    "path": "_bmad\\scripts\\resolve_customization.py",
+    "sha256": "432B9BB8C8FCA30A8D6FE34B3A3CEB1FA4DAA9A9A8F2139A754D0179927D9817"
+  },
+  {
+    "path": "_bmad\\_config\\bmad-help.csv",
+    "sha256": "2F2FA4095C5120A4F5932C72705CC0FE33466C7EC2751CACB0A21EAE6D832FAF"
+  },
+  {
+    "path": "_bmad\\_config\\files-manifest.csv",
+    "sha256": "A7F2418B205672B2E95667E0C8D0631FA28A5737B8D0E8A75C83C1B149D44EF7"
+  },
+  {
+    "path": "_bmad\\_config\\manifest.yaml",
+    "sha256": "57693F5B3976DA82B8AAC2ACDBEA9F5E751726E752ABDA23D9F92B5A6CE4A3A8"
+  },
+  {
+    "path": "_bmad\\_config\\skill-manifest.csv",
+    "sha256": "71D7A1E92645A88E522138F51924B0978A769E99DAC3984020FE56749D0DDDBF"
+  }
+]

@@ -1,0 +1,87 @@
+diff --git a/src/main/java/com/example/petadoptioncommunity/administration/AdminUsersMapper.java b/src/main/java/com/example/petadoptioncommunity/administration/AdminUsersMapper.java
+index 044ed4f..de491ae 100644
+--- a/src/main/java/com/example/petadoptioncommunity/administration/AdminUsersMapper.java
++++ b/src/main/java/com/example/petadoptioncommunity/administration/AdminUsersMapper.java
+@@ -4,11 +4,15 @@ import java.time.Instant;
+ import java.util.List;
+ @Mapper
+ public interface AdminUsersMapper {
+- record Row(String id,String account,String nickname,String role,String status,Instant createdAt){}
++ record Row(long total,String id,String account,String nickname,String role,String status,Instant createdAt){}
+  record Detail(String id,String account,String nickname,String role,String status,Instant createdAt,String bio,String latestReason,Instant latestActionAt,long stateVersion){}
+  String FILTER=" WHERE LOCATE(#{contains},account)>0 AND (#{status} IS NULL OR status=#{status})";
+- @Select("SELECT id,account,nickname,role,status,created_at FROM e4_user"+FILTER+" ORDER BY created_at DESC,id DESC LIMIT #{size} OFFSET #{offset}")
++ // Both derived tables use the same statement read view under READ COMMITTED.
++ // The aggregate always yields one row, preserving total even for an empty/out-of-range page.
++ @Select("SELECT totals.total,p.id,p.account,p.nickname,p.role,p.status,p.created_at FROM "
++  +"(SELECT COUNT(*) AS total FROM e4_user"+FILTER+") totals LEFT JOIN "
++  +"(SELECT id,account,nickname,role,status,created_at FROM e4_user"+FILTER
++  +" ORDER BY created_at DESC,id DESC LIMIT #{size} OFFSET #{offset}) p ON 1=1 ORDER BY p.created_at DESC,p.id DESC")
+  List<Row> list(@Param("contains") String contains,@Param("status") String status,@Param("size") int size,@Param("offset") long offset);
+- @Select("SELECT COUNT(*) FROM e4_user"+FILTER) long count(@Param("contains") String contains,@Param("status") String status);
+  @Select("SELECT id,account,nickname,role,status,created_at,bio,latest_reason,latest_action_at,state_version FROM e4_user WHERE id=#{id}") Detail detail(String id);
+ }
+diff --git a/src/main/java/com/example/petadoptioncommunity/administration/AdminUsersService.java b/src/main/java/com/example/petadoptioncommunity/administration/AdminUsersService.java
+index e05ed3f..6be4cf0 100644
+--- a/src/main/java/com/example/petadoptioncommunity/administration/AdminUsersService.java
++++ b/src/main/java/com/example/petadoptioncommunity/administration/AdminUsersService.java
+@@ -2,7 +2,6 @@ package com.example.petadoptioncommunity.administration;
+ import com.example.petadoptioncommunity.identity.*;
+ import com.example.petadoptioncommunity.web.ApiFailure;
+ import org.springframework.stereotype.Service;
+-import java.time.Instant;
+ import java.time.format.DateTimeFormatter;
+ import java.time.format.DateTimeFormatterBuilder;
+ import java.util.*;
+@@ -20,7 +19,7 @@ public class AdminUsersService {
+  public Page list(IdentityPort.Actor actor,String pageValue,String sizeValue,String query,String status){
+   int page=number(pageValue,1),size=number(sizeValue,20);String contains=contains(query);
+   if(!Set.of(10,20,50).contains(size)||(status!=null&&!Set.of("ACTIVE","FROZEN").contains(status)))throw AccountRules.invalid();
+-  return identity.withActiveActor(actor,List.of(),()->{admin(actor);long total=db.count(contains,status);var rows=db.list(contains,status,size,((long)page-1)*size).stream().map(r->new User(r.id(),r.account(),r.nickname(),r.role(),r.status(),TIME.format(r.createdAt()))).toList();return new Page(rows,page,size,total);});
++  return identity.withActiveActor(actor,List.of(),()->{admin(actor);var projection=db.list(contains,status,size,((long)page-1)*size);long total=projection.get(0).total();var rows=projection.stream().filter(r->r.id()!=null).map(r->new User(r.id(),r.account(),r.nickname(),r.role(),r.status(),TIME.format(r.createdAt()))).toList();return new Page(rows,page,size,total);});
+  }
+  public Detail detail(IdentityPort.Actor actor,String id){
+   if(id==null||!id.matches("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"))throw AccountRules.invalid();
+diff --git a/src/test/java/com/example/petadoptioncommunity/IdentityMysqlTest.java b/src/test/java/com/example/petadoptioncommunity/IdentityMysqlTest.java
+index 57a6ec8..169e240 100644
+--- a/src/test/java/com/example/petadoptioncommunity/IdentityMysqlTest.java
++++ b/src/test/java/com/example/petadoptioncommunity/IdentityMysqlTest.java
+@@ -269,4 +269,37 @@ class IdentityMysqlTest {
+   var query=app.getBean(com.example.petadoptioncommunity.administration.AdminUsersService.class);var actor=service.requireActive("Bearer "+user);
+   assertEquals(403,assertThrows(ApiFailure.class,()->query.list(actor,null,null,null,null)).status);
+   var fake=new IdentityPort.Actor(actor.userId(),"ADMIN",actor.stateVersion(),actor.authVersion(),actor.sessionKey());assertEquals(401,assertThrows(ApiFailure.class,()->query.detail(fake,id)).status);
+- }}
++ }
++ @org.apache.ibatis.plugin.Intercepts(@org.apache.ibatis.plugin.Signature(type=org.apache.ibatis.executor.Executor.class,method="query",args={org.apache.ibatis.mapping.MappedStatement.class,Object.class,org.apache.ibatis.session.RowBounds.class,org.apache.ibatis.session.ResultHandler.class}))
++ static class RegistrationReadBarrier implements org.apache.ibatis.plugin.Interceptor {
++  final java.util.concurrent.atomic.AtomicReference<Thread> reader=new java.util.concurrent.atomic.AtomicReference<>();
++  final java.util.concurrent.atomic.AtomicInteger queries=new java.util.concurrent.atomic.AtomicInteger(),isolation=new java.util.concurrent.atomic.AtomicInteger();
++  final CountDownLatch selected=new CountDownLatch(1),release=new CountDownLatch(1);
++  public Object intercept(org.apache.ibatis.plugin.Invocation invocation)throws Throwable{
++   var statement=(org.apache.ibatis.mapping.MappedStatement)invocation.getArgs()[0];
++   if(Thread.currentThread()!=reader.get()||!statement.getId().startsWith("com.example.petadoptioncommunity.administration.AdminUsersMapper."))return invocation.proceed();
++   isolation.set(org.springframework.jdbc.datasource.DataSourceUtils.getConnection(db.getDataSource()).getTransactionIsolation());
++   Object result=invocation.proceed();
++   if(queries.incrementAndGet()==1){selected.countDown();if(!release.await(10,TimeUnit.SECONDS))throw new IllegalStateException("registration barrier timeout");}
++   return result;
++  }
++ }
++ @Test void adminQueryRegistrationReadView43()throws Exception{
++  service.initializeAdmin("view43_admin","Admin1234");var actor=service.requireActive("Bearer "+service.login("view43_admin","Admin1234").accessToken());
++  var query=app.getBean(com.example.petadoptioncommunity.administration.AdminUsersService.class);
++  var barrier=new RegistrationReadBarrier();app.getBean(org.apache.ibatis.session.SqlSessionFactory.class).getConfiguration().addInterceptor(barrier);
++  var pool=Executors.newSingleThreadExecutor();
++  try{
++   var reading=pool.submit(()->{barrier.reader.set(Thread.currentThread());return query.list(actor,"1","10","view43_new",null);});
++   assertTrue(barrier.selected.await(5,TimeUnit.SECONDS),"First admin SELECT must have completed before registration");
++   service.register("view43_new","Secret123","Secret123");
++   assertEquals(1,db.queryForObject("SELECT COUNT(*) FROM e4_user WHERE account='view43_new'",Integer.class));
++   assertFalse(reading.isDone());barrier.release.countDown();var before=reading.get(5,TimeUnit.SECONDS);
++   assertEquals(Connection.TRANSACTION_READ_COMMITTED,barrier.isolation.get());assertEquals(1,barrier.queries.get(),"Rows and total must come from one actual SELECT");assertEquals(0,before.total());assertTrue(before.items().isEmpty());
++   var after=query.list(actor,"1","10","view43_new",null);assertEquals(1,after.total());assertEquals("view43_new",after.items().get(0).account());
++   var outside=query.list(actor,"2","10","view43_new",null);assertEquals(1,outside.total());assertTrue(outside.items().isEmpty());
++   var empty=query.list(actor,"3","50","view43_absent",null);assertEquals(0,empty.total());assertTrue(empty.items().isEmpty());
++   System.out.println("READ_VIEW43 first admin SELECT completed; real registration committed while reader paused; one SELECT returned coherent pre-registration empty page; next request saw account; out-of-range total retained; READ_COMMITTED unchanged");
++  }finally{barrier.reader.set(null);barrier.release.countDown();pool.shutdownNow();}
++ }
++}

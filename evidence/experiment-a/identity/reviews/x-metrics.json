@@ -1,0 +1,22 @@
+{
+  "group": "X",
+  "story": "4.3",
+  "review_date_local": "2026-11-12",
+  "timezone": "Asia/Shanghai",
+  "reviewed_sha": "5d81624a1f4be1d3329dfe2ea5e54492e4cf4e81",
+  "source_baseline": "df0e7408eef962eedb6b0828557d6e925ede2f35",
+  "copy_baseline": "ed125ae3042e471c03233b7811f4c0b07f3a8cc1",
+  "verdict": "CHANGES_REQUESTED",
+  "must_fix_root_causes": 1,
+  "findings": [{"id":"F1","severity":"medium","must_fix":true,"path":"src/main/java/com/example/petadoptioncommunity/administration/AdminUsersService.java","line":23,"ac":["AC4.3-1"],"fr":["FR-E4-006"],"adr":["ADR-006"],"rules":[],"evidence":"Current review actual MySQL application-service probe: total=0 items=1; scoped cleanup_remaining=0"}],
+  "first_review_pass_rate": {"passed":0,"denominator":1,"percent":0},
+  "project_context_violations": {"count":0,"details":[]},
+  "adr_conflicts": {"count":1,"details":[{"adr":"ADR-006","finding":"F1","behavior":"AdminUsersService.list single-response total/items inconsistency"}]},
+  "sessions": {"phase":"through-first-review-not-done","observed_top_level_build_review_chats":2,"build_chat_id":"01a1cb3a-ac40-7312-b4c9-bcaa3f56e094","review_chat":"current independent review chat","shared_coordinator_id":"01a1c948-8793-72a1-a99e-33d3987e8d5b","shared_coordinator_excluded":true,"review_subagent_layers_separately_recorded":4,"through_done_total":null},
+  "post_done_rework_stories": {"value":null,"measurable":false,"reason":"No human done or post-acceptance observation period"},
+  "current_execution": {"node_scripts_passed":6,"mysql_full_suite_rerun":false,"mysql_targeted_probe":{"database":"pet_adoption_experiment_x_test","total":0,"items":1,"cleanup_remaining":0},"lint_rerun":false,"build_rerun":false,"browser_verified":false,"human_accepted":false,"diff_check":"nonzero: log/document whitespace"},
+  "historical_evidence": {"java_mysql_suite":{"tests":17,"failures":0,"errors":0,"skipped":0,"mysql_tests":12,"non_db_tests":5,"source":"evidence/tests/4.3/final-mysql-retry.txt"},"previous_suite_failure_retained":true,"lint":"passed historical log","build":"passed historical log","ordinary_package_skips_mysql":true},
+  "non_defect_followups": ["Actual browser closed-loop acceptance remains unverified and disclosed","Optional distinctive persisted bio/stateVersion HTTP assertions"],
+  "implementation_times": {"started":"2026-11-11 23:29:42 +08:00","completed":"2026-11-12 00:35:02 +08:00","seconds":3920,"cross_day":true},
+  "limitations": ["Different stories, one per group, no randomization; no general causal inference","Model label GPT-6.1 Sol from user interface registration; backend snapshot not independently observable","No code repairs, no done, no push"]
+}

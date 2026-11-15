@@ -1,0 +1,1172 @@
+diff --git a/src/main/java/com/example/petadoptioncommunity/administration/AdminUsersMapper.java b/src/main/java/com/example/petadoptioncommunity/administration/AdminUsersMapper.java
+new file mode 100644
+index 0000000..044ed4f
+--- /dev/null
++++ b/src/main/java/com/example/petadoptioncommunity/administration/AdminUsersMapper.java
+@@ -0,0 +1,14 @@
++package com.example.petadoptioncommunity.administration;
++import org.apache.ibatis.annotations.*;
++import java.time.Instant;
++import java.util.List;
++@Mapper
++public interface AdminUsersMapper {
++ record Row(String id,String account,String nickname,String role,String status,Instant createdAt){}
++ record Detail(String id,String account,String nickname,String role,String status,Instant createdAt,String bio,String latestReason,Instant latestActionAt,long stateVersion){}
++ String FILTER=" WHERE LOCATE(#{contains},account)>0 AND (#{status} IS NULL OR status=#{status})";
++ @Select("SELECT id,account,nickname,role,status,created_at FROM e4_user"+FILTER+" ORDER BY created_at DESC,id DESC LIMIT #{size} OFFSET #{offset}")
++ List<Row> list(@Param("contains") String contains,@Param("status") String status,@Param("size") int size,@Param("offset") long offset);
++ @Select("SELECT COUNT(*) FROM e4_user"+FILTER) long count(@Param("contains") String contains,@Param("status") String status);
++ @Select("SELECT id,account,nickname,role,status,created_at,bio,latest_reason,latest_action_at,state_version FROM e4_user WHERE id=#{id}") Detail detail(String id);
++}
+diff --git a/src/main/java/com/example/petadoptioncommunity/administration/AdminUsersService.java b/src/main/java/com/example/petadoptioncommunity/administration/AdminUsersService.java
+new file mode 100644
+index 0000000..e05ed3f
+--- /dev/null
++++ b/src/main/java/com/example/petadoptioncommunity/administration/AdminUsersService.java
+@@ -0,0 +1,29 @@
++package com.example.petadoptioncommunity.administration;
++import com.example.petadoptioncommunity.identity.*;
++import com.example.petadoptioncommunity.web.ApiFailure;
++import org.springframework.stereotype.Service;
++import java.time.Instant;
++import java.time.format.DateTimeFormatter;
++import java.time.format.DateTimeFormatterBuilder;
++import java.util.*;
++@Service
++public class AdminUsersService {
++ private final IdentityService identity;private final AdminUsersMapper db;
++ private static final DateTimeFormatter TIME=new DateTimeFormatterBuilder().appendInstant(3).toFormatter();
++ public AdminUsersService(IdentityService identity,AdminUsersMapper db){this.identity=identity;this.db=db;}
++ public record User(String id,String account,String nickname,String role,String status,String createdAt){}
++ public record Detail(String id,String account,String nickname,String role,String status,String createdAt,String bio,String latestReason,String latestActionAt,long stateVersion){}
++ public record Page(List<User> items,int page,int size,long total){}
++ public static int number(String value,int fallback){if(value==null)return fallback;if(!value.matches("[0-9]+"))throw AccountRules.invalid();try{int n=Integer.parseInt(value);if(n<1)throw AccountRules.invalid();return n;}catch(NumberFormatException e){throw AccountRules.invalid();}}
++ public static String contains(String value){String v=value==null?"":AccountRules.trimAccount(value).toLowerCase(Locale.ROOT);if(v.codePointCount(0,v.length())>16)throw AccountRules.invalid();return v;}
++ private void admin(IdentityPort.Actor actor){if(!"ADMIN".equals(actor.role()))throw new ApiFailure(403,"FORBIDDEN","无权限");}
++ public Page list(IdentityPort.Actor actor,String pageValue,String sizeValue,String query,String status){
++  int page=number(pageValue,1),size=number(sizeValue,20);String contains=contains(query);
++  if(!Set.of(10,20,50).contains(size)||(status!=null&&!Set.of("ACTIVE","FROZEN").contains(status)))throw AccountRules.invalid();
++  return identity.withActiveActor(actor,List.of(),()->{admin(actor);long total=db.count(contains,status);var rows=db.list(contains,status,size,((long)page-1)*size).stream().map(r->new User(r.id(),r.account(),r.nickname(),r.role(),r.status(),TIME.format(r.createdAt()))).toList();return new Page(rows,page,size,total);});
++ }
++ public Detail detail(IdentityPort.Actor actor,String id){
++  if(id==null||!id.matches("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"))throw AccountRules.invalid();
++  return identity.withActiveActor(actor,List.of(),()->{admin(actor);var r=db.detail(id.toLowerCase(Locale.ROOT));if(r==null)throw new ApiFailure(404,"NOT_FOUND","用户不存在");return new Detail(r.id(),r.account(),r.nickname(),r.role(),r.status(),TIME.format(r.createdAt()),r.bio(),r.latestReason(),r.latestActionAt()==null?null:TIME.format(r.latestActionAt()),r.stateVersion());});
++ }
++}
+diff --git a/src/main/java/com/example/petadoptioncommunity/web/AdminUsersController.java b/src/main/java/com/example/petadoptioncommunity/web/AdminUsersController.java
+new file mode 100644
+index 0000000..23b2a91
+--- /dev/null
++++ b/src/main/java/com/example/petadoptioncommunity/web/AdminUsersController.java
+@@ -0,0 +1,15 @@
++package com.example.petadoptioncommunity.web;
++import com.example.petadoptioncommunity.administration.AdminUsersService;
++import com.example.petadoptioncommunity.identity.*;
++import org.springframework.security.core.annotation.AuthenticationPrincipal;
++import org.springframework.web.bind.annotation.*;
++import jakarta.servlet.http.HttpServletRequest;
++import java.util.Set;
++@RestController @RequestMapping("/api/v1/admin/users")
++public class AdminUsersController {
++ private final AdminUsersService service;
++ public AdminUsersController(AdminUsersService service){this.service=service;}
++ private void query(HttpServletRequest r,Set<String> allowed){r.getParameterMap().forEach((k,v)->{if(!allowed.contains(k)||v.length!=1)throw AccountRules.invalid();});}
++ @GetMapping public Object list(@AuthenticationPrincipal IdentityPort.Actor actor,HttpServletRequest r){query(r,Set.of("page","size","accountContains","status"));return service.list(actor,r.getParameter("page"),r.getParameter("size"),r.getParameter("accountContains"),r.getParameter("status"));}
++ @GetMapping("/{id}") public Object detail(@AuthenticationPrincipal IdentityPort.Actor actor,@PathVariable String id,HttpServletRequest r){query(r,Set.of());return service.detail(actor,id);}
++}
+diff --git a/src/test/java/com/example/petadoptioncommunity/AdminUsersRulesTest.java b/src/test/java/com/example/petadoptioncommunity/AdminUsersRulesTest.java
+new file mode 100644
+index 0000000..90fb772
+--- /dev/null
++++ b/src/test/java/com/example/petadoptioncommunity/AdminUsersRulesTest.java
+@@ -0,0 +1,14 @@
++package com.example.petadoptioncommunity;
++import com.example.petadoptioncommunity.administration.AdminUsersService;
++import com.example.petadoptioncommunity.web.ApiFailure;
++import org.junit.jupiter.api.Test;
++import static org.junit.jupiter.api.Assertions.*;
++class AdminUsersRulesTest {
++ @Test void strictNumbersAndNormalization(){
++  assertEquals(1,AdminUsersService.number(null,1));assertEquals(20,AdminUsersService.number("20",1));
++  for(String s:new String[]{"","0","-1","1.0","true"," 1","2147483648"})assertEquals(400,assertThrows(ApiFailure.class,()->AdminUsersService.number(s,1)).status);
++  assertEquals("a_%",AdminUsersService.contains("\u3000A_%\u00a0"));
++  assertEquals(16,AdminUsersService.contains("😀".repeat(16)).codePointCount(0,32));
++  assertThrows(ApiFailure.class,()->AdminUsersService.contains("😀".repeat(17)));
++ }
++}
+diff --git a/src/test/java/com/example/petadoptioncommunity/IdentityMysqlTest.java b/src/test/java/com/example/petadoptioncommunity/IdentityMysqlTest.java
+index 8093dda..57a6ec8 100644
+--- a/src/test/java/com/example/petadoptioncommunity/IdentityMysqlTest.java
++++ b/src/test/java/com/example/petadoptioncommunity/IdentityMysqlTest.java
+@@ -1,241 +1,272 @@
+-package com.example.petadoptioncommunity;
+-import com.example.petadoptioncommunity.identity.*;
+-import com.example.petadoptioncommunity.operations.Offline;
+-import com.example.petadoptioncommunity.web.ApiFailure;
+-import org.junit.jupiter.api.*;
+-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+-import org.springframework.boot.builder.SpringApplicationBuilder;
+-import org.springframework.context.ConfigurableApplicationContext;
+-import org.springframework.jdbc.core.JdbcTemplate;
+-import java.sql.*;
+-import java.net.*;
+-import java.net.http.*;
+-import java.util.*;
+-import java.util.concurrent.*;
+-import static org.junit.jupiter.api.Assertions.*;
+-@EnabledIfEnvironmentVariable(named="RUN_IDENTITY_MYSQL",matches="true")
+-class IdentityMysqlTest {
+- static ConfigurableApplicationContext app;static IdentityService service;static JdbcTemplate db;static String url;
+- @BeforeAll static void start()throws Exception{
+-  TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+-  var allowed=Set.of("pet_adoption_community_test","pet_adoption_experiment_x_test","pet_adoption_experiment_y_test");
+-  var configured=URI.create(System.getenv("DB_URL").substring(5)).getPath().substring(1);
+-  if(!allowed.contains(configured))throw new IllegalStateException("Refusing non-test URL");
+-  try(var c=DriverManager.getConnection(System.getenv("DB_URL"),System.getenv("DB_USERNAME"),System.getenv("DB_PASSWORD"));var st=c.createStatement()){
+-   try(var r=st.executeQuery("SELECT DATABASE()")){r.next();if(!allowed.contains(r.getString(1))||!configured.equals(r.getString(1)))throw new IllegalStateException("Refusing non-test database");}
+-   st.execute("DROP TABLE IF EXISTS e4_session");st.execute("DROP TABLE IF EXISTS e4_user");st.execute("DROP TABLE IF EXISTS schema_version");
+-  }
+-  Offline.main(new String[]{"migrate"});Offline.main(new String[]{"migrate"});
+-  app=new SpringApplicationBuilder(PetAdoptionCommunityApplication.class).run("--server.port=0","--spring.profiles.active=test");
+-  service=app.getBean(IdentityService.class);db=app.getBean(JdbcTemplate.class);
+-  url="http://localhost:"+app.getEnvironment().getProperty("local.server.port");
+- }
+- @AfterAll static void stop(){if(app!=null){System.out.println("SAFE_SNAPSHOT users="+db.queryForObject("SELECT COUNT(*) FROM e4_user",Integer.class)+" sessions="+db.queryForObject("SELECT COUNT(*) FROM e4_session",Integer.class)+" revoked="+db.queryForObject("SELECT COUNT(*) FROM e4_session WHERE revoked_at IS NOT NULL",Integer.class)+" schemaVersion="+db.queryForObject("SELECT MAX(version) FROM schema_version",Integer.class));app.close();}}
+- HttpResponse<String> post(String path,String body,String token)throws Exception{
+-  var request=HttpRequest.newBuilder(URI.create(url+path));if(body!=null)request.header("Content-Type","application/json");if(token!=null)request.header("Authorization","Bearer "+token);
+-  return HttpClient.newHttpClient().send(request.POST(body==null?HttpRequest.BodyPublishers.noBody():HttpRequest.BodyPublishers.ofString(body)).build(),HttpResponse.BodyHandlers.ofString());
+- }
+- @Test void mysqlContractAndSessions()throws Exception{
+-  var executor=Executors.newFixedThreadPool(2);var barrier=new CyclicBarrier(2);
+-  Callable<Integer> register=()->{barrier.await(5,TimeUnit.SECONDS);try{service.register(" Same_account ","Secret123","Secret123");return 201;}catch(ApiFailure e){return e.status;}};
+-  try{var a=executor.submit(register);var b=executor.submit(register);assertEquals(Set.of(201,409),Set.of(a.get(15,TimeUnit.SECONDS),b.get(15,TimeUnit.SECONDS)));}finally{executor.shutdownNow();}
+-  assertEquals(1,db.queryForObject("SELECT COUNT(*) FROM e4_user WHERE account='same_account'",Integer.class));
+-  var first=service.login("same_account","Secret123");var second=service.login("same_account","Secret123");
+-  var actor=service.requireActive("Bearer "+first.accessToken());assertEquals("USER",actor.role());
+-  assertEquals(43,first.accessToken().length());assertEquals(32,db.queryForObject("SELECT OCTET_LENGTH(token_hash) FROM e4_session LIMIT 1",Integer.class));
+-  for(int i=0;i<3;i++){
+-   assertEquals(401,post("/api/v1/admin/users",null,null).statusCode());
+-   assertEquals(403,post("/api/v1/admin/users",null,first.accessToken()).statusCode());
+-   assertEquals(400,post("/api/v1/auth/register","{\"account\":\"injected\",\"password\":\"Secret123\",\"confirmPassword\":\"Secret123\",\"role\":\"ADMIN\"}",null).statusCode());
+-  }
+-  assertEquals(0,db.queryForObject("SELECT COUNT(*) FROM e4_user WHERE account='injected'",Integer.class));
+-  assertEquals(400,post("/api/v1/auth/logout","{}",first.accessToken()).statusCode());
+-  assertEquals(204,post("/api/v1/auth/logout",null,first.accessToken()).statusCode());
+-  for(int i=0;i<3;i++){assertEquals(204,post("/api/v1/auth/logout",null,first.accessToken()).statusCode());assertThrows(ApiFailure.class,()->service.requireActive("Bearer "+first.accessToken()));}
+-  service.requireActive("Bearer "+second.accessToken());
+-  assertThrows(ApiFailure.class,()->service.withActiveActor(actor,List.of(),()->"must not run"));
+-  db.update("UPDATE e4_session SET expires_at=UTC_TIMESTAMP(3) WHERE revoked_at IS NULL");
+-  assertThrows(ApiFailure.class,()->service.requireActive("Bearer "+second.accessToken()));assertEquals(204,post("/api/v1/auth/logout",null,second.accessToken()).statusCode());
+-  db.update("UPDATE e4_user SET status='FROZEN',latest_reason='fixture reason',latest_action_at=UTC_TIMESTAMP(3) WHERE account='same_account'");
+-  var bad=post("/api/v1/auth/login","{\"account\":\"same_account\",\"password\":\"Incorrect123\"}",null);assertEquals(401,bad.statusCode());assertFalse(bad.body().contains("fixture reason"));
+-  var frozen=post("/api/v1/auth/login","{\"account\":\"same_account\",\"password\":\"Secret123\"}",null);assertEquals(403,frozen.statusCode());assertTrue(frozen.body().contains("fixture reason"));assertFalse(frozen.body().contains("accessToken"));
+-  assertEquals("ADMIN_CREATED",service.initializeAdmin("offline_admin","Admin1234"));assertEquals("ADMIN_ALREADY_EXISTS",service.initializeAdmin("offline_admin","Different123"));assertEquals("ACCOUNT_CONFLICT",service.initializeAdmin("same_account","Different123"));
+-  service.login("offline_admin","Admin1234");assertThrows(ApiFailure.class,()->service.login("offline_admin","Different123"));
+- }
+- @Test void boundariesAndShortAdmin()throws Exception{
+-  for(int n:new int[]{3,17})assertThrows(ApiFailure.class,()->service.register("a".repeat(n),"Secret123","Secret123"));
+-  for(int n:new int[]{4,16}){String a="b".repeat(n);service.register(a,"Secret123","Secret123");service.login(a,"Secret123");}
+-  int i=0;for(int n:new int[]{7,8,32,33}){String password="字1"+"😀".repeat(n-2);String account="unicode_"+(i++);if(n==8||n==32){service.register(account,password,password);service.login(account,password);}else assertThrows(ApiFailure.class,()->service.register(account,password,password));}
+-  assertThrows(ApiFailure.class,()->service.register("spaces_x","        ","        "));
+-  service.register("spaces_ok"," A123456 "," A123456 ");service.login("spaces_ok"," A123456 ");assertThrows(ApiFailure.class,()->service.login("spaces_ok","A123456"));
+-  assertEquals("ADMIN_CREATED",service.initializeAdmin("short_admin","a1"));service.login("short_admin","a1");
+-  assertThrows(ApiFailure.class,()->service.register("short_user","a1","a1"));
+-  for(String field:List.of("role","status","id","extra"))assertEquals(400,post("/api/v1/auth/register","{\"account\":\"tamper_test\",\"password\":\"Secret123\",\"confirmPassword\":\"Secret123\",\""+field+"\":\"ADMIN\"}",null).statusCode());
+- }
+- @Test void versionAndWriteLogoutOrdering()throws Exception{
+-  service.register("ordering","Secret123","Secret123");var login=service.login("ordering","Secret123");var actor=service.requireActive("Bearer "+login.accessToken());
+-  var locked=new CountDownLatch(1);var release=new CountDownLatch(1);var started=new CountDownLatch(1);var pool=Executors.newFixedThreadPool(2);
+-  try{
+-   var write=pool.submit(()->service.withActiveActor(actor,List.of(),()->{locked.countDown();try{if(!release.await(15,TimeUnit.SECONDS))throw new IllegalStateException("timeout");}catch(InterruptedException e){throw new RuntimeException(e);}db.update("UPDATE e4_user SET bio='ordered write' WHERE id=?",actor.userId());return true;}));
+-   assertTrue(locked.await(5,TimeUnit.SECONDS));var logout=pool.submit(()->{started.countDown();service.logout("Bearer "+login.accessToken());return true;});assertTrue(started.await(5,TimeUnit.SECONDS));assertFalse(logout.isDone());release.countDown();assertTrue(write.get(5,TimeUnit.SECONDS));assertTrue(logout.get(5,TimeUnit.SECONDS));
+-   assertEquals("ordered write",db.queryForObject("SELECT bio FROM e4_user WHERE id=?",String.class,actor.userId()));
+-   assertThrows(ApiFailure.class,()->service.withActiveActor(actor,List.of(),()->{db.update("UPDATE e4_user SET bio='bad' WHERE id=?",actor.userId());return true;}));
+-  }finally{release.countDown();pool.shutdownNow();}
+-  var fresh=service.login("ordering","Secret123");var old=service.requireActive("Bearer "+fresh.accessToken());db.update("UPDATE e4_user SET auth_version=auth_version+1,state_version=state_version+1 WHERE id=?",old.userId());
+-  for(int n=0;n<3;n++){assertThrows(ApiFailure.class,()->service.requireActive("Bearer "+fresh.accessToken()));assertThrows(ApiFailure.class,()->service.withActiveActor(old,List.of(),()->true));}
+- }
+- @Test void loginHashChangesAfterPrecheck()throws Exception{
+-  service.register("hash_race","Secret123","Secret123");var rotationActor=service.requireActive("Bearer "+service.login("hash_race","Secret123").accessToken());var verified=new CountDownLatch(1);var release=new CountDownLatch(1);
+-  var encoder=app.getBean(org.springframework.security.crypto.password.PasswordEncoder.class);
+-  var guarded=new org.springframework.security.crypto.password.PasswordEncoder(){
+-   public String encode(CharSequence p){return encoder.encode(p);}
+-   public boolean matches(CharSequence p,String h){boolean ok=encoder.matches(p,h);verified.countDown();try{if(!release.await(15,TimeUnit.SECONDS))throw new IllegalStateException("timeout");}catch(InterruptedException e){throw new RuntimeException(e);}return ok;}
+-  };
+-  var racing=new IdentityService(app.getBean(IdentityMapper.class),guarded,app.getBean(org.springframework.transaction.PlatformTransactionManager.class));var pool=Executors.newSingleThreadExecutor();
+-  int before=db.queryForObject("SELECT COUNT(*) FROM e4_session",Integer.class);
+-  try{var result=pool.submit(()->racing.login("hash_race","Secret123"));assertTrue(verified.await(5,TimeUnit.SECONDS));service.changePassword(rotationActor,"Secret123","Replacement123","Replacement123");release.countDown();var error=assertThrows(ExecutionException.class,()->result.get(5,TimeUnit.SECONDS));assertInstanceOf(ApiFailure.class,error.getCause());assertEquals(before,db.queryForObject("SELECT COUNT(*) FROM e4_session",Integer.class));}
+-  finally{release.countDown();pool.shutdownNow();}
+-  service.login("hash_race","Replacement123");
+- }
+- @Test void privateStdinInitialization()throws Exception{
+-  String secret=UUID.randomUUID().toString().substring(0,6);
+-  ProcessBuilder builder=new ProcessBuilder(System.getProperty("java.home")+"/bin/java", "-cp",System.getProperty("surefire.test.class.path",System.getProperty("java.class.path")),Offline.class.getName(),"admin-stdin"); builder.environment().put("APP_PROFILE","test"); Process process=builder.redirectErrorStream(true).start();
+-  try(var input=new java.io.OutputStreamWriter(process.getOutputStream(),java.nio.charset.StandardCharsets.UTF_8)){input.write("stdin_admin\n"+secret+"\n");}
+-  var drain=Executors.newSingleThreadExecutor();try{
+-   var output=drain.submit(()->new String(process.getInputStream().readAllBytes(),java.nio.charset.StandardCharsets.UTF_8));
+-   assertTrue(process.waitFor(20,TimeUnit.SECONDS));String text=output.get(5,TimeUnit.SECONDS);assertEquals(0,process.exitValue(),"Offline command failed");assertTrue(text.contains("result=ADMIN_CREATED"));assertFalse(text.contains(secret));assertEquals("ADMIN",service.login("stdin_admin",secret).user().role());
+-  }finally{process.destroyForcibly();drain.shutdownNow();}
+- }
+-
+- @Test void additionalLoginAndAdminBoundaries()throws Exception{
+-  service.register("boundary_login","Secret123","Secret123");
+-  for(int n:new int[]{0,1,7,8,32,33}){
+-   String wrong=n<2?"x".repeat(n):"字1"+"😀".repeat(n-2);
+-   int before=db.queryForObject("SELECT COUNT(*) FROM e4_session",Integer.class);
+-   assertEquals(n==0||n==33?400:401,assertThrows(ApiFailure.class,()->service.login("boundary_login",wrong)).status);
+-   assertEquals(n==0||n==33?400:401,assertThrows(ApiFailure.class,()->service.login("unknown_login",wrong)).status);
+-   assertEquals(before,db.queryForObject("SELECT COUNT(*) FROM e4_session",Integer.class));
+-  }
+-  for(int length:new int[]{1,7}){String credential="x".repeat(length);String name="short_len_"+length;service.initializeAdmin(name,credential);service.login(name,credential);}
+-  var wrong=post("/api/v1/auth/login","{\"account\":\"boundary_login\",\"password\":\"x\"}",null);
+-  var unknown=post("/api/v1/auth/login","{\"account\":\"unknown_login\",\"password\":\"x\"}",null);
+-  assertEquals(wrong.statusCode(),unknown.statusCode());assertTrue(wrong.body().contains("账号或密码错误"));assertTrue(unknown.body().contains("账号或密码错误"));
+-  int users=db.queryForObject("SELECT COUNT(*) FROM e4_user",Integer.class);
+-  assertThrows(ApiFailure.class,()->service.initializeAdmin("admin_too_long","a1"+"😀".repeat(31)));
+-  assertEquals(users,db.queryForObject("SELECT COUNT(*) FROM e4_user",Integer.class));
+-  String maximum="a1"+"😀".repeat(30);assertEquals("ADMIN_CREATED",service.initializeAdmin("admin_maximum",maximum));service.login("admin_maximum",maximum);
+- }
+- @Test void successfulHttpContractAndSchemaGuard()throws Exception{
+-  var registered=post("/api/v1/auth/register","{\"account\":\" HTTP_success \",\"password\":\"Secret123\",\"confirmPassword\":\"Secret123\"}",null);
+-  assertEquals(201,registered.statusCode());assertEquals("no-store",registered.headers().firstValue("Cache-Control").orElseThrow());
+-  var mapper=new tools.jackson.databind.ObjectMapper();var user=mapper.readTree(registered.body());assertEquals(6,user.size());assertEquals("http_success",user.get("account").asText());assertEquals("http_success",user.get("nickname").asText());assertEquals("USER",user.get("role").asText());assertEquals("ACTIVE",user.get("status").asText());UUID.fromString(user.get("id").asText());assertTrue(user.get("createdAt").asText().matches(".*\\.\\d{3}Z"));assertFalse(registered.body().contains("Secret123"));
+-  var logged=post("/api/v1/auth/login","{\"account\":\"http_success\",\"password\":\"Secret123\"}",null);assertEquals(200,logged.statusCode());var login=mapper.readTree(logged.body());assertEquals(3,login.size());assertEquals(user.get("id").asText(),login.get("user").get("id").asText());String token=login.get("accessToken").asText();var actor=service.requireActive("Bearer "+token);assertEquals(user.get("id").asText(),actor.userId());assertFalse(actor.toString().contains(token));assertNotEquals(token,actor.sessionKey());assertTrue(login.get("expiresAt").asText().matches(".*\\.\\d{3}Z"));
+-  var metadata=db.queryForMap("SELECT version,checksum,applied_at FROM schema_version");var guard=app.getBean(com.example.petadoptioncommunity.operations.SchemaGuard.class);var args=new org.springframework.boot.DefaultApplicationArguments(new String[0]);
+-  try{
+-   db.update("UPDATE schema_version SET checksum=?","0".repeat(64));assertThrows(IllegalStateException.class,()->guard.run(args));
+-   db.update("UPDATE schema_version SET checksum=?,version=2",metadata.get("checksum"));assertThrows(IllegalStateException.class,()->guard.run(args));
+-   db.update("INSERT INTO schema_version VALUES(1,?,UTC_TIMESTAMP(3))",metadata.get("checksum"));assertThrows(IllegalStateException.class,()->guard.run(args));
+-  }finally{db.update("DELETE FROM schema_version");db.update("INSERT INTO schema_version VALUES(?,?,?)",metadata.get("version"),metadata.get("checksum"),metadata.get("applied_at"));}
+-  guard.run(args);
+- }
+- @Test void absoluteThirtyMinuteExpiryDoesNotSlide()throws Exception{
+-  service.register("ttl_contract","Secret123","Secret123");
+-  java.time.Instant before=java.time.Instant.now();
+-  var response=post("/api/v1/auth/login","{\"account\":\"ttl_contract\",\"password\":\"Secret123\"}",null);
+-  java.time.Instant after=java.time.Instant.now();assertEquals(200,response.statusCode());
+-  var json=new tools.jackson.databind.ObjectMapper().readTree(response.body());
+-  String token=json.get("accessToken").asText();java.time.Instant returned=java.time.Instant.parse(json.get("expiresAt").asText());
+-  byte[] digest=java.security.MessageDigest.getInstance("SHA-256").digest(token.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+-  java.time.Instant stored=db.queryForObject("SELECT expires_at FROM e4_session WHERE token_hash=?",java.sql.Timestamp.class,digest).toInstant();
+-  java.time.Instant earliest=before.truncatedTo(java.time.temporal.ChronoUnit.MILLIS).plusSeconds(1800).minusMillis(1);
+-  java.time.Instant latest=after.plusSeconds(1800).plusMillis(1);
+-  assertFalse(returned.isBefore(earliest));assertFalse(returned.isAfter(latest));
+-  assertFalse(stored.isBefore(earliest));assertFalse(stored.isAfter(latest));
+-  assertTrue(Math.abs(java.time.Duration.between(returned,stored).toMillis())<=1);
+-  for(int read=0;read<3;read++){
+-   service.requireActive("Bearer "+token);
+-   assertEquals(403,post("/api/v1/admin/users",null,token).statusCode());
+-   assertEquals(stored,db.queryForObject("SELECT expires_at FROM e4_session WHERE token_hash=?",java.sql.Timestamp.class,digest).toInstant());
+-  }
+-  System.out.println("TTL_CONTRACT response/database within login window +1800 seconds; three authenticated reads unchanged");
+- }
+-
+- HttpResponse<String> meHttp(String method,String path,String body,String token)throws Exception{
+-  var r=HttpRequest.newBuilder(URI.create(url+"/api/v1"+path)).header("Authorization","Bearer "+token);
+-  if(body!=null)r.header("Content-Type","application/json");
+-  return HttpClient.newHttpClient().send(r.method(method,body==null?HttpRequest.BodyPublishers.noBody():HttpRequest.BodyPublishers.ofString(body)).build(),HttpResponse.BodyHandlers.ofString());
+- }
+- @Test void profileAndPasswordStory42()throws Exception{
+-  service.register("profile42","Secret123","Secret123");service.register("other42","Secret123","Secret123");
+-  var login=service.login("profile42","Secret123");var second=service.login("profile42","Secret123");var actor=service.requireActive("Bearer "+login.accessToken());
+-  var other=service.requireActive("Bearer "+service.login("other42","Secret123").accessToken());
+-  var current=service.me(actor);assertEquals(0,current.profileVersion());assertEquals("",current.bio());
+-  for(String value:List.of("0.9","-0.9","0.0","\"0\"","true","false","null","{}","[]","9223372036854775808","-1")){
+-   var before=service.me(actor);
+-   assertEquals(400,meHttp("PUT","/me","{\"nickname\":\"must not save\",\"bio\":\"invalid version\",\"expectedProfileVersion\":"+value+"}",login.accessToken()).statusCode(),value);
+-   assertEquals(before,service.me(actor),"Invalid version must not mutate profile: "+value);
+-  }
+-  assertEquals(200,meHttp("PUT","/me","{\"nickname\":\"integer accepted\",\"bio\":\"\",\"expectedProfileVersion\":0}",login.accessToken()).statusCode());
+-  assertEquals(1,service.me(actor).profileVersion());
+-  for(int n:new int[]{0,1,30,31}){String nick="😀".repeat(n);long v=service.me(actor).profileVersion();if(n==1||n==30)assertEquals(n,service.updateProfile(actor," "+nick+" ","",v).nickname().codePointCount(0,nick.length()));else assertEquals(400,assertThrows(ApiFailure.class,()->service.updateProfile(actor,nick,"",v)).status);}
+-  for(int n:new int[]{0,200,201}){String bio="😀".repeat(n);long v=service.me(actor).profileVersion();if(n<=200)assertEquals(bio,service.updateProfile(actor,"nick",bio,v).bio());else assertEquals(400,assertThrows(ApiFailure.class,()->service.updateProfile(actor,"nick",bio,v)).status);}
+-  long version=service.me(actor).profileVersion();service.updateProfile(actor,"<script>alert(1)</script>","<b>text</b>",version);
+-  assertEquals(409,assertThrows(ApiFailure.class,()->service.updateProfile(actor,"lost","",version)).status);
+-  long httpVersion=service.me(actor).profileVersion();
+-  var put=meHttp("PUT","/me","{\"nickname\":\" http nick \",\"bio\":\"persisted\",\"expectedProfileVersion\":"+httpVersion+"}",login.accessToken());assertEquals(200,put.statusCode());
+-  var saved=new tools.jackson.databind.ObjectMapper().readTree(put.body());assertEquals("http nick",saved.get("nickname").asText());assertEquals("persisted",saved.get("bio").asText());assertEquals(httpVersion+1,saved.get("profileVersion").asLong());assertEquals(put.body(),meHttp("GET","/me",null,login.accessToken()).body());
+-  var hashes=db.queryForList("SELECT id,password_hash,auth_version FROM e4_user ORDER BY id");
+-  var sessions=db.queryForList("SELECT HEX(token_hash) token,revoked_at FROM e4_session ORDER BY token_hash");
+-  for(String field:List.of("userId","role","status"))for(int attempt=0;attempt<3;attempt++)assertEquals(400,post("/api/v1/me/password","{\"oldPassword\":\"Secret123\",\"newPassword\":\"Changed123\",\"confirmPassword\":\"Changed123\",\""+field+"\":\""+other.userId()+"\"}",login.accessToken()).statusCode());
+-  assertEquals(hashes,db.queryForList("SELECT id,password_hash,auth_version FROM e4_user ORDER BY id"));assertEquals(sessions,db.queryForList("SELECT HEX(token_hash) token,revoked_at FROM e4_session ORDER BY token_hash"));
+-  var read=meHttp("GET","/me",null,login.accessToken());assertEquals(200,read.statusCode());assertEquals(8,new tools.jackson.databind.ObjectMapper().readTree(read.body()).size());assertFalse(read.body().contains("password"));assertFalse(read.body().contains("authVersion"));
+-  for(int n=0;n<3;n++){
+-   assertEquals(400,meHttp("GET","/me?userId="+other.userId(),null,login.accessToken()).statusCode());
+-   assertEquals(400,meHttp("PUT","/me","{\"nickname\":\"bad\",\"bio\":\"\",\"expectedProfileVersion\":0,\"userId\":\""+other.userId()+"\"}",login.accessToken()).statusCode());
+-  }
+-  assertEquals("other42",service.me(other).nickname());
+-  assertEquals(400,meHttp("PUT","/me","{\"nickname\":\"bad\",\"bio\":\"\"}",login.accessToken()).statusCode());
+-  for(int n:new int[]{0,1,7,32,33}){String wrong="x".repeat(n);assertEquals(400,assertThrows(ApiFailure.class,()->service.changePassword(actor,wrong,"Changed123","Changed123")).status);service.me(actor);}
+-  for(int n:new int[]{7,33}){String invalid="a1"+"😀".repeat(n-2);assertThrows(ApiFailure.class,()->service.changePassword(actor,"Secret123",invalid,invalid));}
+-  assertThrows(ApiFailure.class,()->service.changePassword(actor,"Secret123","Changed123","Different123"));assertThrows(ApiFailure.class,()->service.changePassword(actor,"Secret123","Secret123","Secret123"));
+-  assertEquals(400,post("/api/v1/me/password","{\"oldPassword\":\"wrong\",\"newPassword\":\"Changed123\",\"confirmPassword\":\"Changed123\"}",login.accessToken()).statusCode());service.me(actor);
+-  assertEquals(204,post("/api/v1/me/password","{\"oldPassword\":\"Secret123\",\"newPassword\":\"Changed123\",\"confirmPassword\":\"Changed123\"}",login.accessToken()).statusCode());
+-  for(int n=0;n<3;n++){for(String token:List.of(login.accessToken(),second.accessToken()))assertEquals(401,meHttp("GET","/me",null,token).statusCode());}
+-  assertThrows(ApiFailure.class,()->service.login("profile42","Secret123"));service.login("profile42","Changed123");service.me(other);
+-  for(int length:new int[]{1,7,32}){String credential="x".repeat(length),name="rotate_admin"+length;service.initializeAdmin(name,credential);var a=service.requireActive("Bearer "+service.login(name,credential).accessToken());String next="字1"+"😀".repeat(length==32?30:6);service.changePassword(a,credential,next,next);service.login(name,next);assertThrows(ApiFailure.class,()->service.login(name,credential));}
+- }
+- @Test void profileAndPasswordCompete42()throws Exception{
+-  service.register("race42","Secret123","Secret123");var actor=service.requireActive("Bearer "+service.login("race42","Secret123").accessToken());
+-  var pool=Executors.newFixedThreadPool(2);var gate=new CyclicBarrier(2);
+-  try{
+-   Callable<Integer> write=()->{gate.await(5,TimeUnit.SECONDS);try{service.updateProfile(actor,"winner","",0L);return 200;}catch(ApiFailure e){return e.status;}};
+-   var a=pool.submit(write);var b=pool.submit(write);assertEquals(Set.of(200,409),Set.of(a.get(10,TimeUnit.SECONDS),b.get(10,TimeUnit.SECONDS)));
+-   Callable<Integer> rotate=()->{gate.await(5,TimeUnit.SECONDS);try{service.changePassword(actor,"Secret123","Changed123","Changed123");return 204;}catch(ApiFailure e){return e.status;}};
+-   a=pool.submit(rotate);b=pool.submit(rotate);assertEquals(Set.of(204,401),Set.of(a.get(15,TimeUnit.SECONDS),b.get(15,TimeUnit.SECONDS)));assertEquals(1,db.queryForObject("SELECT auth_version FROM e4_user WHERE id=?",Integer.class,actor.userId()));
+-  }finally{pool.shutdownNow();}
+- }
+-
+- @Test void controlledRotationLock42()throws Exception{
+-  service.register("locked42","Secret123","Secret123");var actor=service.requireActive("Bearer "+service.login("locked42","Secret123").accessToken());
+-  var locked=new CountDownLatch(1);var release=new CountDownLatch(1);var started=new CountDownLatch(1);
+-  var encoder=app.getBean(org.springframework.security.crypto.password.PasswordEncoder.class);
+-  var guarded=new org.springframework.security.crypto.password.PasswordEncoder(){
+-   public String encode(CharSequence p){if(p.toString().equals("Changed123")){locked.countDown();try{if(!release.await(15,TimeUnit.SECONDS))throw new IllegalStateException("timeout");}catch(InterruptedException e){throw new RuntimeException(e);}}return encoder.encode(p);}
+-   public boolean matches(CharSequence p,String h){return encoder.matches(p,h);}
+-  };
+-  var rotating=new IdentityService(app.getBean(IdentityMapper.class),guarded,app.getBean(org.springframework.transaction.PlatformTransactionManager.class));var pool=Executors.newFixedThreadPool(2);
+-  try{
+-   var first=pool.submit(()->{rotating.changePassword(actor,"Secret123","Changed123","Changed123");return true;});
+-   assertTrue(locked.await(5,TimeUnit.SECONDS));
+-   var second=pool.submit(()->{started.countDown();try{service.changePassword(actor,"Secret123","Another123","Another123");return 204;}catch(ApiFailure e){return e.status;}});
+-   assertTrue(started.await(5,TimeUnit.SECONDS));
+-   long deadline=System.nanoTime()+TimeUnit.SECONDS.toNanos(10);boolean waiting=false;
+-   while(System.nanoTime()<deadline){
+-    waiting=db.queryForObject("SELECT COUNT(*) FROM performance_schema.data_lock_waits w JOIN performance_schema.data_locks l ON l.ENGINE_LOCK_ID=w.REQUESTING_ENGINE_LOCK_ID WHERE l.OBJECT_SCHEMA=DATABASE() AND l.OBJECT_NAME='e4_user'",Integer.class)>0;
+-    if(waiting)break;Thread.sleep(20);
+-   }
+-   assertTrue(waiting,"Second MySQL transaction must be observed waiting on account lock");assertFalse(second.isDone());release.countDown();assertTrue(first.get(5,TimeUnit.SECONDS));assertEquals(401,second.get(5,TimeUnit.SECONDS));service.login("locked42","Changed123");assertThrows(ApiFailure.class,()->service.login("locked42","Another123"));
+-   System.out.println("ROTATION_LOCK42 first encode paused under account/session locks; second transaction observed in data_lock_waits/data_locks; first committed; second current-hash verification rejected");
+-  }finally{release.countDown();pool.shutdownNow();}
+- }
+-}
++package com.example.petadoptioncommunity;
++import com.example.petadoptioncommunity.identity.*;
++import com.example.petadoptioncommunity.operations.Offline;
++import com.example.petadoptioncommunity.web.ApiFailure;
++import org.junit.jupiter.api.*;
++import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
++import org.springframework.boot.builder.SpringApplicationBuilder;
++import org.springframework.context.ConfigurableApplicationContext;
++import org.springframework.jdbc.core.JdbcTemplate;
++import java.sql.*;
++import java.net.*;
++import java.net.http.*;
++import java.util.*;
++import java.util.concurrent.*;
++import static org.junit.jupiter.api.Assertions.*;
++@EnabledIfEnvironmentVariable(named="RUN_IDENTITY_MYSQL",matches="true")
++class IdentityMysqlTest {
++ static ConfigurableApplicationContext app;static IdentityService service;static JdbcTemplate db;static String url;
++ @BeforeAll static void start()throws Exception{
++  TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
++  var allowed=Set.of("pet_adoption_community_test","pet_adoption_experiment_x_test","pet_adoption_experiment_y_test");
++  var configured=URI.create(System.getenv("DB_URL").substring(5)).getPath().substring(1);
++  if(!allowed.contains(configured))throw new IllegalStateException("Refusing non-test URL");
++  try(var c=DriverManager.getConnection(System.getenv("DB_URL"),System.getenv("DB_USERNAME"),System.getenv("DB_PASSWORD"));var st=c.createStatement()){
++   try(var r=st.executeQuery("SELECT DATABASE()")){r.next();if(!allowed.contains(r.getString(1))||!configured.equals(r.getString(1)))throw new IllegalStateException("Refusing non-test database");}
++   st.execute("DROP TABLE IF EXISTS e4_session");st.execute("DROP TABLE IF EXISTS e4_user");st.execute("DROP TABLE IF EXISTS schema_version");
++  }
++  Offline.main(new String[]{"migrate"});Offline.main(new String[]{"migrate"});
++  app=new SpringApplicationBuilder(PetAdoptionCommunityApplication.class).run("--server.port=0","--spring.profiles.active=test");
++  service=app.getBean(IdentityService.class);db=app.getBean(JdbcTemplate.class);
++  url="http://localhost:"+app.getEnvironment().getProperty("local.server.port");
++ }
++ @AfterAll static void stop(){if(app!=null){System.out.println("SAFE_SNAPSHOT users="+db.queryForObject("SELECT COUNT(*) FROM e4_user",Integer.class)+" sessions="+db.queryForObject("SELECT COUNT(*) FROM e4_session",Integer.class)+" revoked="+db.queryForObject("SELECT COUNT(*) FROM e4_session WHERE revoked_at IS NOT NULL",Integer.class)+" schemaVersion="+db.queryForObject("SELECT MAX(version) FROM schema_version",Integer.class));app.close();}}
++ HttpResponse<String> post(String path,String body,String token)throws Exception{
++  var request=HttpRequest.newBuilder(URI.create(url+path));if(body!=null)request.header("Content-Type","application/json");if(token!=null)request.header("Authorization","Bearer "+token);
++  return HttpClient.newHttpClient().send(request.POST(body==null?HttpRequest.BodyPublishers.noBody():HttpRequest.BodyPublishers.ofString(body)).build(),HttpResponse.BodyHandlers.ofString());
++ }
++ @Test void mysqlContractAndSessions()throws Exception{
++  var executor=Executors.newFixedThreadPool(2);var barrier=new CyclicBarrier(2);
++  Callable<Integer> register=()->{barrier.await(5,TimeUnit.SECONDS);try{service.register(" Same_account ","Secret123","Secret123");return 201;}catch(ApiFailure e){return e.status;}};
++  try{var a=executor.submit(register);var b=executor.submit(register);assertEquals(Set.of(201,409),Set.of(a.get(15,TimeUnit.SECONDS),b.get(15,TimeUnit.SECONDS)));}finally{executor.shutdownNow();}
++  assertEquals(1,db.queryForObject("SELECT COUNT(*) FROM e4_user WHERE account='same_account'",Integer.class));
++  var first=service.login("same_account","Secret123");var second=service.login("same_account","Secret123");
++  var actor=service.requireActive("Bearer "+first.accessToken());assertEquals("USER",actor.role());
++  assertEquals(43,first.accessToken().length());assertEquals(32,db.queryForObject("SELECT OCTET_LENGTH(token_hash) FROM e4_session LIMIT 1",Integer.class));
++  for(int i=0;i<3;i++){
++   assertEquals(401,post("/api/v1/admin/users",null,null).statusCode());
++   assertEquals(403,post("/api/v1/admin/users",null,first.accessToken()).statusCode());
++   assertEquals(400,post("/api/v1/auth/register","{\"account\":\"injected\",\"password\":\"Secret123\",\"confirmPassword\":\"Secret123\",\"role\":\"ADMIN\"}",null).statusCode());
++  }
++  assertEquals(0,db.queryForObject("SELECT COUNT(*) FROM e4_user WHERE account='injected'",Integer.class));
++  assertEquals(400,post("/api/v1/auth/logout","{}",first.accessToken()).statusCode());
++  assertEquals(204,post("/api/v1/auth/logout",null,first.accessToken()).statusCode());
++  for(int i=0;i<3;i++){assertEquals(204,post("/api/v1/auth/logout",null,first.accessToken()).statusCode());assertThrows(ApiFailure.class,()->service.requireActive("Bearer "+first.accessToken()));}
++  service.requireActive("Bearer "+second.accessToken());
++  assertThrows(ApiFailure.class,()->service.withActiveActor(actor,List.of(),()->"must not run"));
++  db.update("UPDATE e4_session SET expires_at=UTC_TIMESTAMP(3) - INTERVAL 1 SECOND WHERE revoked_at IS NULL");
++  assertThrows(ApiFailure.class,()->service.requireActive("Bearer "+second.accessToken()));assertEquals(204,post("/api/v1/auth/logout",null,second.accessToken()).statusCode());
++  db.update("UPDATE e4_user SET status='FROZEN',latest_reason='fixture reason',latest_action_at=UTC_TIMESTAMP(3) WHERE account='same_account'");
++  var bad=post("/api/v1/auth/login","{\"account\":\"same_account\",\"password\":\"Incorrect123\"}",null);assertEquals(401,bad.statusCode());assertFalse(bad.body().contains("fixture reason"));
++  var frozen=post("/api/v1/auth/login","{\"account\":\"same_account\",\"password\":\"Secret123\"}",null);assertEquals(403,frozen.statusCode());assertTrue(frozen.body().contains("fixture reason"));assertFalse(frozen.body().contains("accessToken"));
++  assertEquals("ADMIN_CREATED",service.initializeAdmin("offline_admin","Admin1234"));assertEquals("ADMIN_ALREADY_EXISTS",service.initializeAdmin("offline_admin","Different123"));assertEquals("ACCOUNT_CONFLICT",service.initializeAdmin("same_account","Different123"));
++  service.login("offline_admin","Admin1234");assertThrows(ApiFailure.class,()->service.login("offline_admin","Different123"));
++ }
++ @Test void boundariesAndShortAdmin()throws Exception{
++  for(int n:new int[]{3,17})assertThrows(ApiFailure.class,()->service.register("a".repeat(n),"Secret123","Secret123"));
++  for(int n:new int[]{4,16}){String a="b".repeat(n);service.register(a,"Secret123","Secret123");service.login(a,"Secret123");}
++  int i=0;for(int n:new int[]{7,8,32,33}){String password="字1"+"😀".repeat(n-2);String account="unicode_"+(i++);if(n==8||n==32){service.register(account,password,password);service.login(account,password);}else assertThrows(ApiFailure.class,()->service.register(account,password,password));}
++  assertThrows(ApiFailure.class,()->service.register("spaces_x","        ","        "));
++  service.register("spaces_ok"," A123456 "," A123456 ");service.login("spaces_ok"," A123456 ");assertThrows(ApiFailure.class,()->service.login("spaces_ok","A123456"));
++  assertEquals("ADMIN_CREATED",service.initializeAdmin("short_admin","a1"));service.login("short_admin","a1");
++  assertThrows(ApiFailure.class,()->service.register("short_user","a1","a1"));
++  for(String field:List.of("role","status","id","extra"))assertEquals(400,post("/api/v1/auth/register","{\"account\":\"tamper_test\",\"password\":\"Secret123\",\"confirmPassword\":\"Secret123\",\""+field+"\":\"ADMIN\"}",null).statusCode());
++ }
++ @Test void versionAndWriteLogoutOrdering()throws Exception{
++  service.register("ordering","Secret123","Secret123");var login=service.login("ordering","Secret123");var actor=service.requireActive("Bearer "+login.accessToken());
++  var locked=new CountDownLatch(1);var release=new CountDownLatch(1);var started=new CountDownLatch(1);var pool=Executors.newFixedThreadPool(2);
++  try{
++   var write=pool.submit(()->service.withActiveActor(actor,List.of(),()->{locked.countDown();try{if(!release.await(15,TimeUnit.SECONDS))throw new IllegalStateException("timeout");}catch(InterruptedException e){throw new RuntimeException(e);}db.update("UPDATE e4_user SET bio='ordered write' WHERE id=?",actor.userId());return true;}));
++   assertTrue(locked.await(5,TimeUnit.SECONDS));var logout=pool.submit(()->{started.countDown();service.logout("Bearer "+login.accessToken());return true;});assertTrue(started.await(5,TimeUnit.SECONDS));assertFalse(logout.isDone());release.countDown();assertTrue(write.get(5,TimeUnit.SECONDS));assertTrue(logout.get(5,TimeUnit.SECONDS));
++   assertEquals("ordered write",db.queryForObject("SELECT bio FROM e4_user WHERE id=?",String.class,actor.userId()));
++   assertThrows(ApiFailure.class,()->service.withActiveActor(actor,List.of(),()->{db.update("UPDATE e4_user SET bio='bad' WHERE id=?",actor.userId());return true;}));
++  }finally{release.countDown();pool.shutdownNow();}
++  var fresh=service.login("ordering","Secret123");var old=service.requireActive("Bearer "+fresh.accessToken());db.update("UPDATE e4_user SET auth_version=auth_version+1,state_version=state_version+1 WHERE id=?",old.userId());
++  for(int n=0;n<3;n++){assertThrows(ApiFailure.class,()->service.requireActive("Bearer "+fresh.accessToken()));assertThrows(ApiFailure.class,()->service.withActiveActor(old,List.of(),()->true));}
++ }
++ @Test void loginHashChangesAfterPrecheck()throws Exception{
++  service.register("hash_race","Secret123","Secret123");var rotationActor=service.requireActive("Bearer "+service.login("hash_race","Secret123").accessToken());var verified=new CountDownLatch(1);var release=new CountDownLatch(1);
++  var encoder=app.getBean(org.springframework.security.crypto.password.PasswordEncoder.class);
++  var guarded=new org.springframework.security.crypto.password.PasswordEncoder(){
++   public String encode(CharSequence p){return encoder.encode(p);}
++   public boolean matches(CharSequence p,String h){boolean ok=encoder.matches(p,h);verified.countDown();try{if(!release.await(15,TimeUnit.SECONDS))throw new IllegalStateException("timeout");}catch(InterruptedException e){throw new RuntimeException(e);}return ok;}
++  };
++  var racing=new IdentityService(app.getBean(IdentityMapper.class),guarded,app.getBean(org.springframework.transaction.PlatformTransactionManager.class));var pool=Executors.newSingleThreadExecutor();
++  int before=db.queryForObject("SELECT COUNT(*) FROM e4_session",Integer.class);
++  try{var result=pool.submit(()->racing.login("hash_race","Secret123"));assertTrue(verified.await(5,TimeUnit.SECONDS));service.changePassword(rotationActor,"Secret123","Replacement123","Replacement123");release.countDown();var error=assertThrows(ExecutionException.class,()->result.get(5,TimeUnit.SECONDS));assertInstanceOf(ApiFailure.class,error.getCause());assertEquals(before,db.queryForObject("SELECT COUNT(*) FROM e4_session",Integer.class));}
++  finally{release.countDown();pool.shutdownNow();}
++  service.login("hash_race","Replacement123");
++ }
++ @Test void privateStdinInitialization()throws Exception{
++  String secret=UUID.randomUUID().toString().substring(0,6);
++  ProcessBuilder builder=new ProcessBuilder(System.getProperty("java.home")+"/bin/java", "-cp",System.getProperty("surefire.test.class.path",System.getProperty("java.class.path")),Offline.class.getName(),"admin-stdin"); builder.environment().put("APP_PROFILE","test"); Process process=builder.redirectErrorStream(true).start();
++  try(var input=new java.io.OutputStreamWriter(process.getOutputStream(),java.nio.charset.StandardCharsets.UTF_8)){input.write("stdin_admin\n"+secret+"\n");}
++  var drain=Executors.newSingleThreadExecutor();try{
++   var output=drain.submit(()->new String(process.getInputStream().readAllBytes(),java.nio.charset.StandardCharsets.UTF_8));
++   assertTrue(process.waitFor(20,TimeUnit.SECONDS));String text=output.get(5,TimeUnit.SECONDS);assertEquals(0,process.exitValue(),"Offline command failed");assertTrue(text.contains("result=ADMIN_CREATED"));assertFalse(text.contains(secret));assertEquals("ADMIN",service.login("stdin_admin",secret).user().role());
++  }finally{process.destroyForcibly();drain.shutdownNow();}
++ }
++
++ @Test void additionalLoginAndAdminBoundaries()throws Exception{
++  service.register("boundary_login","Secret123","Secret123");
++  for(int n:new int[]{0,1,7,8,32,33}){
++   String wrong=n<2?"x".repeat(n):"字1"+"😀".repeat(n-2);
++   int before=db.queryForObject("SELECT COUNT(*) FROM e4_session",Integer.class);
++   assertEquals(n==0||n==33?400:401,assertThrows(ApiFailure.class,()->service.login("boundary_login",wrong)).status);
++   assertEquals(n==0||n==33?400:401,assertThrows(ApiFailure.class,()->service.login("unknown_login",wrong)).status);
++   assertEquals(before,db.queryForObject("SELECT COUNT(*) FROM e4_session",Integer.class));
++  }
++  for(int length:new int[]{1,7}){String credential="x".repeat(length);String name="short_len_"+length;service.initializeAdmin(name,credential);service.login(name,credential);}
++  var wrong=post("/api/v1/auth/login","{\"account\":\"boundary_login\",\"password\":\"x\"}",null);
++  var unknown=post("/api/v1/auth/login","{\"account\":\"unknown_login\",\"password\":\"x\"}",null);
++  assertEquals(wrong.statusCode(),unknown.statusCode());assertTrue(wrong.body().contains("账号或密码错误"));assertTrue(unknown.body().contains("账号或密码错误"));
++  int users=db.queryForObject("SELECT COUNT(*) FROM e4_user",Integer.class);
++  assertThrows(ApiFailure.class,()->service.initializeAdmin("admin_too_long","a1"+"😀".repeat(31)));
++  assertEquals(users,db.queryForObject("SELECT COUNT(*) FROM e4_user",Integer.class));
++  String maximum="a1"+"😀".repeat(30);assertEquals("ADMIN_CREATED",service.initializeAdmin("admin_maximum",maximum));service.login("admin_maximum",maximum);
++ }
++ @Test void successfulHttpContractAndSchemaGuard()throws Exception{
++  var registered=post("/api/v1/auth/register","{\"account\":\" HTTP_success \",\"password\":\"Secret123\",\"confirmPassword\":\"Secret123\"}",null);
++  assertEquals(201,registered.statusCode());assertEquals("no-store",registered.headers().firstValue("Cache-Control").orElseThrow());
++  var mapper=new tools.jackson.databind.ObjectMapper();var user=mapper.readTree(registered.body());assertEquals(6,user.size());assertEquals("http_success",user.get("account").asText());assertEquals("http_success",user.get("nickname").asText());assertEquals("USER",user.get("role").asText());assertEquals("ACTIVE",user.get("status").asText());UUID.fromString(user.get("id").asText());assertTrue(user.get("createdAt").asText().matches(".*\\.\\d{3}Z"));assertFalse(registered.body().contains("Secret123"));
++  var logged=post("/api/v1/auth/login","{\"account\":\"http_success\",\"password\":\"Secret123\"}",null);assertEquals(200,logged.statusCode());var login=mapper.readTree(logged.body());assertEquals(3,login.size());assertEquals(user.get("id").asText(),login.get("user").get("id").asText());String token=login.get("accessToken").asText();var actor=service.requireActive("Bearer "+token);assertEquals(user.get("id").asText(),actor.userId());assertFalse(actor.toString().contains(token));assertNotEquals(token,actor.sessionKey());assertTrue(login.get("expiresAt").asText().matches(".*\\.\\d{3}Z"));
++  var metadata=db.queryForMap("SELECT version,checksum,applied_at FROM schema_version");var guard=app.getBean(com.example.petadoptioncommunity.operations.SchemaGuard.class);var args=new org.springframework.boot.DefaultApplicationArguments(new String[0]);
++  try{
++   db.update("UPDATE schema_version SET checksum=?","0".repeat(64));assertThrows(IllegalStateException.class,()->guard.run(args));
++   db.update("UPDATE schema_version SET checksum=?,version=2",metadata.get("checksum"));assertThrows(IllegalStateException.class,()->guard.run(args));
++   db.update("INSERT INTO schema_version VALUES(1,?,UTC_TIMESTAMP(3))",metadata.get("checksum"));assertThrows(IllegalStateException.class,()->guard.run(args));
++  }finally{db.update("DELETE FROM schema_version");db.update("INSERT INTO schema_version VALUES(?,?,?)",metadata.get("version"),metadata.get("checksum"),metadata.get("applied_at"));}
++  guard.run(args);
++ }
++ @Test void absoluteThirtyMinuteExpiryDoesNotSlide()throws Exception{
++  service.register("ttl_contract","Secret123","Secret123");
++  java.time.Instant before=java.time.Instant.now();
++  var response=post("/api/v1/auth/login","{\"account\":\"ttl_contract\",\"password\":\"Secret123\"}",null);
++  java.time.Instant after=java.time.Instant.now();assertEquals(200,response.statusCode());
++  var json=new tools.jackson.databind.ObjectMapper().readTree(response.body());
++  String token=json.get("accessToken").asText();java.time.Instant returned=java.time.Instant.parse(json.get("expiresAt").asText());
++  byte[] digest=java.security.MessageDigest.getInstance("SHA-256").digest(token.getBytes(java.nio.charset.StandardCharsets.UTF_8));
++  java.time.Instant stored=db.queryForObject("SELECT expires_at FROM e4_session WHERE token_hash=?",java.sql.Timestamp.class,digest).toInstant();
++  java.time.Instant earliest=before.truncatedTo(java.time.temporal.ChronoUnit.MILLIS).plusSeconds(1800).minusMillis(1);
++  java.time.Instant latest=after.plusSeconds(1800).plusMillis(1);
++  assertFalse(returned.isBefore(earliest));assertFalse(returned.isAfter(latest));
++  assertFalse(stored.isBefore(earliest));assertFalse(stored.isAfter(latest));
++  assertTrue(Math.abs(java.time.Duration.between(returned,stored).toMillis())<=1);
++  for(int read=0;read<3;read++){
++   service.requireActive("Bearer "+token);
++   assertEquals(403,post("/api/v1/admin/users",null,token).statusCode());
++   assertEquals(stored,db.queryForObject("SELECT expires_at FROM e4_session WHERE token_hash=?",java.sql.Timestamp.class,digest).toInstant());
++  }
++  System.out.println("TTL_CONTRACT response/database within login window +1800 seconds; three authenticated reads unchanged");
++ }
++
++ HttpResponse<String> meHttp(String method,String path,String body,String token)throws Exception{
++  var r=HttpRequest.newBuilder(URI.create(url+"/api/v1"+path)).header("Authorization","Bearer "+token);
++  if(body!=null)r.header("Content-Type","application/json");
++  return HttpClient.newHttpClient().send(r.method(method,body==null?HttpRequest.BodyPublishers.noBody():HttpRequest.BodyPublishers.ofString(body)).build(),HttpResponse.BodyHandlers.ofString());
++ }
++ @Test void profileAndPasswordStory42()throws Exception{
++  service.register("profile42","Secret123","Secret123");service.register("other42","Secret123","Secret123");
++  var login=service.login("profile42","Secret123");var second=service.login("profile42","Secret123");var actor=service.requireActive("Bearer "+login.accessToken());
++  var other=service.requireActive("Bearer "+service.login("other42","Secret123").accessToken());
++  var current=service.me(actor);assertEquals(0,current.profileVersion());assertEquals("",current.bio());
++  for(String value:List.of("0.9","-0.9","0.0","\"0\"","true","false","null","{}","[]","9223372036854775808","-1")){
++   var before=service.me(actor);
++   assertEquals(400,meHttp("PUT","/me","{\"nickname\":\"must not save\",\"bio\":\"invalid version\",\"expectedProfileVersion\":"+value+"}",login.accessToken()).statusCode(),value);
++   assertEquals(before,service.me(actor),"Invalid version must not mutate profile: "+value);
++  }
++  assertEquals(200,meHttp("PUT","/me","{\"nickname\":\"integer accepted\",\"bio\":\"\",\"expectedProfileVersion\":0}",login.accessToken()).statusCode());
++  assertEquals(1,service.me(actor).profileVersion());
++  for(int n:new int[]{0,1,30,31}){String nick="😀".repeat(n);long v=service.me(actor).profileVersion();if(n==1||n==30)assertEquals(n,service.updateProfile(actor," "+nick+" ","",v).nickname().codePointCount(0,nick.length()));else assertEquals(400,assertThrows(ApiFailure.class,()->service.updateProfile(actor,nick,"",v)).status);}
++  for(int n:new int[]{0,200,201}){String bio="😀".repeat(n);long v=service.me(actor).profileVersion();if(n<=200)assertEquals(bio,service.updateProfile(actor,"nick",bio,v).bio());else assertEquals(400,assertThrows(ApiFailure.class,()->service.updateProfile(actor,"nick",bio,v)).status);}
++  long version=service.me(actor).profileVersion();service.updateProfile(actor,"<script>alert(1)</script>","<b>text</b>",version);
++  assertEquals(409,assertThrows(ApiFailure.class,()->service.updateProfile(actor,"lost","",version)).status);
++  long httpVersion=service.me(actor).profileVersion();
++  var put=meHttp("PUT","/me","{\"nickname\":\" http nick \",\"bio\":\"persisted\",\"expectedProfileVersion\":"+httpVersion+"}",login.accessToken());assertEquals(200,put.statusCode());
++  var saved=new tools.jackson.databind.ObjectMapper().readTree(put.body());assertEquals("http nick",saved.get("nickname").asText());assertEquals("persisted",saved.get("bio").asText());assertEquals(httpVersion+1,saved.get("profileVersion").asLong());assertEquals(put.body(),meHttp("GET","/me",null,login.accessToken()).body());
++  var hashes=db.queryForList("SELECT id,password_hash,auth_version FROM e4_user ORDER BY id");
++  var sessions=db.queryForList("SELECT HEX(token_hash) token,revoked_at FROM e4_session ORDER BY token_hash");
++  for(String field:List.of("userId","role","status"))for(int attempt=0;attempt<3;attempt++)assertEquals(400,post("/api/v1/me/password","{\"oldPassword\":\"Secret123\",\"newPassword\":\"Changed123\",\"confirmPassword\":\"Changed123\",\""+field+"\":\""+other.userId()+"\"}",login.accessToken()).statusCode());
++  assertEquals(hashes,db.queryForList("SELECT id,password_hash,auth_version FROM e4_user ORDER BY id"));assertEquals(sessions,db.queryForList("SELECT HEX(token_hash) token,revoked_at FROM e4_session ORDER BY token_hash"));
++  var read=meHttp("GET","/me",null,login.accessToken());assertEquals(200,read.statusCode());assertEquals(8,new tools.jackson.databind.ObjectMapper().readTree(read.body()).size());assertFalse(read.body().contains("password"));assertFalse(read.body().contains("authVersion"));
++  for(int n=0;n<3;n++){
++   assertEquals(400,meHttp("GET","/me?userId="+other.userId(),null,login.accessToken()).statusCode());
++   assertEquals(400,meHttp("PUT","/me","{\"nickname\":\"bad\",\"bio\":\"\",\"expectedProfileVersion\":0,\"userId\":\""+other.userId()+"\"}",login.accessToken()).statusCode());
++  }
++  assertEquals("other42",service.me(other).nickname());
++  assertEquals(400,meHttp("PUT","/me","{\"nickname\":\"bad\",\"bio\":\"\"}",login.accessToken()).statusCode());
++  for(int n:new int[]{0,1,7,32,33}){String wrong="x".repeat(n);assertEquals(400,assertThrows(ApiFailure.class,()->service.changePassword(actor,wrong,"Changed123","Changed123")).status);service.me(actor);}
++  for(int n:new int[]{7,33}){String invalid="a1"+"😀".repeat(n-2);assertThrows(ApiFailure.class,()->service.changePassword(actor,"Secret123",invalid,invalid));}
++  assertThrows(ApiFailure.class,()->service.changePassword(actor,"Secret123","Changed123","Different123"));assertThrows(ApiFailure.class,()->service.changePassword(actor,"Secret123","Secret123","Secret123"));
++  assertEquals(400,post("/api/v1/me/password","{\"oldPassword\":\"wrong\",\"newPassword\":\"Changed123\",\"confirmPassword\":\"Changed123\"}",login.accessToken()).statusCode());service.me(actor);
++  assertEquals(204,post("/api/v1/me/password","{\"oldPassword\":\"Secret123\",\"newPassword\":\"Changed123\",\"confirmPassword\":\"Changed123\"}",login.accessToken()).statusCode());
++  for(int n=0;n<3;n++){for(String token:List.of(login.accessToken(),second.accessToken()))assertEquals(401,meHttp("GET","/me",null,token).statusCode());}
++  assertThrows(ApiFailure.class,()->service.login("profile42","Secret123"));service.login("profile42","Changed123");service.me(other);
++  for(int length:new int[]{1,7,32}){String credential="x".repeat(length),name="rotate_admin"+length;service.initializeAdmin(name,credential);var a=service.requireActive("Bearer "+service.login(name,credential).accessToken());String next="字1"+"😀".repeat(length==32?30:6);service.changePassword(a,credential,next,next);service.login(name,next);assertThrows(ApiFailure.class,()->service.login(name,credential));}
++ }
++ @Test void profileAndPasswordCompete42()throws Exception{
++  service.register("race42","Secret123","Secret123");var actor=service.requireActive("Bearer "+service.login("race42","Secret123").accessToken());
++  var pool=Executors.newFixedThreadPool(2);var gate=new CyclicBarrier(2);
++  try{
++   Callable<Integer> write=()->{gate.await(5,TimeUnit.SECONDS);try{service.updateProfile(actor,"winner","",0L);return 200;}catch(ApiFailure e){return e.status;}};
++   var a=pool.submit(write);var b=pool.submit(write);assertEquals(Set.of(200,409),Set.of(a.get(10,TimeUnit.SECONDS),b.get(10,TimeUnit.SECONDS)));
++   Callable<Integer> rotate=()->{gate.await(5,TimeUnit.SECONDS);try{service.changePassword(actor,"Secret123","Changed123","Changed123");return 204;}catch(ApiFailure e){return e.status;}};
++   a=pool.submit(rotate);b=pool.submit(rotate);assertEquals(Set.of(204,401),Set.of(a.get(15,TimeUnit.SECONDS),b.get(15,TimeUnit.SECONDS)));assertEquals(1,db.queryForObject("SELECT auth_version FROM e4_user WHERE id=?",Integer.class,actor.userId()));
++  }finally{pool.shutdownNow();}
++ }
++
++ @Test void controlledRotationLock42()throws Exception{
++  service.register("locked42","Secret123","Secret123");var actor=service.requireActive("Bearer "+service.login("locked42","Secret123").accessToken());
++  var locked=new CountDownLatch(1);var release=new CountDownLatch(1);var started=new CountDownLatch(1);
++  var encoder=app.getBean(org.springframework.security.crypto.password.PasswordEncoder.class);
++  var guarded=new org.springframework.security.crypto.password.PasswordEncoder(){
++   public String encode(CharSequence p){if(p.toString().equals("Changed123")){locked.countDown();try{if(!release.await(15,TimeUnit.SECONDS))throw new IllegalStateException("timeout");}catch(InterruptedException e){throw new RuntimeException(e);}}return encoder.encode(p);}
++   public boolean matches(CharSequence p,String h){return encoder.matches(p,h);}
++  };
++  var rotating=new IdentityService(app.getBean(IdentityMapper.class),guarded,app.getBean(org.springframework.transaction.PlatformTransactionManager.class));var pool=Executors.newFixedThreadPool(2);
++  try{
++   var first=pool.submit(()->{rotating.changePassword(actor,"Secret123","Changed123","Changed123");return true;});
++   assertTrue(locked.await(5,TimeUnit.SECONDS));
++   var second=pool.submit(()->{started.countDown();try{service.changePassword(actor,"Secret123","Another123","Another123");return 204;}catch(ApiFailure e){return e.status;}});
++   assertTrue(started.await(5,TimeUnit.SECONDS));
++   long deadline=System.nanoTime()+TimeUnit.SECONDS.toNanos(10);boolean waiting=false;
++   while(System.nanoTime()<deadline){
++    waiting=db.queryForObject("SELECT COUNT(*) FROM performance_schema.data_lock_waits w JOIN performance_schema.data_locks l ON l.ENGINE_LOCK_ID=w.REQUESTING_ENGINE_LOCK_ID WHERE l.OBJECT_SCHEMA=DATABASE() AND l.OBJECT_NAME='e4_user'",Integer.class)>0;
++    if(waiting)break;Thread.sleep(20);
++   }
++   assertTrue(waiting,"Second MySQL transaction must be observed waiting on account lock");assertFalse(second.isDone());release.countDown();assertTrue(first.get(5,TimeUnit.SECONDS));assertEquals(401,second.get(5,TimeUnit.SECONDS));service.login("locked42","Changed123");assertThrows(ApiFailure.class,()->service.login("locked42","Another123"));
++   System.out.println("ROTATION_LOCK42 first encode paused under account/session locks; second transaction observed in data_lock_waits/data_locks; first committed; second current-hash verification rejected");
++  }finally{release.countDown();pool.shutdownNow();}
++ }
++ @Test void adminQueryStory43()throws Exception{
++  service.initializeAdmin("query43_admin","Admin1234");String admin=service.login("query43_admin","Admin1234").accessToken();
++  for(int i=0;i<30;i++){String name=String.format("query43_%02d",i);service.register(name,"Secret123","Secret123");}
++  service.register("query43x01","Secret123","Secret123");
++  db.update("UPDATE e4_user SET created_at='2026-01-01 00:00:00.000' WHERE account LIKE 'query43\\_%' AND role='USER'");
++  db.update("UPDATE e4_user SET status='FROZEN',latest_reason='query fixture',latest_action_at=UTC_TIMESTAMP(3) WHERE account='query43_00'");
++  String user=service.login("query43_01","Secret123").accessToken();var json=new tools.jackson.databind.ObjectMapper();
++  String prefix="/admin/users?accountContains=query43_&status=ACTIVE";
++  var page=json.readTree(meHttp("GET",prefix+"&size=10",null,admin).body());assertEquals(30,page.get("total").asInt());assertEquals(10,page.get("items").size());
++  var expected=db.queryForList("SELECT id FROM e4_user WHERE LOCATE('query43_',account)>0 AND status='ACTIVE' ORDER BY created_at DESC,id DESC",String.class);
++  for(int p=1;p<=3;p++){var response=meHttp("GET",prefix+"&size=10&page="+p,null,admin);assertEquals(200,response.statusCode());var body=json.readTree(response.body());for(int i=0;i<10;i++){var row=body.get("items").get(i);assertEquals(expected.get((p-1)*10+i),row.get("id").asText());assertEquals(Set.of("id","account","nickname","role","status","createdAt"),row.propertyNames());assertTrue(row.get("createdAt").asText().endsWith(".000Z")||row.get("account").asText().equals("query43_admin"));}}
++  var defaults=json.readTree(meHttp("GET","/admin/users?accountContains=query43_",null,admin).body());assertEquals(20,defaults.get("size").asInt());assertEquals(1,defaults.get("page").asInt());assertEquals(31,defaults.get("total").asInt());
++  var all=json.readTree(meHttp("GET","/admin/users?accountContains=query43_&size=50",null,admin).body());assertEquals(31,all.get("items").size());assertEquals(50,all.get("size").asInt());
++  var partial=json.readTree(meHttp("GET","/admin/users?accountContains=query43_&size=20&page=2",null,admin).body());assertEquals(11,partial.get("items").size());assertEquals(31,partial.get("total").asInt());
++  var beyond=json.readTree(meHttp("GET","/admin/users?accountContains=query43_&size=20&page=3",null,admin).body());assertEquals(0,beyond.get("items").size());assertEquals(31,beyond.get("total").asInt());
++  var literal=json.readTree(meHttp("GET","/admin/users?accountContains=query43_01",null,admin).body());assertEquals(1,literal.get("total").asInt());assertEquals("query43_01",literal.get("items").get(0).get("account").asText());
++  var noHistory=json.readTree(meHttp("GET","/admin/users/"+literal.get("items").get(0).get("id").asText(),null,admin).body());assertTrue(noHistory.get("latestReason").isNull());assertTrue(noHistory.get("latestActionAt").isNull());
++  for(String q:List.of("%25","no_such_account")){var empty=json.readTree(meHttp("GET","/admin/users?accountContains="+q,null,admin).body());assertEquals(0,empty.get("total").asInt());assertEquals(0,empty.get("items").size());}
++  var normalized=json.readTree(meHttp("GET","/admin/users?accountContains=%20QUERY43_00%20&status=FROZEN",null,admin).body());assertEquals(1,normalized.get("total").asInt());String id=normalized.get("items").get(0).get("id").asText();
++  var response=meHttp("GET","/admin/users/"+id,null,admin);assertEquals(200,response.statusCode());var detail=json.readTree(response.body());assertEquals(Set.of("id","account","nickname","role","status","createdAt","bio","latestReason","latestActionAt","stateVersion"),detail.propertyNames());assertEquals("query fixture",detail.get("latestReason").asText());assertTrue(detail.get("latestActionAt").asText().endsWith("Z"));
++  for(String forbidden:List.of("password","authVersion","token","profileVersion"))assertFalse(response.body().contains(forbidden));
++  for(String q:List.of("page=","page=0","page=-1","page=1.5","page=true","page=2147483648","size=","size=1","size=51","size=20.0","status=","status=active","accountContains=12345678901234567","page=1&page=2","role=ADMIN"))assertEquals(400,meHttp("GET","/admin/users?"+q,null,admin).statusCode(),q);
++  assertEquals(400,meHttp("GET","/admin/users/bad",null,admin).statusCode());assertEquals(404,meHttp("GET","/admin/users/"+UUID.randomUUID(),null,admin).statusCode());
++  for(int n=0;n<3;n++)for(String path:List.of("/admin/users","/admin/users/"+id)){
++   var guest=HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url+"/api/v1"+path)).GET().build(),HttpResponse.BodyHandlers.ofString());assertEquals(401,guest.statusCode());assertFalse(guest.body().contains("query43"));
++   var denied=meHttp("GET",path,null,user);assertEquals(403,denied.statusCode());assertEquals(Set.of("code","message","requestId"),json.readTree(denied.body()).propertyNames());assertFalse(denied.body().contains("query43"));
++   var forged=HttpRequest.newBuilder(URI.create(url+"/api/v1"+path)).header("Authorization","Bearer "+user).header("X-Role","ADMIN").GET().build();var forgedResponse=HttpClient.newHttpClient().send(forged,HttpResponse.BodyHandlers.ofString());assertEquals(403,forgedResponse.statusCode());assertEquals(Set.of("code","message","requestId"),json.readTree(forgedResponse.body()).propertyNames());assertFalse(forgedResponse.body().contains("query43"));
++  }
++  var query=app.getBean(com.example.petadoptioncommunity.administration.AdminUsersService.class);var actor=service.requireActive("Bearer "+user);
++  assertEquals(403,assertThrows(ApiFailure.class,()->query.list(actor,null,null,null,null)).status);
++  var fake=new IdentityPort.Actor(actor.userId(),"ADMIN",actor.stateVersion(),actor.authVersion(),actor.sessionKey());assertEquals(401,assertThrows(ApiFailure.class,()->query.detail(fake,id)).status);
++ }}
+diff --git a/vue1/src/App.vue b/vue1/src/App.vue
+index b3dea10..063f43c 100644
+--- a/vue1/src/App.vue
++++ b/vue1/src/App.vue
+@@ -1,114 +1,117 @@
+-<template>
+-  <main>
+-    <header><p>宠物领养社区 · 账号中心</p><h1>{{ session.user ? '欢迎，' + session.user.nickname : (registering ? '创建社区账号' : '登录社区') }}</h1></header>
+-    <section v-if="session.user">
+-      <p>账号：{{ session.user.account }} · {{ session.user.role }}</p>
+-      <p>本次会话到期：{{ displayTime(session.expiresAt) }}（Asia/Shanghai）</p>
+-      <button :disabled="busy" @click="logout">{{ busy ? '处理中…' : '退出当前会话' }}</button>
+-      <h2>本人资料</h2>
+-      <p v-if="profileLoading">资料加载中…</p>
+-      <button :disabled="busy || profileLoading" @click="loadProfile()">刷新资料</button>
+-      <form v-if="profile" @submit.prevent="saveProfile">
+-        <p>用户标识：{{ profile.id }} · 状态：{{ profile.status }}</p><p>注册时间：{{ displayTime(profile.createdAt) }}（Asia/Shanghai）</p>
+-        <label>昵称<input v-model="nickname" :disabled="busy || profileLoading" required></label>
+-        <label>简介<textarea v-model="bio" :disabled="busy || profileLoading" /></label>
+-        <p v-if="review">服务器最新资料：{{ review.nickname }} / {{ review.bio }}（版本 {{ review.profileVersion }}）。你的输入已保留。</p>
+-        <button v-if="review" type="button" :disabled="busy" @click="acceptVersion">已核对，采用最新版本继续编辑</button>
+-        <button :disabled="busy || profileLoading || !!review">保存资料</button>
+-      </form>
+-      <p v-else-if="!profileLoading">资料尚未加载，请刷新重试。</p>
+-      <h2>更换密码</h2>
+-      <form @submit.prevent="changePassword">
+-        <label>原密码<input v-model="oldPassword" type="password" autocomplete="current-password" :disabled="busy" required></label>
+-        <label>新密码<input v-model="newPassword" type="password" autocomplete="new-password" :disabled="busy" required></label>
+-        <label>确认新密码<input v-model="confirmNewPassword" type="password" autocomplete="new-password" :disabled="busy" required></label>
+-        <small>原密码非空且最多32个字符；新密码8—32个Unicode字符且含字母数字，不裁剪空白。</small>
+-        <button :disabled="busy">更换密码并退出所有会话</button>
+-      </form>
+-      <p>本人通知：待后续故事接入</p>
+-      <button disabled>领养管理 · 待集成</button><button disabled>社区管理 · 待集成</button><button disabled>订单管理 · 待集成</button>
+-    </section>
+-    <form v-else @submit.prevent="submit">
+-      <label>账号<input v-model="account" autocomplete="username" required :disabled="busy"></label>
+-      <small>4—16 位 ASCII 字母、数字或下划线，自动去首尾空白并转小写</small>
+-      <label>密码<input v-model="password" type="password" :autocomplete="registering ? 'new-password' : 'current-password'" required :disabled="busy"></label>
+-      <small>{{ registering ? "8—32 个 Unicode 字符，含字母和数字；密码保留空白" : "请输入密码，保留空白；初始管理员使用负责人提供的凭据" }}</small>
+-      <label v-if="registering">确认密码<input v-model="confirmation" type="password" autocomplete="new-password" required :disabled="busy"></label>
+-      <button :disabled="busy">{{ busy ? '处理中…' : (registering ? '注册' : '登录 / 核验受限原因') }}</button>
+-      <button type="button" :disabled="busy" @click="switchMode">{{ registering ? '已有账号，前往登录' : '创建新账号' }}</button>
+-    </form>
+-    <p role="status" aria-live="polite">{{ message }}</p>
+-    <aside v-if="frozen"><h2>账号受限</h2><p>{{ frozen.reason }}</p><p>{{ displayTime(frozen.actionAt) }}（Asia/Shanghai）</p><p>请联系管理员线下核实。刷新后需重新核验。</p></aside>
+-    <footer>会话仅保存在本页内存，刷新或关闭页面后请重新登录。</footer>
+-  </main>
+-</template>
+-<script>
+-import { session, clearSession, setSession } from './state/session'
+-import { request } from './api/client'
+-import { normalizeAccount, validAccount, validPassword } from './validation/account'
+-export default {
+-  name: 'App',
+-  data: () => ({ session, registering: false, account: '', password: '', confirmation: '', busy: false, message: '', frozen: null, profile: null, profileLoading: false, nickname: '', bio: '', review: null, oldPassword: '', newPassword: '', confirmNewPassword: '' }),
+-  watch: { 'session.accessToken': { flush: 'sync', handler () { this.resetAccountState() } } },
+-  methods: {
+-    resetAccountState () { this.profileLoading = false; this.profile = null; this.review = null; this.nickname = ''; this.bio = ''; this.oldPassword = ''; this.newPassword = ''; this.confirmNewPassword = '' },
+-    displayTime (time) { return new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', dateStyle: 'medium', timeStyle: 'medium' }).format(new Date(time)) },
+-    switchMode () { this.registering = !this.registering; this.password = ''; this.confirmation = ''; this.frozen = null; this.message = '' },
+-    async submit () {
+-      this.busy = true; this.message = ''; this.frozen = null
+-      try {
+-        if (!validAccount(this.account) || (this.registering ? !validPassword(this.password) : (!this.password || Array.from(this.password).length > 32)) || (this.registering && this.password !== this.confirmation)) throw new Error('请核对账号、密码格式及确认密码')
+-        const body = { account: normalizeAccount(this.account), password: this.password }
+-        if (this.registering) body.confirmPassword = this.confirmation
+-        const result = await request('/auth/' + (this.registering ? 'register' : 'login'), body)
+-        if (this.registering) { this.registering = false; this.message = '注册成功，请登录' } else { this.resetAccountState(); setSession(result); this.message = '登录成功'; await this.loadProfile() }
+-      } catch (error) { this.message = error.message; if (error.result && error.result.code === 'ACCOUNT_FROZEN_VERIFIED') this.frozen = error.result } finally { this.password = ''; this.confirmation = ''; this.busy = false }
+-    },
+-    async loadProfile (preserve = false) {
+-      const token = session.accessToken
+-      this.profileLoading = true
+-      try {
+-        const latest = await request('/me', undefined, 'GET')
+-        if (token !== session.accessToken) return
+-        if (preserve) this.review = latest
+-        else { this.profile = latest; this.nickname = latest.nickname; this.bio = latest.bio; this.review = null }
+-      } catch (error) { if (token === session.accessToken) this.message = error.message } finally { if (token === session.accessToken) this.profileLoading = false }
+-    },
+-    acceptVersion () { this.profile = this.review; this.review = null; this.message = '已采用核对后的版本，请再次提交' },
+-    async saveProfile () {
+-      this.busy = true; this.message = ''
+-      try {
+-        const length = Array.from(this.nickname.trim()).length
+-        if (length < 1 || length > 30 || Array.from(this.bio).length > 200) throw new Error('昵称须1—30字，简介最多200字')
+-        this.profile = await request('/me', { nickname: this.nickname, bio: this.bio, expectedProfileVersion: this.profile.profileVersion }, 'PUT')
+-        this.nickname = this.profile.nickname; session.user.nickname = this.profile.nickname; this.message = '资料已保存'
+-      } catch (error) {
+-        this.message = error.message
+-        if (error.uncertain || (error.result && error.result.code === 'VERSION_CONFLICT')) await this.loadProfile(true)
+-      } finally { this.busy = false }
+-    },
+-    async changePassword () {
+-      this.busy = true; this.message = ''
+-      try {
+-        if (!this.oldPassword || Array.from(this.oldPassword).length > 32 || !validPassword(this.newPassword) || this.newPassword !== this.confirmNewPassword || this.newPassword === this.oldPassword) throw new Error('请核对原密码、新密码及确认密码')
+-        await request('/me/password', { oldPassword: this.oldPassword, newPassword: this.newPassword, confirmPassword: this.confirmNewPassword })
+-        clearSession(); this.resetAccountState(); this.message = '密码已更换，请用新密码登录'
+-      } catch (error) {
+-        this.message = error.message
+-        if (error.uncertain || (error.result && error.result.code === 'VERSION_CONFLICT')) { clearSession(); this.resetAccountState(); this.message = '结果未确认，请重新登录核验密码' }
+-      } finally { this.oldPassword = ''; this.newPassword = ''; this.confirmNewPassword = ''; this.busy = false }
+-    },
+-    async logout () {
+-      this.busy = true; this.message = ''
+-      try { await request('/auth/logout'); clearSession(); this.resetAccountState(); this.message = '已退出当前会话' } catch (error) { this.message = error.message } finally { this.busy = false }
+-    }
+-  }
+-}
+-</script>
+-<style>
+-body { margin: 0; background: #f4f7f2; color: #243e32; font-family: system-ui, sans-serif; }
+-main { max-width: 620px; margin: 48px auto; padding: 32px; background: white; border-radius: 16px; }
+-h1 { font-size: 28px; } label { display: block; margin-top: 20px; } input { display: block; box-sizing: border-box; width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #8a9c90; border-radius: 6px; }
+-button { padding: 12px 18px; margin: 18px 10px 4px 0; border: 1px solid #396b50; border-radius: 6px; background: #eaf3ea; color: #243e32; cursor: pointer; } button:disabled { opacity: .6; cursor: default; } small { display: block; line-height: 1.5; } small, footer { color: #54655b; } footer { margin-top: 36px; } aside { border-left: 4px solid #aa7543; padding: 12px; }
+-@media(max-width: 680px) { main { margin: 12px; padding: 24px; } }
+-</style>
++<template>
++  <main>
++    <header><p>宠物领养社区 · 账号中心</p><h1>{{ session.user ? '欢迎，' + session.user.nickname : (registering ? '创建社区账号' : '登录社区') }}</h1></header>
++    <section v-if="session.user">
++      <p>账号：{{ session.user.account }} · {{ session.user.role }}</p>
++      <p>本次会话到期：{{ displayTime(session.expiresAt) }}（Asia/Shanghai）</p>
++      <button :disabled="busy" @click="logout">{{ busy ? '处理中…' : '退出当前会话' }}</button>
++      <AdminUsers v-if="profile && profile.role === 'ADMIN'" :key="session.accessToken" />
++      <h2>本人资料</h2>
++      <p v-if="profileLoading">资料加载中…</p>
++      <button :disabled="busy || profileLoading" @click="loadProfile()">刷新资料</button>
++      <form v-if="profile" @submit.prevent="saveProfile">
++        <p>用户标识：{{ profile.id }} · 状态：{{ profile.status }}</p><p>注册时间：{{ displayTime(profile.createdAt) }}（Asia/Shanghai）</p>
++        <label>昵称<input v-model="nickname" :disabled="busy || profileLoading" required></label>
++        <label>简介<textarea v-model="bio" :disabled="busy || profileLoading" /></label>
++        <p v-if="review">服务器最新资料：{{ review.nickname }} / {{ review.bio }}（版本 {{ review.profileVersion }}）。你的输入已保留。</p>
++        <button v-if="review" type="button" :disabled="busy" @click="acceptVersion">已核对，采用最新版本继续编辑</button>
++        <button :disabled="busy || profileLoading || !!review">保存资料</button>
++      </form>
++      <p v-else-if="!profileLoading">资料尚未加载，请刷新重试。</p>
++      <h2>更换密码</h2>
++      <form @submit.prevent="changePassword">
++        <label>原密码<input v-model="oldPassword" type="password" autocomplete="current-password" :disabled="busy" required></label>
++        <label>新密码<input v-model="newPassword" type="password" autocomplete="new-password" :disabled="busy" required></label>
++        <label>确认新密码<input v-model="confirmNewPassword" type="password" autocomplete="new-password" :disabled="busy" required></label>
++        <small>原密码非空且最多32个字符；新密码8—32个Unicode字符且含字母数字，不裁剪空白。</small>
++        <button :disabled="busy">更换密码并退出所有会话</button>
++      </form>
++      <p>本人通知：待后续故事接入</p>
++      <button disabled>领养管理 · 待集成</button><button disabled>社区管理 · 待集成</button><button disabled>订单管理 · 待集成</button>
++    </section>
++    <form v-else @submit.prevent="submit">
++      <label>账号<input v-model="account" autocomplete="username" required :disabled="busy"></label>
++      <small>4—16 位 ASCII 字母、数字或下划线，自动去首尾空白并转小写</small>
++      <label>密码<input v-model="password" type="password" :autocomplete="registering ? 'new-password' : 'current-password'" required :disabled="busy"></label>
++      <small>{{ registering ? "8—32 个 Unicode 字符，含字母和数字；密码保留空白" : "请输入密码，保留空白；初始管理员使用负责人提供的凭据" }}</small>
++      <label v-if="registering">确认密码<input v-model="confirmation" type="password" autocomplete="new-password" required :disabled="busy"></label>
++      <button :disabled="busy">{{ busy ? '处理中…' : (registering ? '注册' : '登录 / 核验受限原因') }}</button>
++      <button type="button" :disabled="busy" @click="switchMode">{{ registering ? '已有账号，前往登录' : '创建新账号' }}</button>
++    </form>
++    <p role="status" aria-live="polite">{{ message }}</p>
++    <aside v-if="frozen"><h2>账号受限</h2><p>{{ frozen.reason }}</p><p>{{ displayTime(frozen.actionAt) }}（Asia/Shanghai）</p><p>请联系管理员线下核实。刷新后需重新核验。</p></aside>
++    <footer>会话仅保存在本页内存，刷新或关闭页面后请重新登录。</footer>
++  </main>
++</template>
++<script>
++import AdminUsers from './components/AdminUsers.vue'
++import { session, clearSession, setSession } from './state/session'
++import { request } from './api/client'
++import { normalizeAccount, validAccount, validPassword } from './validation/account'
++export default {
++  name: 'App',
++  components: { AdminUsers },
++  data: () => ({ session, registering: false, account: '', password: '', confirmation: '', busy: false, message: '', frozen: null, profile: null, profileLoading: false, nickname: '', bio: '', review: null, oldPassword: '', newPassword: '', confirmNewPassword: '' }),
++  watch: { 'session.accessToken': { flush: 'sync', handler () { this.resetAccountState() } } },
++  methods: {
++    resetAccountState () { this.profileLoading = false; this.profile = null; this.review = null; this.nickname = ''; this.bio = ''; this.oldPassword = ''; this.newPassword = ''; this.confirmNewPassword = '' },
++    displayTime (time) { return new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', dateStyle: 'medium', timeStyle: 'medium' }).format(new Date(time)) },
++    switchMode () { this.registering = !this.registering; this.password = ''; this.confirmation = ''; this.frozen = null; this.message = '' },
++    async submit () {
++      this.busy = true; this.message = ''; this.frozen = null
++      try {
++        if (!validAccount(this.account) || (this.registering ? !validPassword(this.password) : (!this.password || Array.from(this.password).length > 32)) || (this.registering && this.password !== this.confirmation)) throw new Error('请核对账号、密码格式及确认密码')
++        const body = { account: normalizeAccount(this.account), password: this.password }
++        if (this.registering) body.confirmPassword = this.confirmation
++        const result = await request('/auth/' + (this.registering ? 'register' : 'login'), body)
++        if (this.registering) { this.registering = false; this.message = '注册成功，请登录' } else { this.resetAccountState(); setSession(result); this.message = '登录成功'; await this.loadProfile() }
++      } catch (error) { this.message = error.message; if (error.result && error.result.code === 'ACCOUNT_FROZEN_VERIFIED') this.frozen = error.result } finally { this.password = ''; this.confirmation = ''; this.busy = false }
++    },
++    async loadProfile (preserve = false) {
++      const token = session.accessToken
++      this.profileLoading = true
++      try {
++        const latest = await request('/me', undefined, 'GET')
++        if (token !== session.accessToken) return
++        if (preserve) this.review = latest
++        else { this.profile = latest; this.nickname = latest.nickname; this.bio = latest.bio; this.review = null }
++      } catch (error) { if (token === session.accessToken) this.message = error.message } finally { if (token === session.accessToken) this.profileLoading = false }
++    },
++    acceptVersion () { this.profile = this.review; this.review = null; this.message = '已采用核对后的版本，请再次提交' },
++    async saveProfile () {
++      this.busy = true; this.message = ''
++      try {
++        const length = Array.from(this.nickname.trim()).length
++        if (length < 1 || length > 30 || Array.from(this.bio).length > 200) throw new Error('昵称须1—30字，简介最多200字')
++        this.profile = await request('/me', { nickname: this.nickname, bio: this.bio, expectedProfileVersion: this.profile.profileVersion }, 'PUT')
++        this.nickname = this.profile.nickname; session.user.nickname = this.profile.nickname; this.message = '资料已保存'
++      } catch (error) {
++        this.message = error.message
++        if (error.uncertain || (error.result && error.result.code === 'VERSION_CONFLICT')) await this.loadProfile(true)
++      } finally { this.busy = false }
++    },
++    async changePassword () {
++      this.busy = true; this.message = ''
++      try {
++        if (!this.oldPassword || Array.from(this.oldPassword).length > 32 || !validPassword(this.newPassword) || this.newPassword !== this.confirmNewPassword || this.newPassword === this.oldPassword) throw new Error('请核对原密码、新密码及确认密码')
++        await request('/me/password', { oldPassword: this.oldPassword, newPassword: this.newPassword, confirmPassword: this.confirmNewPassword })
++        clearSession(); this.resetAccountState(); this.message = '密码已更换，请用新密码登录'
++      } catch (error) {
++        this.message = error.message
++        if (error.uncertain || (error.result && error.result.code === 'VERSION_CONFLICT')) { clearSession(); this.resetAccountState(); this.message = '结果未确认，请重新登录核验密码' }
++      } finally { this.oldPassword = ''; this.newPassword = ''; this.confirmNewPassword = ''; this.busy = false }
++    },
++    async logout () {
++      this.busy = true; this.message = ''
++      try { await request('/auth/logout'); clearSession(); this.resetAccountState(); this.message = '已退出当前会话' } catch (error) { this.message = error.message } finally { this.busy = false }
++    }
++  }
++}
++</script>
++<style>
++body { margin: 0; background: #f4f7f2; color: #243e32; font-family: system-ui, sans-serif; }
++main { max-width: 620px; margin: 48px auto; padding: 32px; background: white; border-radius: 16px; }
++h1 { font-size: 28px; } label { display: block; margin-top: 20px; } input { display: block; box-sizing: border-box; width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #8a9c90; border-radius: 6px; }
++button { padding: 12px 18px; margin: 18px 10px 4px 0; border: 1px solid #396b50; border-radius: 6px; background: #eaf3ea; color: #243e32; cursor: pointer; } button:disabled { opacity: .6; cursor: default; } small { display: block; line-height: 1.5; } small, footer { color: #54655b; } footer { margin-top: 36px; } aside { border-left: 4px solid #aa7543; padding: 12px; }
++@media(max-width: 680px) { main { margin: 12px; padding: 24px; } }
++</style>
+diff --git a/vue1/src/components/AdminUsers.vue b/vue1/src/components/AdminUsers.vue
+new file mode 100644
+index 0000000..e854e87
+--- /dev/null
++++ b/vue1/src/components/AdminUsers.vue
+@@ -0,0 +1,72 @@
++<template>
++  <section aria-label="管理员账号查询">
++    <h2>管理员 · 账号查询</h2>
++    <form @submit.prevent="search">
++      <label>账号包含<input v-model="accountContains"></label>
++      <label>状态<select v-model="status"><option value="">全部</option><option>ACTIVE</option><option>FROZEN</option></select></label>
++      <label>每页<select v-model.number="size"><option :value="10">10</option><option :value="20">20</option><option :value="50">50</option></select></label>
++      <button>查询</button><button type="button" @click="loadList">刷新 / 重试</button>
++    </form>
++    <p>时间均以 Asia/Shanghai 显示。刷新后分页可能随新增账号变化。</p>
++    <p v-if="loading" role="status">账号加载中…</p>
++    <p v-else-if="error" role="alert">查询失败：{{ error }}</p>
++    <template v-else-if="result">
++      <p>共 {{ result.total }} 个账号，第 {{ result.page }} 页</p>
++      <p v-if="!result.items.length">没有符合条件的账号。</p>
++      <ul v-else><li v-for="user in result.items" :key="user.id"><p>{{ user.account }} · {{ user.nickname }} · {{ user.role }} · {{ user.status }}</p><p>{{ user.id }} · {{ time(user.createdAt) }}</p><button @click="loadDetail(user.id)">核对详情</button></li></ul>
++      <button :disabled="filtersChanged || page <= 1" @click="page--; loadList()">上一页</button><button :disabled="filtersChanged || page * result.size >= result.total" @click="page++; loadList()">下一页</button>
++    </template>
++    <aside v-if="target">
++      <h3>账号详情</h3><p>目标：{{ target }}</p>
++      <p v-if="detailLoading">详情加载中…</p>
++      <p v-else-if="detailError" role="alert">详情读取失败：{{ detailError }} <button @click="loadDetail(target)">重试详情</button></p>
++      <template v-else-if="detail"><p>{{ detail.account }} · {{ detail.nickname }} · {{ detail.role }} · {{ detail.status }}</p><p>注册：{{ time(detail.createdAt) }}</p><p>简介：{{ detail.bio }}</p><p>最近处置原因：{{ detail.latestReason || '无' }}</p><p>最近处置时间：{{ time(detail.latestActionAt) }}</p><p>状态版本：{{ detail.stateVersion }}</p></template>
++      <button @click="closeDetail">关闭详情</button>
++    </aside>
++  </section>
++</template>
++<script>
++import { request } from '../api/client'
++import { session } from '../state/session'
++export default {
++  name: 'AdminUsers',
++  data: () => ({ session, accountContains: '', status: '', page: 1, size: 20, result: null, loading: false, error: '', target: '', detail: null, detailLoading: false, detailError: '', submitted: null, listGeneration: 0, detailGeneration: 0 }),
++  computed: { filtersChanged () { return !!this.submitted && (this.accountContains !== this.submitted.accountContains || this.status !== this.submitted.status || this.size !== this.submitted.size) } },
++  mounted () { this.loadList() },
++  beforeUnmount () { this.listGeneration++; this.detailGeneration++ },
++  methods: {
++    time (value) { return value ? new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', dateStyle: 'medium', timeStyle: 'medium' }).format(new Date(value)) + '（Asia/Shanghai）' : '无' },
++    search () { this.page = 1; this.loadList() },
++    closeDetail () { this.detailGeneration++; this.target = ''; this.detail = null; this.detailLoading = false; this.detailError = '' },
++    validUser (value) {
++      return !!value && ['id', 'account', 'nickname'].every(key => typeof value[key] === 'string' && value[key].length > 0) && ['USER', 'ADMIN'].includes(value.role) && ['ACTIVE', 'FROZEN'].includes(value.status) && typeof value.createdAt === 'string' && Number.isFinite(Date.parse(value.createdAt))
++    },
++    validDetail (value, id) {
++      return this.validUser(value) && value.id === id && typeof value.bio === 'string' && Number.isSafeInteger(value.stateVersion) && value.stateVersion >= 0 && (value.latestReason === null || typeof value.latestReason === 'string') && (value.latestActionAt === null || (typeof value.latestActionAt === 'string' && Number.isFinite(Date.parse(value.latestActionAt))))
++    },
++    async loadList () {
++      if (this.filtersChanged) this.page = 1
++      const generation = ++this.listGeneration; const token = session.accessToken
++      this.loading = true; this.error = ''; this.result = null; this.closeDetail(); this.submitted = { accountContains: this.accountContains, status: this.status, size: this.size }
++      try {
++        const contains = this.accountContains.trim().toLowerCase()
++        if (Array.from(contains).length > 16) throw new Error('账号包含条件最多16个字符')
++        const query = new URLSearchParams({ page: this.page, size: this.size, accountContains: contains })
++        if (this.status) query.set('status', this.status)
++        const value = await request('/admin/users?' + query, undefined, 'GET')
++        if (!value || !Array.isArray(value.items) || !value.items.every(this.validUser) || !Number.isSafeInteger(value.total) || value.total < 0 || value.page !== Number(query.get('page')) || value.size !== Number(query.get('size'))) throw new Error('账号列表响应无效，请重试')
++        if (generation === this.listGeneration && token === session.accessToken) this.result = value
++      } catch (error) { if (generation === this.listGeneration && token === session.accessToken) this.error = error.message } finally { if (generation === this.listGeneration && token === session.accessToken) this.loading = false }
++    },
++    async loadDetail (id) {
++      const generation = ++this.detailGeneration; const token = session.accessToken
++      this.target = id; this.detail = null; this.detailError = ''; this.detailLoading = true
++      try {
++        const value = await request('/admin/users/' + encodeURIComponent(id), undefined, 'GET')
++        if (!this.validDetail(value, id)) throw new Error('账号详情响应无效，请重试')
++        if (generation === this.detailGeneration && token === session.accessToken) this.detail = value
++      } catch (error) { if (generation === this.detailGeneration && token === session.accessToken) this.detailError = error.message } finally { if (generation === this.detailGeneration && token === session.accessToken) this.detailLoading = false }
++    }
++  }
++}
++</script>
+diff --git a/vue1/tests/account-flow.js b/vue1/tests/account-flow.js
+index e324407..5b34476 100644
+--- a/vue1/tests/account-flow.js
++++ b/vue1/tests/account-flow.js
+@@ -1,19 +1,19 @@
+-const fs = require('fs'); const vm = require('vm'); const assert = require('assert');
+-(async () => {
+- const validation = { categories: require('../../src/main/resources/identity/unicode-java17.json') }; vm.createContext(validation);vm.runInContext(fs.readFileSync(__dirname+'/../src/validation/unicode.js','utf8').replace(/^import .*$/gm,'').replace(/export const /g,'var '),validation);vm.runInContext(fs.readFileSync(__dirname+'/../src/validation/account.js','utf8').replace(/^import .*$/gm,'').replace(/export const /g,'var '),validation);
+- for(const cp of [9,10,11,12,13,32,160,5760,8192,8193,8194,8195,8196,8197,8198,8199,8200,8201,8202,8232,8233,8239,8287,12288,65279])assert.equal(validation.normalizeAccount(String.fromCodePoint(cp)+'USER'+String.fromCodePoint(cp)),'user');
+- for(const cp of [0x85,0x180e,0x200b,0x1c])assert.equal(validation.validAccount(String.fromCodePoint(cp)+'user'),false);
+- for(const n of [0,1,7,8,32,33])assert.equal(validation.validPassword(n<2?'a'.repeat(n):'𐐀١'+'😀'.repeat(n-2)),n===8||n===32);
+-
+- const ctx = { session: {accessToken:'fixture-token'}, clearSession(){ctx.session={}}, AbortController, setTimeout, clearTimeout, TypeError, Error };
+- let captured;
+- ctx.fetch=async (url,options)=>{captured={url,options};return {status:204,ok:true}};
+- vm.createContext(ctx); vm.runInContext(fs.readFileSync(__dirname+'/../src/api/client.js','utf8').replace(/^import .*$/m,'').replace('export async function request','async function request'),ctx);
+- await ctx.request('/auth/logout'); assert.equal(captured.options.credentials,'omit'); assert.equal(captured.options.body,undefined); assert.equal(captured.options.headers['Content-Type'],undefined);
+- ctx.fetch=async()=>({status:401,ok:false,json:async()=>({message:'会话无效'})}); await assert.rejects(ctx.request('/test')); assert.equal(ctx.session.accessToken,undefined);
+- ctx.fetch=async()=>{throw new TypeError('network')}; await assert.rejects(ctx.request('/auth/logout'),/结果未确认/);
+- let source=fs.readFileSync(__dirname+'/../src/App.vue','utf8').split('<script>')[1].split('</script>')[0].replace(/^import .*$/gm,'').replace('export default','var component =');
+- Object.assign(ctx,{session:{user:{account:'fixture'}},normalizeAccount:s=>s.trim().toLowerCase(),validAccount:()=>true,validPassword:()=>true,setSession(){throw Error('unexpected success')},request:async()=>{throw Error('结果未确认')}});
+- vm.runInContext(source,ctx); const state=ctx.component.data(); Object.assign(state,ctx.component.methods); state.account='fixture';state.password='fixture-value';state.confirmation='fixture-value'; await state.submit(); assert.equal(state.password,'');assert.equal(state.confirmation,'');assert.equal(state.busy,false);assert.match(state.message,/结果未确认/);await state.logout();assert.ok(ctx.session.user);assert.match(state.message,/结果未确认/);
+- console.log('PASS: credentials=omit; logout empty body; 401 clears session; network unknown; form clears passwords; failed logout preserves identity');
+-})().catch(e=>{console.error(e);process.exitCode=1});
+\ No newline at end of file
++const fs = require('fs'); const vm = require('vm'); const assert = require('assert');
++(async () => {
++ const validation = { categories: require('../../src/main/resources/identity/unicode-java17.json') }; vm.createContext(validation);vm.runInContext(fs.readFileSync(__dirname+'/../src/validation/unicode.js','utf8').replace(/^import .*$/gm,'').replace(/export const /g,'var '),validation);vm.runInContext(fs.readFileSync(__dirname+'/../src/validation/account.js','utf8').replace(/^import .*$/gm,'').replace(/export const /g,'var '),validation);
++ for(const cp of [9,10,11,12,13,32,160,5760,8192,8193,8194,8195,8196,8197,8198,8199,8200,8201,8202,8232,8233,8239,8287,12288,65279])assert.equal(validation.normalizeAccount(String.fromCodePoint(cp)+'USER'+String.fromCodePoint(cp)),'user');
++ for(const cp of [0x85,0x180e,0x200b,0x1c])assert.equal(validation.validAccount(String.fromCodePoint(cp)+'user'),false);
++ for(const n of [0,1,7,8,32,33])assert.equal(validation.validPassword(n<2?'a'.repeat(n):'𐐀١'+'😀'.repeat(n-2)),n===8||n===32);
++
++ const ctx = { AdminUsers: {}, session: {accessToken:'fixture-token'}, clearSession(){ctx.session={}}, AbortController, setTimeout, clearTimeout, TypeError, Error };
++ let captured;
++ ctx.fetch=async (url,options)=>{captured={url,options};return {status:204,ok:true}};
++ vm.createContext(ctx); vm.runInContext(fs.readFileSync(__dirname+'/../src/api/client.js','utf8').replace(/^import .*$/m,'').replace('export async function request','async function request'),ctx);
++ await ctx.request('/auth/logout'); assert.equal(captured.options.credentials,'omit'); assert.equal(captured.options.body,undefined); assert.equal(captured.options.headers['Content-Type'],undefined);
++ ctx.fetch=async()=>({status:401,ok:false,json:async()=>({message:'会话无效'})}); await assert.rejects(ctx.request('/test')); assert.equal(ctx.session.accessToken,undefined);
++ ctx.fetch=async()=>{throw new TypeError('network')}; await assert.rejects(ctx.request('/auth/logout'),/结果未确认/);
++ let source=fs.readFileSync(__dirname+'/../src/App.vue','utf8').split('<script>')[1].split('</script>')[0].replace(/^import .*$/gm,'').replace('export default','var component =');
++ Object.assign(ctx,{session:{user:{account:'fixture'}},normalizeAccount:s=>s.trim().toLowerCase(),validAccount:()=>true,validPassword:()=>true,setSession(){throw Error('unexpected success')},request:async()=>{throw Error('结果未确认')}});
++ vm.runInContext(source,ctx); const state=ctx.component.data(); Object.assign(state,ctx.component.methods); state.account='fixture';state.password='fixture-value';state.confirmation='fixture-value'; await state.submit(); assert.equal(state.password,'');assert.equal(state.confirmation,'');assert.equal(state.busy,false);assert.match(state.message,/结果未确认/);await state.logout();assert.ok(ctx.session.user);assert.match(state.message,/结果未确认/);
++ console.log('PASS: credentials=omit; logout empty body; 401 clears session; network unknown; form clears passwords; failed logout preserves identity');
++})().catch(e=>{console.error(e);process.exitCode=1});
+diff --git a/vue1/tests/admin-users-flow.js b/vue1/tests/admin-users-flow.js
+new file mode 100644
+index 0000000..9d26d6d
+--- /dev/null
++++ b/vue1/tests/admin-users-flow.js
+@@ -0,0 +1,27 @@
++const fs = require('fs'); const vm = require('vm'); const assert = require('assert');
++(async () => {
++ const session = { accessToken: 'A' }; const ctx = { session, Intl, Date, URLSearchParams, request: async () => { throw Error('network') } }; vm.createContext(ctx);
++ const source = fs.readFileSync(__dirname + '/../src/components/AdminUsers.vue', 'utf8');
++ vm.runInContext(source.split('<script>')[1].split('</script>')[0].replace(/^import .*$/gm, '').replace('export default', 'var component ='), ctx);
++ const s = ctx.component.data(); Object.assign(s, ctx.component.methods); Object.defineProperty(s, 'filtersChanged', { get: () => ctx.component.computed.filtersChanged.call(s) });
++ const row = id => ({ id, account: 'user_' + id, nickname: 'Nick', role: 'USER', status: 'ACTIVE', createdAt: '2026-01-01T00:00:00.000Z', bio: '', latestReason: null, latestActionAt: null, stateVersion: 0 });
++ s.accountContains = 'test'; await s.loadList(); assert.equal(s.result, null); assert.equal(s.error, 'network'); assert.equal(s.accountContains, 'test'); assert.equal(s.loading, false);
++ ctx.request = async () => ({ items: [], total: 0, page: 1, size: 20 }); await s.loadList(); assert.equal(s.result.total, 0); assert.equal(s.error, '');
++ let release; ctx.request = () => new Promise(resolve => { release = resolve }); let old = s.loadList(); assert.equal(s.loading, true);
++ ctx.request = async () => ({ items: [row('new')], total: 1, page: 1, size: 20 }); await s.loadList(); release({ items: [row('old')], total: 1, page: 1, size: 20 }); await old; assert.equal(s.result.items[0].id, 'new');
++ ctx.request = () => new Promise(resolve => { release = resolve }); old = s.loadDetail('one'); assert.equal(s.detailLoading, true); assert.equal(s.detail, null);
++ ctx.request = async () => row('two'); await s.loadDetail('two'); release(row('one')); await old; assert.equal(s.detail.id, 'two');
++ ctx.request = async () => { throw Error('not found') }; await s.loadDetail('missing'); assert.equal(s.detail, null); assert.equal(s.detailError, 'not found');
++ ctx.request = () => new Promise(resolve => { release = resolve }); old = s.loadDetail('private'); session.accessToken = 'B'; release(row('private')); await old; assert.equal(s.detail, null);
++ assert.match(s.time('2026-01-01T00:00:00.000Z'), /08:00:00/); assert.ok(!source.includes('v-html')); assert.match(source, /v-else-if="error"/);
++ s.submitted = { accountContains: 'original', status: 'ACTIVE', size: 20 }; s.accountContains = 'original'; s.status = 'ACTIVE'; s.size = 20; assert.equal(ctx.component.computed.filtersChanged.call(s), false); for (const [field, value] of [['accountContains', 'draft'], ['status', 'FROZEN'], ['size', 10]]) { const previous = s[field]; s[field] = value; assert.equal(ctx.component.computed.filtersChanged.call(s), true); s[field] = previous } assert.match(source, /filtersChanged \|\| page \* result.size/);
++
++ const sent = []; ctx.request = async (...args) => { sent.push(args); const q = new URLSearchParams(args[0].split('?')[1]); return args[0].includes('?') ? { items: [], total: 0, page: +q.get('page'), size: +q.get('size') } : row(args[0].split('/').pop()) };
++ s.accountContains = ' A_% '; s.status = 'FROZEN'; s.size = 10; s.page = 7; await s.loadList();
++ assert.deepStrictEqual(sent[0], ['/admin/users?page=1&size=10&accountContains=a_%25&status=FROZEN', undefined, 'GET']); assert.equal(s.page, 1);
++ s.page = 2; await s.loadList(); assert.match(sent[1][0], /page=2&size=10/);
++ await s.loadDetail('first'); await s.loadDetail('second'); assert.deepStrictEqual(sent.slice(2), [['/admin/users/first', undefined, 'GET'], ['/admin/users/second', undefined, 'GET']]);
++ for (const bad of [null, {}, {items: null}, {items: [{}], page: 1, size: 10, total: 1}]) { ctx.request = async () => bad; await s.loadList(); assert.equal(s.result, null); assert.match(s.error, /响应无效/) }
++ for (const bad of [null, {}, row('wrong'), {...row('first'), latestActionAt: 'bad'}]) { ctx.request = async () => bad; await s.loadDetail('first'); assert.equal(s.detail, null); assert.match(s.detailError, /响应无效/) }
++ console.log('PASS admin query states, retries, retained filters, stale list/detail/identity, Shanghai time, plain text');
++})().catch(e => { console.error(e); process.exitCode = 1 });
+diff --git a/vue1/tests/admin-users-render.js b/vue1/tests/admin-users-render.js
+new file mode 100644
+index 0000000..ae67dba
+--- /dev/null
++++ b/vue1/tests/admin-users-render.js
+@@ -0,0 +1,33 @@
++const fs = require('fs'); const vm = require('vm'); const assert = require('assert');
++const Vue = require('vue'); const { compile } = require('@vue/compiler-dom'); const { renderToString } = require('@vue/server-renderer');
++const session = { accessToken: 'test', user: { account: 'admin', nickname: 'Admin', role: 'ADMIN' }, expiresAt: '2026-01-01T00:00:00Z' };
++// Use SFC parser to retain nested template branches exactly.
++const { parse } = require('@vue/compiler-sfc');
++function load (file, extra) {
++ const c = componentScript(file, extra); const template = parse(fs.readFileSync(__dirname + '/../src/' + file, 'utf8')).descriptor.template.content;
++ c.render = new Function('Vue', compile(template, { mode: 'function', prefixIdentifiers: true }).code)(Vue); return c;
++}
++function componentScript (file, extra = {}) {
++ const source = parse(fs.readFileSync(__dirname + '/../src/' + file, 'utf8')).descriptor.script.content;
++ const ctx = { session, Intl, Date, URLSearchParams, request () { throw Error('Unexpected SSR network') }, ...extra }; vm.createContext(ctx);
++ vm.runInContext(source.replace(/^import .*$/gm, '').replace('export default', 'var component ='), ctx); return ctx.component;
++}
++(async () => {
++ const Admin = load('components/AdminUsers.vue');
++ const user = { id: 'selected', account: 'target', nickname: '<b>Nick</b>', role: 'USER', status: 'ACTIVE', createdAt: '2026-01-01T00:00:00.000Z', bio: 'BIO', latestReason: 'REASON', latestActionAt: '2026-01-02T00:00:00Z', stateVersion: 3 };
++ const render = patch => renderToString(Vue.createSSRApp({ ...Admin, data: () => ({ ...Admin.data(), ...patch }) }));
++ let html = await render({ loading: true }); assert.match(html, /账号加载中/); assert.ok(!html.includes('没有符合'));
++ html = await render({ error: 'network' }); assert.match(html, /查询失败：network/); assert.ok(!html.includes('没有符合'));
++ html = await render({ result: { items: [], total: 0, page: 1, size: 20 } }); assert.match(html, /没有符合条件/); assert.match(html, /共 0 个账号/);
++ html = await render({ result: { items: [user], total: 1, page: 1, size: 20 }, target: user.id, detail: user }); for (const text of ['target', '&lt;b&gt;Nick&lt;/b&gt;', 'USER', 'ACTIVE', 'selected', 'BIO', 'REASON', '状态版本：3', 'Asia/Shanghai']) assert.ok(html.includes(text), text);
++ html = await render({ target: user.id, detailLoading: true }); assert.match(html, /详情加载中/);
++ html = await render({ target: user.id, detailError: 'missing' }); assert.match(html, /详情读取失败：missing/); assert.match(html, /重试详情/);
++ const App = load('App.vue', { AdminUsers: Admin });
++ for (const role of ['ADMIN', 'USER', null]) {
++  const profile = role ? { ...user, role, profileVersion: 0 } : null;
++  html = await renderToString(Vue.createSSRApp({ ...App, data: () => ({ ...App.data(), profile }) }));
++  assert.equal(html.includes('管理员 · 账号查询'), role === 'ADMIN');
++ }
++ session.user = null; html = await renderToString(Vue.createSSRApp(App)); assert.ok(!html.includes('管理员 · 账号查询'));
++ console.log('PASS compiled Vue SSR render: ADMIN/me guard; guest/USER hidden; loading/error/empty/success and all detail fields/retry/text escaping. Real browser remains unverified.');
++})().catch(error => { console.error(error); process.exitCode = 1 });
+diff --git a/vue1/tests/profile-adapter.js b/vue1/tests/profile-adapter.js
+index 3b5cff0..f19a94f 100644
+--- a/vue1/tests/profile-adapter.js
++++ b/vue1/tests/profile-adapter.js
+@@ -1,35 +1,35 @@
+-const fs = require('fs'); const vm = require('vm'); const assert = require('assert');
+-(async () => {
+- const session = { user: { nickname: 'fixture' }, accessToken: 'A' };
+- const ctx = { session, clearSession () { session.accessToken = null; session.user = null }, validPassword: () => true, Intl, Date, AbortController, setTimeout, clearTimeout, TypeError, fetch: async () => { throw Error('unexpected') } };
+- vm.createContext(ctx);
+- vm.runInContext(fs.readFileSync(__dirname + '/../src/api/client.js','utf8').replace(/^import .*$/gm,'').replace('export async','async'),ctx);
+- const source = fs.readFileSync(__dirname + '/../src/App.vue','utf8');
+- vm.runInContext(source.split('<script>')[1].split('</script>')[0].replace(/^import .*$/gm,'').replace('export default','var component ='),ctx);
+- const state = ctx.component.data(); Object.assign(state,ctx.component.methods);
+- function seed () { session.accessToken='A';session.user={nickname:'fixture'};state.oldPassword='old';state.newPassword=state.confirmNewPassword='Changed123';state.profile={};state.review={};state.nickname='private';state.bio='private'; }
+- for (const response of [{status:503,ok:false,json:async()=>{throw SyntaxError('HTML')}},{status:200,ok:true,json:async()=>{throw SyntaxError('empty')}}]) {
+-  seed();ctx.fetch=async()=>response;await state.changePassword();assert.equal(session.user,null);assert.equal(state.bio,'');assert.equal(state.review,null);assert.equal(state.oldPassword,'');assert.match(state.message,/重新登录/);
+- }
+- seed();ctx.fetch=async()=>{const e=Error('abort');e.name='AbortError';throw e};await state.changePassword();assert.equal(session.user,null);
+- seed();ctx.fetch=async()=>({status:400,ok:false,json:async()=>({code:'VALIDATION_ERROR',message:'wrong old'})});await state.changePassword();assert.ok(session.user);assert.equal(state.oldPassword,'');
+- seed();ctx.fetch=async()=>({status:401,ok:false,json:async()=>({code:'SESSION_INVALID'})});await state.changePassword();ctx.component.watch['session.accessToken'].handler.call(state);assert.equal(state.bio,'');assert.equal(state.profile,null);
+- seed();let release;ctx.fetch=()=>new Promise(resolve=>{release=resolve});const pending=state.loadProfile();session.accessToken='B';state.resetAccountState();release({status:200,ok:true,json:async()=>({nickname:'A secret',bio:'A secret'})});await pending;assert.equal(state.profile,null);assert.equal(state.bio,'');assert.equal(state.profileLoading,false);
+- seed();ctx.fetch=async()=>({status:204,ok:true});await state.logout();assert.equal(state.review,null);assert.equal(state.oldPassword,'');assert.equal(state.bio,'');
+- seed();state.profile={profileVersion:5};state.nickname='my draft';state.bio='draft bio';
+- const sent=[];let put=0;
+- ctx.fetch=async(url,options)=>{
+-  sent.push({url,method:options.method,body:options.body && JSON.parse(options.body)});
+-  if(options.method==='PUT' && put++===0)return {status:409,ok:false,json:async()=>({code:'VERSION_CONFLICT',message:'conflict'})};
+-  return {status:200,ok:true,json:async()=>({nickname:options.method==='GET'?'server name':'saved name',bio:options.method==='GET'?'server bio':'draft bio',profileVersion:options.method==='GET'?6:7})};
+- };
+- await state.saveProfile();
+- assert.deepStrictEqual(sent[0],{url:'/api/v1/me',method:'PUT',body:{nickname:'my draft',bio:'draft bio',expectedProfileVersion:5}});
+- assert.equal(sent[1].method,'GET');assert.equal(sent.length,2);assert.equal(state.profile.profileVersion,5);assert.equal(state.review.profileVersion,6);assert.equal(state.nickname,'my draft');assert.equal(state.bio,'draft bio');
+- state.acceptVersion();assert.equal(sent.length,2);await state.saveProfile();
+- assert.deepStrictEqual(sent[2],{url:'/api/v1/me',method:'PUT',body:{nickname:'my draft',bio:'draft bio',expectedProfileVersion:6}});
+- assert.equal(state.profile.profileVersion,7);assert.equal(state.nickname,'saved name');assert.equal(session.user.nickname,'saved name');assert.equal(state.review,null);assert.match(state.message,/资料已保存/);
+- console.log('PASS profile PUT adapter: complete versioned payload, conflict preserves draft, explicit review then new version, success updates nickname/version');
+- assert.match(source,/v-model="nickname" :disabled="busy \|\| profileLoading"/);assert.match(source,/v-model="bio" :disabled="busy \|\| profileLoading"/);
+- console.log('PASS adapter-component: nonJSON503, malformed success, abort, business400, invalid401, stale GET, logout reset, refresh editing guard');
+-})().catch(e=>{console.error(e);process.exitCode=1});
++const fs = require('fs'); const vm = require('vm'); const assert = require('assert');
++(async () => {
++ const session = { user: { nickname: 'fixture' }, accessToken: 'A' };
++ const ctx = { AdminUsers: {}, session, clearSession () { session.accessToken = null; session.user = null }, validPassword: () => true, Intl, Date, AbortController, setTimeout, clearTimeout, TypeError, fetch: async () => { throw Error('unexpected') } };
++ vm.createContext(ctx);
++ vm.runInContext(fs.readFileSync(__dirname + '/../src/api/client.js','utf8').replace(/^import .*$/gm,'').replace('export async','async'),ctx);
++ const source = fs.readFileSync(__dirname + '/../src/App.vue','utf8');
++ vm.runInContext(source.split('<script>')[1].split('</script>')[0].replace(/^import .*$/gm,'').replace('export default','var component ='),ctx);
++ const state = ctx.component.data(); Object.assign(state,ctx.component.methods);
++ function seed () { session.accessToken='A';session.user={nickname:'fixture'};state.oldPassword='old';state.newPassword=state.confirmNewPassword='Changed123';state.profile={};state.review={};state.nickname='private';state.bio='private'; }
++ for (const response of [{status:503,ok:false,json:async()=>{throw SyntaxError('HTML')}},{status:200,ok:true,json:async()=>{throw SyntaxError('empty')}}]) {
++  seed();ctx.fetch=async()=>response;await state.changePassword();assert.equal(session.user,null);assert.equal(state.bio,'');assert.equal(state.review,null);assert.equal(state.oldPassword,'');assert.match(state.message,/重新登录/);
++ }
++ seed();ctx.fetch=async()=>{const e=Error('abort');e.name='AbortError';throw e};await state.changePassword();assert.equal(session.user,null);
++ seed();ctx.fetch=async()=>({status:400,ok:false,json:async()=>({code:'VALIDATION_ERROR',message:'wrong old'})});await state.changePassword();assert.ok(session.user);assert.equal(state.oldPassword,'');
++ seed();ctx.fetch=async()=>({status:401,ok:false,json:async()=>({code:'SESSION_INVALID'})});await state.changePassword();ctx.component.watch['session.accessToken'].handler.call(state);assert.equal(state.bio,'');assert.equal(state.profile,null);
++ seed();let release;ctx.fetch=()=>new Promise(resolve=>{release=resolve});const pending=state.loadProfile();session.accessToken='B';state.resetAccountState();release({status:200,ok:true,json:async()=>({nickname:'A secret',bio:'A secret'})});await pending;assert.equal(state.profile,null);assert.equal(state.bio,'');assert.equal(state.profileLoading,false);
++ seed();ctx.fetch=async()=>({status:204,ok:true});await state.logout();assert.equal(state.review,null);assert.equal(state.oldPassword,'');assert.equal(state.bio,'');
++ seed();state.profile={profileVersion:5};state.nickname='my draft';state.bio='draft bio';
++ const sent=[];let put=0;
++ ctx.fetch=async(url,options)=>{
++  sent.push({url,method:options.method,body:options.body && JSON.parse(options.body)});
++  if(options.method==='PUT' && put++===0)return {status:409,ok:false,json:async()=>({code:'VERSION_CONFLICT',message:'conflict'})};
++  return {status:200,ok:true,json:async()=>({nickname:options.method==='GET'?'server name':'saved name',bio:options.method==='GET'?'server bio':'draft bio',profileVersion:options.method==='GET'?6:7})};
++ };
++ await state.saveProfile();
++ assert.deepStrictEqual(sent[0],{url:'/api/v1/me',method:'PUT',body:{nickname:'my draft',bio:'draft bio',expectedProfileVersion:5}});
++ assert.equal(sent[1].method,'GET');assert.equal(sent.length,2);assert.equal(state.profile.profileVersion,5);assert.equal(state.review.profileVersion,6);assert.equal(state.nickname,'my draft');assert.equal(state.bio,'draft bio');
++ state.acceptVersion();assert.equal(sent.length,2);await state.saveProfile();
++ assert.deepStrictEqual(sent[2],{url:'/api/v1/me',method:'PUT',body:{nickname:'my draft',bio:'draft bio',expectedProfileVersion:6}});
++ assert.equal(state.profile.profileVersion,7);assert.equal(state.nickname,'saved name');assert.equal(session.user.nickname,'saved name');assert.equal(state.review,null);assert.match(state.message,/资料已保存/);
++ console.log('PASS profile PUT adapter: complete versioned payload, conflict preserves draft, explicit review then new version, success updates nickname/version');
++ assert.match(source,/v-model="nickname" :disabled="busy \|\| profileLoading"/);assert.match(source,/v-model="bio" :disabled="busy \|\| profileLoading"/);
++ console.log('PASS adapter-component: nonJSON503, malformed success, abort, business400, invalid401, stale GET, logout reset, refresh editing guard');
++})().catch(e=>{console.error(e);process.exitCode=1});
+diff --git a/vue1/tests/profile-flow.js b/vue1/tests/profile-flow.js
+index 0925ae1..03c1e99 100644
+--- a/vue1/tests/profile-flow.js
++++ b/vue1/tests/profile-flow.js
+@@ -1,24 +1,24 @@
+-const fs = require('fs'); const vm = require('vm'); const assert = require('assert');
+-(async () => {
+- const ctx = { session: { user: { nickname: 'old' }, accessToken: 'fixture' }, clearSession () { ctx.session.user = null; ctx.session.accessToken = '' }, validPassword: p => Array.from(p).length >= 8 && Array.from(p).length <= 32, request: async () => { throw Error('unexpected') }, Intl, Date };
+- vm.createContext(ctx);
+- const source = fs.readFileSync(__dirname + '/../src/App.vue', 'utf8');
+- assert.ok(!source.includes('v-html'));
+- vm.runInContext(source.split('<script>')[1].split('</script>')[0].replace(/^import .*$/gm, '').replace('export default', 'var component ='), ctx);
+- const state = ctx.component.data(); Object.assign(state, ctx.component.methods);
+- const profile = { id: 'fixture', nickname: 'latest', bio: '<script>text</script>', profileVersion: 2 };
+- state.profile = { profileVersion: 1 }; state.nickname = 'my edit'; state.bio = 'draft';
+- let calls = [];
+- ctx.request = async (path, body, method) => { calls.push({path, body, method}); if (method === 'PUT') { const e = Error('conflict'); e.result = { code: 'VERSION_CONFLICT' }; throw e } return profile };
+- await state.saveProfile(); assert.equal(state.nickname, 'my edit'); assert.equal(state.bio, 'draft'); assert.equal(state.profile.profileVersion, 1); assert.equal(state.review.profileVersion, 2); assert.equal(calls.length, 2);
+- state.acceptVersion(); assert.equal(state.profile.profileVersion, 2); assert.equal(state.nickname, 'my edit');
+- state.oldPassword = 'x'; state.newPassword = state.confirmNewPassword = 'Changed123';
+- ctx.request = async () => { const e = Error('原密码错误'); e.result = {code:'VALIDATION_ERROR'}; throw e };
+- await state.changePassword(); assert.ok(ctx.session.user); assert.equal(state.oldPassword, ''); assert.equal(state.newPassword, ''); assert.match(state.message, /原密码错误/);
+- state.oldPassword = 'x'; state.newPassword = state.confirmNewPassword = 'Changed123';
+- ctx.request = async () => { const e = Error('unknown'); e.uncertain = true; throw e };
+- await state.changePassword(); assert.equal(ctx.session.user, null); assert.equal(state.confirmNewPassword, ''); assert.match(state.message, /重新登录/);
+- ctx.session.user = {nickname:'fixture'}; state.oldPassword = 'x'; state.newPassword = state.confirmNewPassword = 'Changed123'; ctx.request = async () => null;
+- await state.changePassword(); assert.equal(ctx.session.user, null); assert.match(state.message, /密码已更换/);
+- console.log('PASS: profile conflict keeps draft and version until explicit review; wrong old password preserves login; uncertain and successful rotation clear identity and passwords; text interpolation only');
+-})().catch(e => { console.error(e); process.exitCode = 1 });
++const fs = require('fs'); const vm = require('vm'); const assert = require('assert');
++(async () => {
++ const ctx = { AdminUsers: {}, session: { user: { nickname: 'old' }, accessToken: 'fixture' }, clearSession () { ctx.session.user = null; ctx.session.accessToken = '' }, validPassword: p => Array.from(p).length >= 8 && Array.from(p).length <= 32, request: async () => { throw Error('unexpected') }, Intl, Date };
++ vm.createContext(ctx);
++ const source = fs.readFileSync(__dirname + '/../src/App.vue', 'utf8');
++ assert.ok(!source.includes('v-html'));
++ vm.runInContext(source.split('<script>')[1].split('</script>')[0].replace(/^import .*$/gm, '').replace('export default', 'var component ='), ctx);
++ const state = ctx.component.data(); Object.assign(state, ctx.component.methods);
++ const profile = { id: 'fixture', nickname: 'latest', bio: '<script>text</script>', profileVersion: 2 };
++ state.profile = { profileVersion: 1 }; state.nickname = 'my edit'; state.bio = 'draft';
++ let calls = [];
++ ctx.request = async (path, body, method) => { calls.push({path, body, method}); if (method === 'PUT') { const e = Error('conflict'); e.result = { code: 'VERSION_CONFLICT' }; throw e } return profile };
++ await state.saveProfile(); assert.equal(state.nickname, 'my edit'); assert.equal(state.bio, 'draft'); assert.equal(state.profile.profileVersion, 1); assert.equal(state.review.profileVersion, 2); assert.equal(calls.length, 2);
++ state.acceptVersion(); assert.equal(state.profile.profileVersion, 2); assert.equal(state.nickname, 'my edit');
++ state.oldPassword = 'x'; state.newPassword = state.confirmNewPassword = 'Changed123';
++ ctx.request = async () => { const e = Error('原密码错误'); e.result = {code:'VALIDATION_ERROR'}; throw e };
++ await state.changePassword(); assert.ok(ctx.session.user); assert.equal(state.oldPassword, ''); assert.equal(state.newPassword, ''); assert.match(state.message, /原密码错误/);
++ state.oldPassword = 'x'; state.newPassword = state.confirmNewPassword = 'Changed123';
++ ctx.request = async () => { const e = Error('unknown'); e.uncertain = true; throw e };
++ await state.changePassword(); assert.equal(ctx.session.user, null); assert.equal(state.confirmNewPassword, ''); assert.match(state.message, /重新登录/);
++ ctx.session.user = {nickname:'fixture'}; state.oldPassword = 'x'; state.newPassword = state.confirmNewPassword = 'Changed123'; ctx.request = async () => null;
++ await state.changePassword(); assert.equal(ctx.session.user, null); assert.match(state.message, /密码已更换/);
++ console.log('PASS: profile conflict keeps draft and version until explicit review; wrong old password preserves login; uncertain and successful rotation clear identity and passwords; text interpolation only');
++})().catch(e => { console.error(e); process.exitCode = 1 });

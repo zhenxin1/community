@@ -1,0 +1,78 @@
+{
+  "executedAt": "2026-11-14T10:08:53Z",
+  "checks": [
+    {
+      "name": "production root serves real Vue index",
+      "passed": true
+    },
+    {
+      "name": "production local asset served",
+      "passed": true
+    },
+    {
+      "name": "visitor upload refused",
+      "passed": true
+    },
+    {
+      "name": "SVG disguised as PNG refused",
+      "passed": true
+    },
+    {
+      "name": "real PNG upload accepted",
+      "passed": true
+    },
+    {
+      "name": "uploaded image readable",
+      "passed": true
+    },
+    {
+      "name": "nonexistent image rejected",
+      "passed": true
+    },
+    {
+      "name": "combined pet filtering",
+      "passed": true
+    },
+    {
+      "name": "media-created pet completes full adoption",
+      "passed": true
+    },
+    {
+      "name": "hidden-only category not publicly exposed",
+      "passed": true
+    },
+    {
+      "name": "recommended products come first",
+      "passed": true
+    },
+    {
+      "name": "malformed page is validation error",
+      "passed": true
+    },
+    {
+      "name": "zero page is rejected",
+      "passed": true
+    },
+    {
+      "name": "unselected item excluded from discount threshold",
+      "passed": true
+    },
+    {
+      "name": "unselected cart line retained",
+      "passed": true
+    },
+    {
+      "name": "stale admin stock version rejected after payment",
+      "passed": true
+    },
+    {
+      "name": "actual database inventory and adoption invariants",
+      "passed": true
+    },
+    {
+      "name": "original source SHA256 retained",
+      "passed": true
+    }
+  ],
+  "failure": null
+}

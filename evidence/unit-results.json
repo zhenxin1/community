@@ -1,0 +1,26 @@
+[
+  {
+    "name": "com.example.petadoptioncommunity.AdminUsersRulesTest",
+    "tests": "1",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.064"
+  },
+  {
+    "name": "com.example.petadoptioncommunity.PricingTest",
+    "tests": "2",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.002"
+  },
+  {
+    "name": "com.example.petadoptioncommunity.UnicodeCategoriesTest",
+    "tests": "2",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.463"
+  }
+]

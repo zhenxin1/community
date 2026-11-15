@@ -1,0 +1,3 @@
+Work only in C:/Users/ASUS/AppData/Local/Temp/course-mall-g1u9pl66/Y. Read task.md in that directory and implement it. Do not invoke skills or read files outside this directory.
+请阅读当前目录中的 task.md，按其中要求完成开发并运行适当的检查。完成后说明实际改动、验证结果和仍未完成的事项。
+For this coursework, start implementing immediately without asking permission. The input preparation is complete.

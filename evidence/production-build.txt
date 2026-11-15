@@ -1,0 +1,90 @@
+
+added 50 packages in 1s
+
+> pet-haven@1.0.0 build
+> vite build
+
+vite v8.3.8 building client environment for production...
+transforming...
+✓ 55 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.57 kB │ gzip:  0.43 kB
+dist/assets/index-BYoZ_Fet.css   23.40 kB │ gzip:  5.99 kB
+dist/assets/index-DxUzP19q.js   159.30 kB │ gzip: 57.04 kB
+
+✓ built in 286ms
+[INFO] Scanning for projects...
+[INFO] Loaded 24477 auto-discovered prefixes for remote repository central (prefixes-central.txt)
+[INFO] 
+[INFO] ------------------< com.example:PetAdoptionCommunity >------------------
+[INFO] Building PetAdoptionCommunity 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.5.0:resources (default-resources) @ PetAdoptionCommunity ---
+[INFO] Copying 109 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.15.0:compile (default-compile) @ PetAdoptionCommunity ---
+[INFO] Loaded 64 auto-discovered prefixes for remote repository apache.snapshots (prefixes-apache.snapshots.txt)
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 35 source files with javac [debug parameters release 17] to target\classes
+[INFO] /D:/Code/temp/final/PetAdoptionCommunity/src/main/java/com/example/petadoptioncommunity/shop/ShopService.java: D:\Code\temp\final\PetAdoptionCommunity\src\main\java\com\example\petadoptioncommunity\shop\ShopService.java使用了未经检查或不安全的操作。
+[INFO] /D:/Code/temp/final/PetAdoptionCommunity/src/main/java/com/example/petadoptioncommunity/shop/ShopService.java: 有关详细信息, 请使用 -Xlint:unchecked 重新编译。
+[INFO] 
+[INFO] --- resources:3.5.0:testResources (default-testResources) @ PetAdoptionCommunity ---
+[INFO] skip non existing resourceDirectory D:\Code\temp\final\PetAdoptionCommunity\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.15.0:testCompile (default-testCompile) @ PetAdoptionCommunity ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 3 source files with javac [debug parameters release 17] to target\test-classes
+[INFO] 
+[INFO] --- surefire:3.5.6:test (default-test) @ PetAdoptionCommunity ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.example.petadoptioncommunity.AdminUsersRulesTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.064 s -- in com.example.petadoptioncommunity.AdminUsersRulesTest
+[INFO] Running com.example.petadoptioncommunity.PricingTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.example.petadoptioncommunity.PricingTest
+[INFO] Running com.example.petadoptioncommunity.UnicodeCategoriesTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.463 s -- in com.example.petadoptioncommunity.UnicodeCategoriesTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jar:3.5.1:jar (default-jar) @ PetAdoptionCommunity ---
+[INFO] Building jar: D:\Code\temp\final\PetAdoptionCommunity\target\PetAdoptionCommunity-0.0.1-SNAPSHOT.jar
+[INFO] 
+[INFO] --- spring-boot:4.1.2:repackage (repackage) @ PetAdoptionCommunity ---
+[INFO] Loaded 50 auto-discovered prefixes for remote repository ow2-snapshot (prefixes-ow2-snapshot.txt)
+[INFO] Replacing main artifact D:\Code\temp\final\PetAdoptionCommunity\target\PetAdoptionCommunity-0.0.1-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to D:\Code\temp\final\PetAdoptionCommunity\target\PetAdoptionCommunity-0.0.1-SNAPSHOT.jar.original
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  10.271 s
+[INFO] Finished at: 2026-11-14T18:03:49+08:00
+[INFO] ------------------------------------------------------------------------
+[INFO] Scanning for projects...
+[INFO] Loaded 24477 auto-discovered prefixes for remote repository central (prefixes-central.txt)
+[INFO] 
+[INFO] ------------------< com.example:PetAdoptionCommunity >------------------
+[INFO] Building PetAdoptionCommunity 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- dependency:3.10.0:build-classpath (default-cli) @ PetAdoptionCommunity ---
+[INFO] Loaded 64 auto-discovered prefixes for remote repository apache.snapshots (prefixes-apache.snapshots.txt)
+[INFO] Skipped writing classpath file 'D:\Code\temp\final\PetAdoptionCommunity\target\classpath.txt'.  No changes found.
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  3.025 s
+[INFO] Finished at: 2026-11-14T18:03:53+08:00
+[INFO] ------------------------------------------------------------------------
+Built one Spring Boot jar containing Vue assets. Run python scripts/manage.py init, then serve.

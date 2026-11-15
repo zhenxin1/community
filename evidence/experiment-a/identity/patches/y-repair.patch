@@ -1,0 +1,543 @@
+diff --git a/src/main/java/com/example/petadoptioncommunity/notification/NotificationMapper.java b/src/main/java/com/example/petadoptioncommunity/notification/NotificationMapper.java
+new file mode 100644
+index 0000000..dd17dbe
+--- /dev/null
++++ b/src/main/java/com/example/petadoptioncommunity/notification/NotificationMapper.java
+@@ -0,0 +1,14 @@
++package com.example.petadoptioncommunity.notification;
++import org.apache.ibatis.annotations.*;
++import java.time.Instant;
++import java.util.List;
++@Mapper public interface NotificationMapper {
++ record Row(String id,String recipientId,String title,String body,String type,String operationId,Instant createdAt,Instant readAt){}
++ String OWNED="SELECT id,recipient_id,title,body,type,operation_id,created_at,read_at FROM e4_notification WHERE recipient_id=#{userId}";
++ @Select(OWNED+" AND (#{unread}=false OR read_at IS NULL) ORDER BY created_at DESC,id DESC LIMIT #{size} OFFSET #{offset}")
++ List<Row> list(@Param("userId") String userId,@Param("unread") boolean unread,@Param("size") int size,@Param("offset") long offset);
++ @Select("SELECT COUNT(*) FROM e4_notification WHERE recipient_id=#{userId} AND (#{unread}=false OR read_at IS NULL)") long count(@Param("userId") String userId,@Param("unread") boolean unread);
++ @Select(OWNED+" AND id=#{id}") Row owned(@Param("userId") String userId,@Param("id") String id);
++ @Select("SELECT COUNT(*) FROM e4_notification WHERE id=#{id}") long exists(String id);
++ @Update("UPDATE e4_notification SET read_at=COALESCE(read_at,UTC_TIMESTAMP(3)) WHERE recipient_id=#{userId} AND id=#{id}") void mark(@Param("userId") String userId,@Param("id") String id);
++}
+diff --git a/src/main/java/com/example/petadoptioncommunity/notification/NotificationService.java b/src/main/java/com/example/petadoptioncommunity/notification/NotificationService.java
+new file mode 100644
+index 0000000..bcd2a75
+--- /dev/null
++++ b/src/main/java/com/example/petadoptioncommunity/notification/NotificationService.java
+@@ -0,0 +1,18 @@
++package com.example.petadoptioncommunity.notification;
++import com.example.petadoptioncommunity.identity.IdentityPort;
++import com.example.petadoptioncommunity.web.ApiFailure;
++import org.springframework.stereotype.Service;
++import java.util.*;
++import java.time.format.DateTimeFormatterBuilder;
++@Service public class NotificationService {
++ private final NotificationMapper db;private final IdentityPort identity;
++ private static final java.time.format.DateTimeFormatter TIME=new DateTimeFormatterBuilder().appendInstant(3).toFormatter();
++ public NotificationService(NotificationMapper db,IdentityPort identity){this.db=db;this.identity=identity;}
++ public record Notification(String id,String title,String body,String type,String operationId,String createdAt,String readAt){}
++ public record Page(List<Notification> items,int page,int size,long total){}
++ private Notification dto(NotificationMapper.Row r){return new Notification(r.id(),r.title(),r.body(),r.type(),r.operationId(),TIME.format(r.createdAt()),r.readAt()==null?null:TIME.format(r.readAt()));}
++ private Notification owned(IdentityPort.Actor actor,String id){var row=db.owned(actor.userId(),id);if(row==null){boolean exists=db.exists(id)>0;throw new ApiFailure(exists?403:404,exists?"FORBIDDEN":"NOT_FOUND","无法访问通知");}return dto(row);}
++ public Page list(IdentityPort.Actor actor,int page,int size,String filter){if(page<1||!Set.of(10,20,50).contains(size)||!Set.of("ALL","UNREAD").contains(filter))throw new ApiFailure(400,"VALIDATION_ERROR","分页筛选参数无效");return identity.withActiveActor(actor,List.of(),()->new Page(db.list(actor.userId(),filter.equals("UNREAD"),size,((long)page-1)*size).stream().map(this::dto).toList(),page,size,db.count(actor.userId(),filter.equals("UNREAD"))));}
++ public Notification detail(IdentityPort.Actor actor,String id){return identity.withActiveActor(actor,List.of(),()->owned(actor,id));}
++ public Notification read(IdentityPort.Actor actor,String id){return identity.withActiveActor(actor,List.of(),()->{owned(actor,id);db.mark(actor.userId(),id);return owned(actor,id);});}
++}
+diff --git a/src/main/java/com/example/petadoptioncommunity/web/NotificationsController.java b/src/main/java/com/example/petadoptioncommunity/web/NotificationsController.java
+index adb5d76..7393d2a 100644
+--- a/src/main/java/com/example/petadoptioncommunity/web/NotificationsController.java
++++ b/src/main/java/com/example/petadoptioncommunity/web/NotificationsController.java
+@@ -1,20 +1,19 @@
+ package com.example.petadoptioncommunity.web;
+ import com.example.petadoptioncommunity.identity.IdentityPort;
+-import org.springframework.jdbc.core.JdbcTemplate;
++import com.example.petadoptioncommunity.notification.NotificationService;
+ import org.springframework.security.core.annotation.AuthenticationPrincipal;
+ import org.springframework.web.bind.annotation.*;
+-import java.util.*;
++import jakarta.servlet.http.HttpServletRequest;
++import java.util.Set;
+ @RestController @RequestMapping("/api/v1/me/notifications")
+ public class NotificationsController {
+- private final JdbcTemplate db;private final IdentityPort identity;
+- public NotificationsController(JdbcTemplate db,IdentityPort identity){this.db=db;this.identity=identity;}
+- public record Notification(String id,String title,String content,String createdAt,String readAt){}
+- private final org.springframework.jdbc.core.RowMapper<Notification> mapper=(r,n)->new Notification(r.getString("id"),r.getString("title"),r.getString("content"),r.getTimestamp("created_at").toInstant().toString(),r.getTimestamp("read_at")==null?null:r.getTimestamp("read_at").toInstant().toString());
+- @GetMapping public Object list(@AuthenticationPrincipal IdentityPort.Actor actor,@RequestParam(required=false) String unread){
+-  if(unread!=null&&!Set.of("true","false").contains(unread))throw new ApiFailure(400,"VALIDATION_ERROR","筛选参数无效");
+-  return identity.withActiveActor(actor,List.of(),()->db.query("SELECT * FROM e4_notification WHERE user_id=?"+("true".equals(unread)?" AND read_at IS NULL":"")+" ORDER BY created_at DESC,id DESC",mapper,actor.userId()));
++ private final NotificationService notifications;
++ public NotificationsController(NotificationService notifications){this.notifications=notifications;}
++ private void query(HttpServletRequest request,Set<String> allowed){if(request.getParameterMap().entrySet().stream().anyMatch(e->!allowed.contains(e.getKey())||e.getValue().length!=1))throw new ApiFailure(400,"VALIDATION_ERROR","请求参数无效");}
++ @GetMapping public Object list(@AuthenticationPrincipal IdentityPort.Actor actor,HttpServletRequest request){
++  query(request,Set.of("page","size","filter"));
++  try{return notifications.list(actor,Integer.parseInt(request.getParameter("page")==null?"1":request.getParameter("page")),Integer.parseInt(request.getParameter("size")==null?"20":request.getParameter("size")),request.getParameter("filter")==null?"ALL":request.getParameter("filter"));}catch(NumberFormatException e){throw new ApiFailure(400,"VALIDATION_ERROR","分页参数无效");}
+  }
+- private Notification owned(IdentityPort.Actor actor,String id){var rows=db.query("SELECT * FROM e4_notification WHERE user_id=? AND id=?",mapper,actor.userId(),id);if(rows.isEmpty())throw new ApiFailure(404,"NOT_FOUND","通知不存在");return rows.get(0);}
+- @GetMapping("/{id}") public Object detail(@AuthenticationPrincipal IdentityPort.Actor actor,@PathVariable String id){return identity.withActiveActor(actor,List.of(),()->owned(actor,id));}
+- @PostMapping("/{id}/read") public Object read(@AuthenticationPrincipal IdentityPort.Actor actor,@PathVariable String id){return identity.withActiveActor(actor,List.of(),()->{owned(actor,id);db.update("UPDATE e4_notification SET read_at=COALESCE(read_at,UTC_TIMESTAMP(3)) WHERE user_id=? AND id=?",actor.userId(),id);return owned(actor,id);});}
++ @GetMapping("/{id}") public Object detail(@AuthenticationPrincipal IdentityPort.Actor actor,@PathVariable String id,HttpServletRequest request){query(request,Set.of());return notifications.detail(actor,id);}
++ @PutMapping("/{id}/read") public Object read(@AuthenticationPrincipal IdentityPort.Actor actor,@PathVariable String id,HttpServletRequest request)throws java.io.IOException{query(request,Set.of());if(request.getInputStream().read()!=-1)throw new ApiFailure(400,"VALIDATION_ERROR","此请求不接受body");return notifications.read(actor,id);}
+ }
+diff --git a/src/main/resources/db/migrations/V002_notifications.sql b/src/main/resources/db/migrations/V002_notifications.sql
+index bdf5351..3c4c92b 100644
+--- a/src/main/resources/db/migrations/V002_notifications.sql
++++ b/src/main/resources/db/migrations/V002_notifications.sql
+@@ -1,7 +1,11 @@
+ CREATE TABLE e4_notification (
+  id CHAR(36) CHARACTER SET ascii COLLATE ascii_bin PRIMARY KEY,
+- user_id CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+- title VARCHAR(200) NOT NULL, content TEXT NOT NULL,
++ recipient_id CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
++ title VARCHAR(60) NOT NULL, body VARCHAR(500) NOT NULL,
++ type VARCHAR(14) NOT NULL CHECK(type IN ('STATUS_CHANGE','ADMIN_MESSAGE')),
++ operation_id CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
++ actor_id CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  created_at DATETIME(3) NOT NULL, read_at DATETIME(3),
+- FOREIGN KEY(user_id) REFERENCES e4_user(id), INDEX(user_id,created_at,id)
++ FOREIGN KEY(recipient_id) REFERENCES e4_user(id), FOREIGN KEY(actor_id) REFERENCES e4_user(id),
++ INDEX(recipient_id,created_at,id), INDEX(recipient_id,read_at)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+diff --git a/src/main/resources/db/migrations/checksums.properties b/src/main/resources/db/migrations/checksums.properties
+index 5983b32..8dd0da9 100644
+--- a/src/main/resources/db/migrations/checksums.properties
++++ b/src/main/resources/db/migrations/checksums.properties
+@@ -1,2 +1,2 @@
+-V001_identity.sql=d3d6c24919827c6eaf71ff06ade6264c189a23ccadaad5cd12951b2ffa2b5f13
+-V002_notifications.sql=34faaca1b56964ab402131ebc38929b563611c4a2e672d4c14fb19cbcae2dbbe
++V001_identity.sql=d3d6c24919827c6eaf71ff06ade6264c189a23ccadaad5cd12951b2ffa2b5f13
++V002_notifications.sql=124b52b3e833940ec4e936636df4ecaa79d4ae81b3cb0add51ef0ad4800fdf01
+diff --git a/src/test/java/com/example/petadoptioncommunity/IdentityMysqlTest.java b/src/test/java/com/example/petadoptioncommunity/IdentityMysqlTest.java
+index a48bc12..bfe73f3 100644
+--- a/src/test/java/com/example/petadoptioncommunity/IdentityMysqlTest.java
++++ b/src/test/java/com/example/petadoptioncommunity/IdentityMysqlTest.java
+@@ -240,37 +240,65 @@ class IdentityMysqlTest {
+    System.out.println("ROTATION_LOCK42 first encode paused under account/session locks; second transaction observed in data_lock_waits/data_locks; first committed; second current-hash verification rejected");
+   }finally{release.countDown();pool.shutdownNow();}
+  }
++ // 事后契约修复：真实MySQL/HTTP通知路径，不以身份域单测代替。
++ void notificationFixture(String id,String recipient,String actor,String operation,String title){
++  db.update("INSERT INTO e4_notification(id,recipient_id,title,body,type,operation_id,actor_id,created_at,read_at) VALUES(?,?,?,?,'ADMIN_MESSAGE',?,?,?,NULL)",id,recipient,title,"<script>纯文本</script>",operation,actor,Timestamp.from(java.time.Instant.parse("2026-01-01T00:00:00Z")));
++ }
+  @Test void myNotificationsHttp()throws Exception{
+   service.register("notify_owner","Secret123","Secret123");service.register("notify_other","Secret123","Secret123");
+   var login=service.login("notify_owner","Secret123");var otherLogin=service.login("notify_other","Secret123");
+   var actor=service.requireActive("Bearer "+login.accessToken());var other=service.requireActive("Bearer "+otherLogin.accessToken());
+-  String own=UUID.randomUUID().toString(),foreign=UUID.randomUUID().toString();
+-  assertEquals("[]",meHttp("GET","/me/notifications",null,login.accessToken()).body());
+-  db.update("INSERT INTO e4_notification VALUES(?,?,?,?,UTC_TIMESTAMP(3),NULL)",own,actor.userId(),"Owner title","Owner content");
+-  db.update("INSERT INTO e4_notification VALUES(?,?,?,?,UTC_TIMESTAMP(3),NULL)",foreign,other.userId(),"Private title","Private content");
+-  var list=meHttp("GET","/me/notifications?unread=true",null,login.accessToken());assertEquals(200,list.statusCode());assertTrue(list.body().contains(own));assertFalse(list.body().contains("Private"));
+-  var json=new tools.jackson.databind.ObjectMapper();var listed=json.readTree(list.body());assertEquals(1,listed.size());var notification=listed.get(0);
+-  assertEquals(own,notification.get("id").asText());assertEquals("Owner title",notification.get("title").asText());assertEquals("Owner content",notification.get("content").asText());
+-  assertEquals(db.queryForObject("SELECT created_at FROM e4_notification WHERE id=?",Timestamp.class,own).toInstant(),java.time.Instant.parse(notification.get("createdAt").asText()));assertTrue(notification.get("readAt").isNull());
+-  var detail=json.readTree(meHttp("GET","/me/notifications/"+own,null,login.accessToken()).body());assertEquals(notification,detail);
+-
+-  for(String id:List.of(foreign,UUID.randomUUID().toString())){
+-   assertEquals(404,meHttp("GET","/me/notifications/"+id,null,login.accessToken()).statusCode());
+-   assertEquals(404,meHttp("POST","/me/notifications/"+id+"/read",null,login.accessToken()).statusCode());
++  var json=new tools.jackson.databind.ObjectMapper();
++  var empty=json.readTree(meHttp("GET","/me/notifications",null,login.accessToken()).body());
++  assertEquals(4,empty.size());assertEquals(1,empty.get("page").asInt());assertEquals(20,empty.get("size").asInt());assertEquals(0,empty.get("total").asInt());assertEquals(0,empty.get("items").size());
++  String own=UUID.randomUUID().toString(),foreign=UUID.randomUUID().toString(),operation=UUID.randomUUID().toString();
++  notificationFixture(own,actor.userId(),other.userId(),operation,"Owner title");notificationFixture(foreign,other.userId(),other.userId(),UUID.randomUUID().toString(),"Private title");
++  var list=meHttp("GET","/me/notifications?filter=UNREAD",null,login.accessToken());assertEquals(200,list.statusCode());assertFalse(list.body().contains("Private"));
++  var notification=json.readTree(list.body()).get("items").get(0);assertEquals(7,notification.size());
++  assertEquals(own,notification.get("id").asText());assertEquals("Owner title",notification.get("title").asText());assertEquals("<script>纯文本</script>",notification.get("body").asText());assertEquals("ADMIN_MESSAGE",notification.get("type").asText());assertEquals(operation,notification.get("operationId").asText());
++  assertEquals("2026-01-01T00:00:00.000Z",notification.get("createdAt").asText());assertTrue(notification.get("readAt").isNull());
++  assertEquals(notification,json.readTree(meHttp("GET","/me/notifications/"+own,null,login.accessToken()).body()));
++  String missing=UUID.randomUUID().toString();
++  for(int attempt=0;attempt<3;attempt++)for(String id:List.of(foreign,missing))for(String method:List.of("GET","PUT")){
++   var denied=meHttp(method,"/me/notifications/"+id+(method.equals("PUT")?"/read":""),null,login.accessToken());
++   assertEquals(id.equals(foreign)?403:404,denied.statusCode());assertFalse(denied.body().contains("Private"));assertFalse(denied.body().contains("<script>"));
+   }
+-  assertEquals(200,meHttp("GET","/me/notifications/"+own,null,login.accessToken()).statusCode());assertNull(db.queryForObject("SELECT read_at FROM e4_notification WHERE id=?",Timestamp.class,own));
+-  var marked=meHttp("POST","/me/notifications/"+own+"/read",null,login.accessToken());assertEquals(200,marked.statusCode());
+-  var readNotification=json.readTree(marked.body());assertEquals("Owner title",readNotification.get("title").asText());assertEquals("Owner content",readNotification.get("content").asText());assertEquals(notification.get("createdAt"),readNotification.get("createdAt"));
+-  assertEquals(db.queryForObject("SELECT read_at FROM e4_notification WHERE id=?",Timestamp.class,own).toInstant(),java.time.Instant.parse(readNotification.get("readAt").asText()));
+-  assertEquals(marked.body(),meHttp("POST","/me/notifications/"+own+"/read",null,login.accessToken()).body());
+-  assertEquals(marked.body(),meHttp("GET","/me/notifications/"+own,null,login.accessToken()).body());
+-  assertEquals("[]",meHttp("GET","/me/notifications?unread=true",null,login.accessToken()).body());
+-  assertTrue(meHttp("GET","/me/notifications?unread=false",null,login.accessToken()).body().contains(own));
++  for(String body:List.of("{}","{\"userId\":\""+other.userId()+"\"}","[]","null"," ")){
++   assertEquals(400,meHttp("PUT","/me/notifications/"+own+"/read",body,login.accessToken()).statusCode());assertNull(db.queryForObject("SELECT read_at FROM e4_notification WHERE id=?",Timestamp.class,own));
++  }
++  for(String query:List.of("page=0","page=-1","page=1.5","page=x","size=0","size=15","filter=unread","filter=OTHER"))assertEquals(400,meHttp("GET","/me/notifications?"+query,null,login.accessToken()).statusCode(),query);
++  assertNull(db.queryForObject("SELECT read_at FROM e4_notification WHERE id=?",Timestamp.class,own));
++  var marked=meHttp("PUT","/me/notifications/"+own+"/read",null,login.accessToken());assertEquals(200,marked.statusCode());
++  assertEquals(marked.body(),meHttp("PUT","/me/notifications/"+own+"/read",null,login.accessToken()).body());assertEquals(marked.body(),meHttp("GET","/me/notifications/"+own,null,login.accessToken()).body());
++  assertEquals(db.queryForObject("SELECT read_at FROM e4_notification WHERE id=?",Timestamp.class,own).toInstant(),java.time.Instant.parse(json.readTree(marked.body()).get("readAt").asText()));
++  assertEquals(0,json.readTree(meHttp("GET","/me/notifications?filter=UNREAD",null,login.accessToken()).body()).get("total").asInt());
+   assertNull(db.queryForObject("SELECT read_at FROM e4_notification WHERE id=?",Timestamp.class,foreign));
+-  for(String path:List.of("/me/notifications","/me/notifications/"+own)){
+-   var req=HttpRequest.newBuilder(URI.create(url+"/api/v1"+path)).GET().build();assertEquals(401,HttpClient.newHttpClient().send(req,HttpResponse.BodyHandlers.ofString()).statusCode());
++  var expected=new ArrayList<String>();expected.add(own);
++  for(int i=0;i<22;i++){String id=UUID.randomUUID().toString();expected.add(id);notificationFixture(id,actor.userId(),other.userId(),UUID.randomUUID().toString(),"page "+i);}
++  expected.sort(Comparator.reverseOrder());
++  for(int size:List.of(10,20,50))for(int page:List.of(1,2,4)){
++   var response=meHttp("GET","/me/notifications?page="+page+"&size="+size+"&filter=ALL",null,login.accessToken());assertEquals(200,response.statusCode());var envelope=json.readTree(response.body());assertEquals(page,envelope.get("page").asInt());assertEquals(size,envelope.get("size").asInt());assertEquals(23,envelope.get("total").asInt());
++   var ids=new ArrayList<String>();for(var item:envelope.get("items"))ids.add(item.get("id").asText());int start=Math.min((page-1)*size,23);assertEquals(expected.subList(start,Math.min(start+size,23)),ids);
++  }
++  assertEquals(20,json.readTree(meHttp("GET","/me/notifications",null,login.accessToken()).body()).get("items").size());
++  assertEquals(22,json.readTree(meHttp("GET","/me/notifications?filter=UNREAD",null,login.accessToken()).body()).get("total").asInt());
++  for(String path:List.of("/me/notifications","/me/notifications/"+own,"/me/notifications/"+own+"/read")){
++   var req=HttpRequest.newBuilder(URI.create(url+"/api/v1"+path)).method(path.endsWith("/read")?"PUT":"GET",HttpRequest.BodyPublishers.noBody()).build();assertEquals(401,HttpClient.newHttpClient().send(req,HttpResponse.BodyHandlers.ofString()).statusCode());
+   }
+-  assertEquals(401,post("/api/v1/me/notifications/"+own+"/read",null,null).statusCode());
++ }
++ @Test void notificationServiceRevalidatesAndConcurrentFirstRead()throws Exception{
++  service.register("notify_guard","Secret123","Secret123");var login=service.login("notify_guard","Secret123");var actor=service.requireActive("Bearer "+login.accessToken());
++  var notifications=app.getBean(com.example.petadoptioncommunity.notification.NotificationService.class);String id=UUID.randomUUID().toString();notificationFixture(id,actor.userId(),actor.userId(),UUID.randomUUID().toString(),"guard");
++  db.update("UPDATE e4_user SET status='FROZEN',state_version=state_version+1,auth_version=auth_version+1 WHERE id=?",actor.userId());
++  for(int phase=0;phase<2;phase++){
++   assertEquals(401,assertThrows(ApiFailure.class,()->notifications.list(actor,1,20,"ALL")).status);assertEquals(401,assertThrows(ApiFailure.class,()->notifications.detail(actor,id)).status);assertEquals(401,assertThrows(ApiFailure.class,()->notifications.read(actor,id)).status);
++   assertNull(db.queryForObject("SELECT read_at FROM e4_notification WHERE id=?",Timestamp.class,id));
++   db.update("UPDATE e4_user SET status='ACTIVE',state_version=state_version+1 WHERE id=?",actor.userId());
++  }
++  var fresh=service.requireActive("Bearer "+service.login("notify_guard","Secret123").accessToken());var gate=new CyclicBarrier(2);var pool=Executors.newFixedThreadPool(2);
++  try{
++   Callable<Object> read=()->{gate.await(5,TimeUnit.SECONDS);return notifications.read(fresh,id);};var first=pool.submit(read);var second=pool.submit(read);var a=first.get(10,TimeUnit.SECONDS);var b=second.get(10,TimeUnit.SECONDS);assertEquals(a,b);assertEquals(a,notifications.detail(fresh,id));assertEquals(a,notifications.read(fresh,id));assertNotNull(db.queryForObject("SELECT read_at FROM e4_notification WHERE id=?",Timestamp.class,id));
++  }finally{pool.shutdownNow();}
+  }
+  @Test void upgradeV001PreservesAccounts()throws Exception{
+   var before=db.queryForList("SELECT * FROM e4_user ORDER BY id");
+diff --git a/vue1/src/components/MyNotifications.vue b/vue1/src/components/MyNotifications.vue
+index 3e206fa..4fa5240 100644
+--- a/vue1/src/components/MyNotifications.vue
++++ b/vue1/src/components/MyNotifications.vue
+@@ -2,14 +2,16 @@
+   <section aria-label="本人通知">
+     <h2>本人通知</h2>
+     <label><input v-model="unread" type="checkbox">只看未读</label>
++    <label>每页<select v-model.number="size"><option :value="10">10</option><option :value="20">20</option><option :value="50">50</option></select></label>
+     <button @click="load">刷新通知</button>
++    <p>第 {{ page }} 页，共 {{ total }} 条</p><button :disabled="loading || page <= 1" @click="changePage(page - 1)">上一页</button><button :disabled="loading || page * size >= total" @click="changePage(page + 1)">下一页</button>
+     <p v-if="loading" role="status">通知加载中…</p>
+     <p v-else-if="error" role="alert">{{ error }} <button @click="load">重试</button></p>
+     <p v-else-if="items.length === 0">暂无通知</p>
+     <ul v-else><li v-for="item in items" :key="item.id"><button @click="open(item.id)">{{ item.title }} · {{ item.readAt ? '已读' : '未读' }}</button><time>{{ displayTime(item.createdAt) }}</time></li></ul>
+     <p v-if="detailLoading" role="status">详情加载中…</p>
+     <p v-else-if="detailError" role="alert">{{ detailError }} <button @click="open(selectedId)">重试详情</button></p>
+-    <article v-else-if="detail"><h3>{{ detail.title }}</h3><p style="white-space: pre-wrap">{{ detail.content }}</p><p>{{ detail.readAt ? '已读' : '未读' }}</p><button v-if="!detail.readAt" :disabled="marking" @click="markRead">{{ marking ? '处理中…' : '标记已读' }}</button><p v-if="markError" role="alert">{{ markError }} <button :disabled="marking" @click="markRead">重试标记</button></p></article>
++    <article v-else-if="detail"><h3>{{ detail.title }}</h3><p style="white-space: pre-wrap">{{ detail.body }}</p><p>{{ detail.readAt ? '已读' : '未读' }}</p><button v-if="!detail.readAt" :disabled="marking" @click="markRead">{{ marking ? '处理中…' : '标记已读' }}</button><p v-if="markError" role="alert">{{ markError }} <button :disabled="marking" @click="markRead">重试标记</button></p></article>
+   </section>
+ </template>
+ <script>
+@@ -17,50 +19,85 @@ import { request } from '../api/client'
+ import { session } from '../state/session'
+ export default {
+   name: 'MyNotifications',
+-  data: () => ({ session, unread: false, items: [], loading: false, error: '', detail: null, selectedId: null, detailLoading: false, detailError: '', marking: false, markError: '', generation: 0, detailGeneration: 0, alive: true }),
++  data: () => ({ session, unread: false, page: 1, size: 20, total: 0, items: [], loading: false, error: '', detail: null, selectedId: null, detailLoading: false, detailError: '', marking: false, markError: '', generation: 0, viewGeneration: 0, detailGeneration: 0, alive: true, readAttempts: {} }),
+   watch: {
+-    unread () { this.load() },
++    unread () { this.page = 1; this.load() },
++    size () { this.page = 1; this.load() },
+     'session.accessToken': { flush: 'sync', handler () { this.load() } }
+   },
+   mounted () { this.load() },
+   beforeUnmount () { this.alive = false; this.generation++; this.detailGeneration++ },
+   methods: {
++    changePage (page) { this.page = page; this.load() },
+     displayTime (time) { return new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', dateStyle: 'medium', timeStyle: 'medium' }).format(new Date(time)) },
+     async load () {
+-      const generation = ++this.generation; const token = session.accessToken
++      this.viewGeneration++
+       this.detailGeneration++; this.detail = null; this.selectedId = null; this.detailLoading = false; this.detailError = ''; this.markError = ''; this.marking = false
+-      this.items = []; this.error = ''; this.loading = !!token
+-      if (!token) return
++      this.items = []; this.total = 0
++      await this.refreshList()
++    },
++    async refreshList (validAttempt = () => true, correctPage = false) {
++      const generation = ++this.generation; const token = session.accessToken
++      const filter = this.unread ? 'UNREAD' : 'ALL'; const size = this.size
++      const current = () => this.alive && token === session.accessToken && generation === this.generation && validAttempt()
++      if (!token) { this.loading = false; this.error = ''; return }
++      this.loading = true; this.error = ''
+       try {
+-        const items = await request('/me/notifications?unread=' + this.unread, undefined, 'GET')
+-        if (this.alive && generation === this.generation && token === session.accessToken) this.items = items
+-      } catch (error) { if (this.alive && generation === this.generation && token === session.accessToken) this.error = error.message }
+-      finally { if (this.alive && generation === this.generation && token === session.accessToken) this.loading = false }
++        // A concurrent removal can invalidate the requested last page. Allow one bounded correction.
++        for (let query = 0; query < 2; query++) {
++          const result = await request('/me/notifications?page=' + this.page + '&size=' + size + '&filter=' + filter, undefined, 'GET')
++          if (!current()) return
++          const lastPage = Math.max(1, Math.ceil(result.total / size))
++          if (correctPage && this.page > lastPage) {
++            this.page = lastPage
++            if (query === 0) continue
++            throw new Error('通知分页已变化，请重试刷新')
++          }
++          this.items = result.items; this.total = result.total
++          return
++        }
++      } catch (error) { if (current()) { this.items = []; this.error = error.message } }
++      finally { if (this.alive && token === session.accessToken && generation === this.generation) this.loading = false }
+     },
+     async open (id) {
+-      const generation = ++this.detailGeneration; const listGeneration = this.generation; const token = session.accessToken
++      const generation = ++this.detailGeneration; const token = session.accessToken
+       this.selectedId = id; this.detail = null; this.detailError = ''; this.markError = ''; this.marking = false; this.detailLoading = true
+-      const current = () => this.alive && generation === this.detailGeneration && listGeneration === this.generation && token === session.accessToken
++      const current = () => this.alive && generation === this.detailGeneration && token === session.accessToken
+       try { const detail = await request('/me/notifications/' + encodeURIComponent(id), undefined, 'GET'); if (current()) this.detail = detail }
+       catch (error) { if (current()) this.detailError = error.message }
+       finally { if (current()) this.detailLoading = false }
+     },
+     async markRead () {
+       if (!this.detail || this.marking) return
+-      const generation = this.detailGeneration; const listGeneration = this.generation; const token = session.accessToken; const id = this.detail.id
+-      const current = () => this.alive && generation === this.detailGeneration && listGeneration === this.generation && token === session.accessToken
++      const viewGeneration = this.viewGeneration; const listGeneration = this.generation; const token = session.accessToken; const id = this.detail.id
++      const attempt = (this.readAttempts[id] || 0) + 1; this.readAttempts[id] = attempt
++      const sameSession = () => this.alive && token === session.accessToken && this.readAttempts[id] === attempt
++      const ownsDetail = () => sameSession() && viewGeneration === this.viewGeneration && this.selectedId === id
++      const reconcile = async updated => {
++        if (!sameSession()) return
++        if (ownsDetail()) {
++          // Confirmed state owns this detail, even if a same-ID GET was started earlier.
++          this.detailGeneration++; this.detail = updated; this.detailLoading = false; this.detailError = ''; this.marking = false
++        }
++        if (updated.readAt && (this.unread || listGeneration !== this.generation)) {
++          // Automatic list work never resets another notification's detail or feedback.
++          await this.refreshList(sameSession, this.unread)
++        } else if (listGeneration === this.generation) this.items = this.items.map(item => item.id === id ? updated : item)
++      }
+       this.marking = true; this.markError = ''
+       try {
+-        const updated = await request('/me/notifications/' + encodeURIComponent(id) + '/read')
+-        if (this.alive && token === session.accessToken) {
+-          if (listGeneration !== this.generation) await this.load()
+-          else {
+-            this.items = this.items.map(item => item.id === id ? updated : item).filter(item => !this.unread || !item.readAt)
+-            if (current()) this.detail = updated
+-          }
++        const updated = await request('/me/notifications/' + encodeURIComponent(id) + '/read', undefined, 'PUT')
++        await reconcile(updated)
++      } catch (error) {
++        if (ownsDetail()) this.markError = error.message
++        if (error.uncertain && sameSession()) {
++          try {
++            const confirmed = await request('/me/notifications/' + encodeURIComponent(id), undefined, 'GET')
++            await reconcile(confirmed)
++            if (ownsDetail()) this.markError = confirmed.readAt ? '' : '结果未确认，当前仍未读，可重试标记'
++          } catch (readError) { if (ownsDetail()) this.markError = '结果未确认，读取核对失败：' + readError.message }
+         }
+-      } catch (error) { if (current()) this.markError = error.message }
+-      finally { if (current()) this.marking = false }
++      } finally { if (ownsDetail()) this.marking = false }
+     }
+   }
+ }
+diff --git a/vue1/tests/notifications-flow.js b/vue1/tests/notifications-flow.js
+index 241ef7c..04afce3 100644
+--- a/vue1/tests/notifications-flow.js
++++ b/vue1/tests/notifications-flow.js
+@@ -1,7 +1,7 @@
+ const fs = require('fs'); const vm = require('vm'); const assert = require('assert');
+ (async () => {
+   const session = { accessToken: 'A' }; let queue = [];
+-  const ctx = { session, Intl, Date, request: (...args) => new Promise((resolve, reject) => queue.push({ args, resolve, reject })) };
++  const ctx = { session, Intl, Date, request: (...args) => new Promise((resolve, reject) => queue.push({ args, resolve: value => resolve(args[0].includes("?page=") && Array.isArray(value) ? { items: value, total: value.length, page: 1, size: 20 } : value), reject })) };
+   vm.createContext(ctx);
+   vm.runInContext(fs.readFileSync(__dirname + '/../src/components/MyNotifications.vue', 'utf8').split('<script>')[1].split('</script>')[0].replace(/^import .*$/gm, '').replace('export default', 'var component ='), ctx);
+   const state = Object.assign(ctx.component.data(), ctx.component.methods);
+@@ -10,8 +10,8 @@ const fs = require('fs'); const vm = require('vm'); const assert = require('asse
+   assert.equal(state.items[0].id, 'new'); assert.equal(state.loading, false); queue = [];
+   let pending = state.open('new'); queue[0].resolve({ id: 'new', content: '<script>private</script>', readAt: null }); await pending;
+   assert.equal(state.detail.readAt, null); assert.equal(queue[0].args[2], 'GET'); queue = [];
+-  pending = state.markRead(); queue[0].resolve({ id: 'new', readAt: '2026-11-11T00:00:00Z' }); await pending;
+-  assert.equal(state.items.length, 0); assert.ok(state.detail.readAt); queue = [];
++  state.unread = false; pending = state.markRead(); queue[0].resolve({ id: 'new', readAt: '2026-11-11T00:00:00Z' }); await pending;
++  assert.equal(state.items.length, 1); assert.ok(state.detail.readAt); queue = [];
+   pending = state.load(); queue[0].reject(Error('network failed')); await pending; assert.equal(state.error, 'network failed'); assert.equal(state.loading, false); queue = [];
+   pending = state.load(); queue[0].resolve([]); await pending; assert.equal(state.error, ''); assert.equal(state.items.length, 0); queue = [];
+   pending = state.open('retry'); queue[0].reject(Error('detail failed')); await pending;
+@@ -36,9 +36,140 @@ const fs = require('fs'); const vm = require('vm'); const assert = require('asse
+   assert.equal(state.items[0].readAt, 'read'); queue = [];
+   state.detail = { id: 'old', readAt: null }; pending = state.markRead(); state.unread = true; refreshing = state.load();
+   queue[0].resolve({ id: 'old', readAt: 'read' }); await new Promise(resolve => setImmediate(resolve));
+-  assert.equal(queue[2].args[0], '/me/notifications?unread=true');
++  assert.equal(queue[2].args[0], '/me/notifications?page=1&size=20&filter=UNREAD');
+   queue[2].resolve([]); await pending; queue[1].resolve([{ id: 'old', readAt: null }]); await refreshing;
+   assert.equal(state.items.length, 0); queue = [];
++  // Reopening the same notification must receive the confirmed state, even if its GET returns late.
++  state.unread = false; state.detail = { id: 'same', readAt: null }; state.selectedId = 'same'; state.items = [state.detail];
++  pending = state.markRead(); opening = state.open('same');
++  queue[0].resolve({ id: 'same', readAt: 'read' }); await pending;
++  queue[1].resolve({ id: 'same', readAt: null }); await opening;
++  assert.equal(state.detail.readAt, 'read'); assert.equal(state.items[0].readAt, 'read'); queue = [];
++  // An uncertain write automatically reads to confirm rather than replaying the PUT.
++  state.detail = { id: 'same', readAt: null }; pending = state.markRead();
++  const uncertain = Error('结果未确认'); uncertain.uncertain = true; queue[0].reject(uncertain);
++  await new Promise(resolve => setImmediate(resolve)); assert.equal(queue[1].args[2], 'GET');
++  queue[1].resolve({ id: 'same', readAt: 'confirmed' }); await pending;
++  assert.equal(state.detail.readAt, 'confirmed'); assert.equal(state.markError, ''); queue = [];
++  // An older uncertain confirmation cannot downgrade a newer successful attempt.
++  state.detail = { id: 'same', readAt: null }; pending = state.markRead(); queue[0].reject(uncertain);
++  await new Promise(resolve => setImmediate(resolve)); opening = state.open('same');
++  queue[2].resolve({ id: 'same', readAt: null }); await opening;
++  const newer = state.markRead(); queue[3].resolve({ id: 'same', readAt: 'newer-confirmed' }); await newer;
++  queue[1].resolve({ id: 'same', readAt: null }); await pending;
++  assert.equal(state.detail.readAt, 'newer-confirmed'); assert.equal(state.markError, ''); queue = [];
++  state.unread = true; state.total = 12; state.items = [{ id: 'same', readAt: null }]; state.detail = state.items[0];
++  pending = state.markRead(); opening = state.open('same'); queue[1].resolve({ id: 'same', readAt: null }); await opening;
++  const duplicate = state.markRead(); queue[0].resolve({ id: 'same', readAt: 'read' }); await pending;
++  queue[2].resolve({ id: 'same', readAt: 'read' }); await new Promise(resolve => setImmediate(resolve));
++  queue[3].resolve({ items: [], total: 11 }); await duplicate; assert.equal(state.total, 11); queue = [];
++  state.detail = { id: 'same', readAt: null }; pending = state.markRead(); queue[0].reject(uncertain);
++  await new Promise(resolve => setImmediate(resolve)); queue[1].resolve({ id: 'same', readAt: null }); await pending;
++  assert.equal(state.detail.readAt, null); assert.match(state.markError, /仍未读/); assert.equal(state.marking, false); queue = [];
++  pending = state.markRead(); queue[0].reject(uncertain); await new Promise(resolve => setImmediate(resolve));
++  queue[1].reject(Error('offline')); await pending; assert.match(state.markError, /读取核对失败/); assert.equal(state.marking, false); queue = [];
++  // Confirmed reads refill the page from the server rather than locally removing one row.
++  const flush = () => new Promise(resolve => setImmediate(resolve));
++  const ten = Array.from({ length: 10 }, (_, i) => ({ id: 'remaining-' + i, readAt: null }));
++  const seedUnread = (page = 1) => {
++    state.unread = true; state.page = page; state.size = 10; state.total = 11;
++    state.items = [{ id: 'removed', readAt: null }]; state.detail = state.items[0]; state.selectedId = 'removed';
++  };
++  seedUnread(); pending = state.markRead(); queue[0].resolve({ id: 'removed', readAt: 'read' }); await flush();
++  assert.match(queue[1].args[0], /page=1&size=10&filter=UNREAD/);
++  queue[1].resolve({ items: ten, total: 10 }); await pending;
++  assert.equal(state.items.length, 10); assert.equal(state.total, 10); assert.equal(state.detail.readAt, 'read'); queue = [];
++  // Refilling A must not cancel B's independent in-flight detail request.
++  seedUnread(); pending = state.markRead(); opening = state.open('b');
++  queue[0].resolve({ id: 'removed', readAt: 'read' }); await flush();
++  assert.equal(state.detailLoading, true); queue[2].resolve({ items: ten, total: 10 }); await pending;
++  queue[1].resolve({ id: 'b', body: 'B detail', readAt: null }); await opening;
++  assert.equal(state.detail.id, 'b'); assert.equal(state.detailLoading, false); queue = [];
++  // A's refill must not suppress B's mark failure or leave its button busy.
++  seedUnread(); pending = state.markRead(); opening = state.open('b');
++  queue[1].resolve({ id: 'b', readAt: null }); await opening; const markB = state.markRead();
++  queue[0].resolve({ id: 'removed', readAt: 'read' }); await flush();
++  queue[3].resolve({ items: ten, total: 10 }); await pending;
++  queue[2].reject(Error('B mark failed')); await markB;
++  assert.equal(state.markError, 'B mark failed'); assert.equal(state.marking, false); queue = [];
++  // R2: A completes a list-only refill while B's independent write is still pending.
++  const startAB = async () => {
++    seedUnread(); const a = state.markRead(); const bOpen = state.open('b');
++    queue[1].resolve({ id: 'b', body: 'B detail', readAt: null }); await bOpen;
++    const b = state.markRead(); queue[0].resolve({ id: 'removed', readAt: 'read' }); await flush();
++    queue[3].resolve({ items: [{ id: 'b', readAt: null }], total: 1 }); await a;
++    return { b };
++  };
++  for (const confirmation of ['unread', 'failed', 'read']) {
++    const { b } = await startAB(); queue[2].reject(uncertain); await flush();
++    assert.equal(queue[4].args[0], '/me/notifications/b');
++    if (confirmation === 'failed') queue[4].reject(Error('B confirmation offline'));
++    else queue[4].resolve({ id: 'b', body: 'B confirmed', readAt: confirmation === 'read' ? 'B-read' : null });
++    await flush();
++    if (confirmation === 'read') { assert.match(queue[5].args[0], /filter=UNREAD/); queue[5].resolve({ items: confirmation === 'read' ? [] : [{ id: 'b', readAt: null }], total: confirmation === 'read' ? 0 : 1 }); }
++    await b;
++    assert.equal(state.selectedId, 'b'); assert.equal(state.detail.id, 'b'); assert.equal(state.marking, false);
++    if (confirmation === 'read') { assert.equal(state.detail.readAt, 'B-read'); assert.equal(state.markError, ''); }
++    else {
++      assert.equal(state.detail.readAt, null); assert.match(state.markError, confirmation === 'failed' ? /读取核对失败/ : /仍未读/);
++      // The user can retry B directly without reopening it, and the successful result stays visible.
++      const index = queue.length; const retry = state.markRead(); assert.equal(queue[index].args[2], 'PUT');
++      queue[index].resolve({ id: 'b', readAt: 'B-retry-read' }); await flush();
++      queue[index + 1].resolve({ items: [], total: 0 }); await retry;
++      assert.equal(state.detail.readAt, 'B-retry-read'); assert.equal(state.markError, ''); assert.equal(state.marking, false);
++    }
++    queue = [];
++  }
++  // The direct success path also preserves B and does not depend on A's list generation.
++  let pair = await startAB(); queue[2].resolve({ id: 'b', readAt: 'B-success' }); await flush();
++  queue[4].resolve({ items: [], total: 0 }); await pair.b;
++  assert.equal(state.detail.readAt, 'B-success'); assert.equal(state.selectedId, 'b'); queue = [];
++  // An old B confirmation cannot overwrite a newer B attempt after A's refill.
++  pair = await startAB(); queue[2].reject(uncertain); await flush();
++  opening = state.open('b'); queue[5].resolve({ id: 'b', readAt: null }); await opening;
++  const freshB = state.markRead(); queue[6].resolve({ id: 'b', readAt: 'fresh-B' }); await flush();
++  queue[7].resolve({ items: [], total: 0 }); await freshB;
++  queue[4].resolve({ id: 'b', readAt: null }); await pair.b;
++  assert.equal(queue.length, 8); assert.equal(state.detail.readAt, 'fresh-B'); assert.equal(state.markError, ''); queue = [];
++  // Explicit filter changes still clear the prior detail and reject its late feedback.
++  pair = await startAB(); queue[2].reject(uncertain); await flush(); state.unread = false;
++  refreshing = state.load(); queue[5].resolve([{ id: 'all-current' }]); await refreshing;
++  queue[4].resolve({ id: 'b', readAt: null }); await pair.b; assert.equal(queue.length, 6);
++  assert.equal(state.detail, null); assert.equal(state.selectedId, null); assert.equal(state.markError, ''); assert.equal(state.items[0].id, 'all-current'); queue = [];
++  // A new session neither receives B's late confirmation nor starts an old-session follow-up.
++  pair = await startAB(); queue[2].reject(uncertain); await flush(); session.accessToken = 'R2-new-session';
++  refreshing = state.load(); queue[5].resolve([{ id: 'new-session-current' }]); await refreshing;
++  queue[4].reject(Error('old confirmation failed')); await pair.b;
++  assert.equal(queue.length, 6); assert.equal(state.detail, null); assert.equal(state.markError, '');
++  assert.equal(state.items[0].id, 'new-session-current'); queue = []; session.accessToken = 'A';
++  // The final page becomes invalid: obtain the new total, then request the valid last page.
++  seedUnread(2); pending = state.markRead(); queue[0].resolve({ id: 'removed', readAt: 'read' }); await flush();
++  queue[1].resolve({ items: [], total: 10 }); await flush(); assert.match(queue[2].args[0], /page=1&size=10/);
++  queue[2].resolve({ items: ten, total: 10 }); await pending; assert.equal(state.page, 1); assert.equal(state.items.length, 10); queue = [];
++  // An uncertain PUT that is confirmed read uses the same refill path, without replaying the PUT.
++  seedUnread(); pending = state.markRead(); queue[0].reject(uncertain); await flush();
++  queue[1].resolve({ id: 'removed', readAt: 'confirmed' }); await flush();
++  assert.equal(queue[1].args[2], 'GET'); assert.match(queue[2].args[0], /filter=UNREAD/);
++  queue[2].resolve({ items: ten, total: 10 }); await pending; assert.equal(state.items.length, 10); assert.equal(state.detail.readAt, 'confirmed'); queue = [];
++  // A refill failure is an explicit list error, with retry via the existing refresh action.
++  seedUnread(); pending = state.markRead(); queue[0].resolve({ id: 'removed', readAt: 'read' }); await flush();
++  queue[1].reject(Error('refill offline')); await pending;
++  assert.equal(state.error, 'refill offline'); assert.equal(state.loading, false); assert.equal(state.detail.readAt, 'read'); queue = [];
++  refreshing = state.load(); queue[0].resolve({ items: ten, total: 10 }); await refreshing;
++  assert.equal(state.error, ''); assert.equal(state.items.length, 10); queue = [];
++  // A late refill cannot replace a newer filter/page request.
++  seedUnread(); pending = state.markRead(); queue[0].resolve({ id: 'removed', readAt: 'read' }); await flush();
++  state.unread = false; refreshing = state.load(); queue[2].resolve([{ id: 'all-new' }]); await refreshing;
++  queue[1].resolve({ items: ten, total: 10 }); await pending; assert.equal(state.items[0].id, 'all-new'); queue = [];
++  // Old-session refill responses cannot populate the new session.
++  seedUnread(); pending = state.markRead(); queue[0].resolve({ id: 'removed', readAt: 'read' }); await flush();
++  session.accessToken = 'new-session'; refreshing = state.load(); queue[2].resolve([{ id: 'new-session' }]); await refreshing;
++  queue[1].resolve({ items: ten, total: 10 }); await pending; assert.equal(state.items[0].id, 'new-session'); queue = []; session.accessToken = 'A';
++  // Continual concurrent shrinkage is bounded to two queries and surfaces a retryable error.
++  seedUnread(3); pending = state.markRead(); queue[0].resolve({ id: 'removed', readAt: 'read' }); await flush();
++  queue[1].resolve({ items: [], total: 11 }); await flush(); assert.equal(state.page, 2);
++  queue[2].resolve({ items: [], total: 1 }); await pending; assert.equal(queue.length, 3);
++  assert.equal(state.page, 1); assert.match(state.error, /重试/); assert.equal(state.loading, false); queue = [];
+   // A successful old-session write must neither update nor refresh the new session.
+   state.detail = { id: 'old', readAt: null }; pending = state.markRead(); session.accessToken = 'B'; refreshing = state.load();
+   queue[1].resolve([{ id: 'B', readAt: null }]); await refreshing; queue[0].resolve({ id: 'old', readAt: 'read' }); await pending;
+@@ -54,11 +185,42 @@ const fs = require('fs'); const vm = require('vm'); const assert = require('asse
+     parentNode: () => null, nextSibling: () => null
+   });
+   const app = renderer.createApp({ ...ctx.component, render: () => null }); const live = app.mount({});
+-  assert.equal(queue[0].args[0], '/me/notifications?unread=false');
++  assert.equal(queue[0].args[0], '/me/notifications?page=1&size=20&filter=ALL');
+   queue[0].resolve([{ id: 'initial', readAt: null }]); await new Promise(resolve => setImmediate(resolve)); await nextTick();
+   live.unread = true; await nextTick();
+-  assert.equal(queue.length, 2); assert.equal(queue[1].args[0], '/me/notifications?unread=true');
++  assert.equal(queue.length, 2); assert.equal(queue[1].args[0], '/me/notifications?page=1&size=20&filter=UNREAD');
+   queue[1].resolve([]); await new Promise(resolve => setImmediate(resolve)); await nextTick(); assert.equal(live.items.length, 0); assert.equal(live.loading, false);
++  queue = []; live.size = 10; await nextTick();
++  assert.equal(queue[0].args[0], '/me/notifications?page=1&size=10&filter=UNREAD');
++  queue[0].resolve({ items: [{ id: 'paged' }], total: 25, page: 1, size: 10 }); await new Promise(resolve => setImmediate(resolve));
++  queue = []; live.changePage(2); assert.equal(queue[0].args[0], '/me/notifications?page=2&size=10&filter=UNREAD');
++  queue[0].resolve({ items: [{ id: 'page2' }], total: 25, page: 2, size: 10 }); await new Promise(resolve => setImmediate(resolve));
++  assert.equal(live.items[0].id, 'page2'); assert.equal(live.total, 25);
+   app.unmount();
++  // Compile the production template and exercise its actual event bindings.
++  const vue = require('vue'); const { compile } = require('@vue/compiler-dom');
++  const template = fs.readFileSync(__dirname + '/../src/components/MyNotifications.vue', 'utf8').split('<template>')[1].split('</template>')[0];
++  const render = new Function('Vue', compile(template, { prefixIdentifiers: true }).code)(vue);
++  const node = type => ({ type, tagName: type.toUpperCase(), children: [], props: {}, text: '', addEventListener () {}, options: [], multiple: false });
++  const dom = createRenderer({
++    createElement: node, createText: text => ({ ...node('#text'), text }), createComment: () => node('#comment'),
++    insert (child, parent, anchor) { child.parent = parent; const index = parent.children.indexOf(anchor); if (index < 0) parent.children.push(child); else parent.children.splice(index, 0, child) },
++    remove (child) { const index = child.parent.children.indexOf(child); if (index >= 0) child.parent.children.splice(index, 1) },
++    setText (n, text) { n.text = text }, setElementText (n, text) { n.text = text; n.children = [] },
++    patchProp (n, key, old, value) { n.props[key] = value }, parentNode: n => n.parent, nextSibling: () => null
++  });
++  const root = node('root'); queue = []; const uiApp = dom.createApp({ ...ctx.component, render }); uiApp.mount(root);
++  const settle = async () => { await new Promise(resolve => setImmediate(resolve)); await nextTick() };
++  const nodes = n => [n, ...n.children.flatMap(nodes)]; const text = n => n.text + n.children.map(text).join('');
++  const button = label => nodes(root).find(n => n.type === 'button' && text(n).includes(label));
++  queue[0].resolve({ items: [{ id: 'ui', title: '通知标题', createdAt: '2026-01-01T00:00:00.000Z', readAt: null }], total: 25 }); await settle();
++  assert.equal(button('上一页').props.disabled, true); assert.equal(button('下一页').props.disabled, false);
++  button('下一页').props.onClick(); assert.match(queue[1].args[0], /page=2/);
++  queue[1].resolve({ items: [], total: 25 }); await settle(); assert.ok(text(root).includes('第 2 页'));
++  nodes(root).find(n => n.type === 'select').props['onUpdate:modelValue'](10); await nextTick(); assert.match(queue[2].args[0], /page=1&size=10/);
++  queue[2].resolve({ items: [{ id: 'ui', title: '通知标题', createdAt: '2026-01-01T00:00:00.000Z', readAt: null }], total: 1 }); await settle();
++  button('通知标题').props.onClick(); queue[3].resolve({ id: 'ui', title: '通知标题', body: '<script>纯文本</script>', readAt: null }); await settle();
++  assert.ok(text(root).includes('<script>纯文本</script>')); assert.equal(nodes(root).some(n => n.type === 'script'), false);
++  assert.equal(button('下一页').props.disabled, true); uiApp.unmount();
+   console.log('PASS notifications: reactive filter watcher, failures/retries, mark/detail/refresh/session races, stale responses and unmount');
+ })().catch(error => { console.error(error); process.exitCode = 1 });

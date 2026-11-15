@@ -1,0 +1,7 @@
+{
+  "mode": "Direct main class, module working directory; no DB environment variables",
+  "port": 18080,
+  "health": true,
+  "databaseRead": true,
+  "localConfigTracked": false
+}

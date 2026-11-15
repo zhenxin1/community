@@ -1,0 +1,19 @@
+{
+  "source_commit": "df0e7408eef962eedb6b0828557d6e925ede2f35",
+  "model_display": "GPT-6.1 Sol",
+  "model_source": "user interface confirmation",
+  "backend_snapshot": "not exposed by tools",
+  "operator": "same root Codex coordinator",
+  "local_start_date": "2026-11-11",
+  "x_thread": "01a1cb3a-ac40-7312-b4c9-bcaa3f56e094",
+  "y_thread": "01a1cb3a-d8b8-7830-991a-29c23b6da572",
+  "x_path": "C:/Users/29201/Documents/Codex/2026-11-11/yue-du/work/experiment-a/x-final",
+  "y_path": "C:/Users/29201/Documents/Codex/2026-11-11/yue-du/work/experiment-a/y-final",
+  "x_database": "pet_adoption_experiment_x_test",
+  "y_database": "pet_adoption_experiment_y_test",
+  "x_context": "baseline code plus approved PRD/architecture/AGENTS/project-context/story",
+  "y_context": "baseline code and generic BMAD framework plus oral request only",
+  "y_manifest": "y-input-manifest.json",
+  "result": "not collected",
+  "limitation": "Different stories, one per group, no randomization; baseline code carries existing conventions; precise server model snapshot unobservable; finish dates must be recorded separately"
+}

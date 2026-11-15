@@ -1,0 +1,120 @@
+{
+  "executedAt": "2026-11-14T09:39:37Z",
+  "seconds": 2.805,
+  "checks": [
+    {
+      "name": "unknown registration fields cannot elevate",
+      "passed": true
+    },
+    {
+      "name": "wrong login generic rejection",
+      "passed": true
+    },
+    {
+      "name": "USER cannot administer users",
+      "passed": true
+    },
+    {
+      "name": "visitor protected request rejected",
+      "passed": true
+    },
+    {
+      "name": "profile plain text stored",
+      "passed": true
+    },
+    {
+      "name": "stale profile version rejected",
+      "passed": true
+    },
+    {
+      "name": "foreign profile query rejected",
+      "passed": true
+    },
+    {
+      "name": "freeze repeated command has one result",
+      "passed": true
+    },
+    {
+      "name": "frozen old session revoked",
+      "passed": true
+    },
+    {
+      "name": "frozen reason only after valid credential",
+      "passed": true
+    },
+    {
+      "name": "unfreeze does not restore old session",
+      "passed": true
+    },
+    {
+      "name": "message idempotency",
+      "passed": true
+    },
+    {
+      "name": "foreign notification rejected",
+      "passed": true
+    },
+    {
+      "name": "read keeps first timestamp",
+      "passed": true
+    },
+    {
+      "name": "visitor contacts absent",
+      "passed": true
+    },
+    {
+      "name": "logged in available contact visible",
+      "passed": true
+    },
+    {
+      "name": "self application rejected",
+      "passed": true
+    },
+    {
+      "name": "parallel same applicant one active application",
+      "passed": true
+    },
+    {
+      "name": "parallel selection one winner",
+      "passed": true
+    },
+    {
+      "name": "handover other applicant contacts removed",
+      "passed": true
+    },
+    {
+      "name": "unrelated confirmation rejected",
+      "passed": true
+    },
+    {
+      "name": "single party repeat remains selected",
+      "passed": true
+    },
+    {
+      "name": "double confirmation repeated remains successful",
+      "passed": true
+    },
+    {
+      "name": "adopted no new applications",
+      "passed": true
+    },
+    {
+      "name": "failure restores available",
+      "passed": true
+    },
+    {
+      "name": "old successful confirmation cannot affect new handover",
+      "passed": true
+    },
+    {
+      "name": "USER cannot create product",
+      "passed": true
+    },
+    {
+      "name": "fractional cart quantity rejected",
+      "passed": false
+    }
+  ],
+  "failure": "AssertionError: fractional cart quantity rejected",
+  "environment": "Java17 SpringBoot4.1.2 MySQL8.0.45 real HTTP; no mocks; labelled test records retained"
+}

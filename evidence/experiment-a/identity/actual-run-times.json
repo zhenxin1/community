@@ -1,0 +1,16 @@
+[
+  {
+    "group": "X",
+    "started_local": "2026-11-11 23:29:42 +08:00",
+    "completed_local": "2026-11-12 00:35:02 +08:00",
+    "elapsed_seconds": 3920,
+    "first_reviewable_sha": "5d81624a1f4be1d3329dfe2ea5e54492e4cf4e81"
+  },
+  {
+    "group": "Y",
+    "started_local": "2026-11-11 23:29:54 +08:00",
+    "completed_local": "2026-11-11 23:59:24 +08:00",
+    "elapsed_seconds": 1770,
+    "first_reviewable_sha": "0a6dd61e011ec6257f5322e3dc55db7d4c954acf"
+  }
+]

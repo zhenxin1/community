@@ -1,0 +1,52 @@
+{
+  "experiment": "A",
+  "group": "Y",
+  "story": "4.4",
+  "review_type": "first_independent_review",
+  "review_date_local": "2026-11-12",
+  "timezone": "Asia/Shanghai",
+  "reviewed_sha": "0a6dd61e011ec6257f5322e3dc55db7d4c954acf",
+  "source_baseline_sha": "df0e7408eef962eedb6b0828557d6e925ede2f35",
+  "snapshot_baseline_sha": "9380032975644450aced41676ec74c31ef963242",
+  "verdict": "CHANGES_REQUESTED",
+  "first_pass": {"numerator": 0, "denominator": 1, "percent": 0},
+  "mandatory_root_causes": 8,
+  "mandatory_findings": ["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8"],
+  "project_context_violations": {"count": 0, "confirmed_mappings": []},
+  "adr_conflicts": {
+    "count": 4,
+    "unit": "ADR number plus independent implementation behavior",
+    "confirmed_mappings": [
+      {"adr": "ADR-006", "finding": "F1", "behavior": "pagination contract"},
+      {"adr": "ADR-006", "finding": "F3", "behavior": "accepting nonempty input at empty-body endpoint"},
+      {"adr": "ADR-006", "finding": "F5", "behavior": "notification resource and storage fields"},
+      {"adr": "ADR-006", "finding": "O1", "behavior": "fixed millisecond timestamp representation", "mandatory": false}
+    ]
+  },
+  "sessions": {
+    "status": "interim_until_review_not_done",
+    "independent_build_review_repair_main_chats": 2,
+    "build": ["01a1cb3a-d8b8-7830-991a-29c23b6da572"],
+    "review": ["01a1cd52-9615-7780-92de-6c973af158f4"],
+    "independent_repair_chats_observed": [],
+    "shared_coordinator_excluded": "01a1c948-8793-72a1-a99e-33d3987e8d5b",
+    "build_main_user_turns_verified": 1,
+    "review_internal_subagents": 4,
+    "build_internal_subagents": "present; not independently enumerated as main chats",
+    "count_basis": "registration and actual read_thread record; tool calls and internal delegation are separately described"
+  },
+  "post_done_rework_stories": null,
+  "post_done_rework_reason": "No human done acceptance; not measurable",
+  "build_started_local": "2026-11-11T23:29:54+08:00",
+  "first_reviewable_completed_local": "2026-11-11T23:59:24+08:00",
+  "build_elapsed_seconds_recorded": 1770,
+  "cross_day_review": true,
+  "model_display_recorded": "GPT-6.1 Sol",
+  "model_source": "experiment registration: user interface confirmation",
+  "precise_backend_snapshot": "not exposed",
+  "review_layers": {"completed": ["blind-hunter", "edge-case-hunter", "verification-gap", "acceptance-auditor"], "failed": []},
+  "current_review_execution": ["read-only source and contract review", "historical log verification", "actual build chat verification", "component-method uncertain-write probe", "component-method same-notification reopen race probe"],
+  "current_review_database_runs": 0,
+  "historical_tests": {"java_total": 17, "mysql_test_class": 13, "failures": 0, "errors": 0, "skipped": 0, "frontend_scripts": 5, "lint": "passed", "build": "passed", "package": "passed", "browser_human_acceptance": false},
+  "limitations": ["Different stories, one sample per group, no randomization; no general causal inference", "Full upstream documents supplied only after implementation for independent review", "Code-supported API differences were not replayed against MySQL this review", "No human acceptance or post-done observation", "Historical tests verify their own assertions, not missing contract cases"]
+}

@@ -1,0 +1,1258 @@
+{
+  "schema_version": 1,
+  "experiment": "A",
+  "story": "3.1",
+  "status": "frozen_simplified",
+  "frozen_at": "2026-11-08T12:36:27.121368+00:00",
+  "hash_algorithm": "SHA-256",
+  "baseline_commit": null,
+  "baseline_note": "Git HEAD 尚无提交；不得虚构提交标识。正式冻结使用实际包的逐文件 SHA-256。",
+  "pairing": {
+    "X": "Story 1.5",
+    "Y": "Story 2.1",
+    "planned_order": [
+      "Y",
+      "X"
+    ]
+  },
+  "user_confirmation": {
+    "decision_date": "2026-11-07",
+    "record": "_bmad-output/implementation-artifacts/spec-3-1-experiment-inputs.md#Intent",
+    "decision": "用户选择 A 配对，接受难度差异及 Y 独立固定商品/购物车/报价夹具的限制",
+    "raw_conversation_reference": null,
+    "conversation_evidence": {
+      "source": "当前聊天",
+      "selection_verbatim": "A",
+      "approval_verbatim": "批准并继续",
+      "export_id_available": false
+    },
+    "scope": "确认实验方案；不证明完全等价、骨架可运行、隔离通过或输入冻结",
+    "simplification": {
+      "date": "2026-11-08",
+      "choice": "non_strict_isolation",
+      "scope": "coursework exploratory comparison",
+      "strict_isolation_claimed": false
+    }
+  },
+  "environment": {
+    "operator": null,
+    "execution_date": null,
+    "host": null,
+    "os": null,
+    "model_id": null,
+    "model_version_evidence": null,
+    "reasoning_settings": null,
+    "tool_versions_and_settings": null,
+    "same_conditions_verified": false
+  },
+  "common_skeleton": {
+    "status": "candidate_copied_and_hashed",
+    "files": [],
+    "candidate_manifest": "experiments/A/preparation/candidate-manifest.json",
+    "candidate_common_files": 17,
+    "run_evidence": "experiments/A/preparation/verification.md",
+    "no_tested_feature_verified": false
+  },
+  "inputs": {
+    "X": {
+      "status": "implementation_finished",
+      "candidate_root": "experiments/A/preparation/X",
+      "candidate_file_count": 130,
+      "root": "C:\\Users\\ASUS\\AppData\\Local\\Temp\\course-mall-g1u9pl66\\X",
+      "files": [
+        {
+          "path": "_bmad-output/planning-artifacts/architecture/architecture-pet-mall-bmad-2026-11-06/ARCHITECTURE-SPINE.md",
+          "size_bytes": 14520,
+          "sha256": "ed61d2733623e27bd4048e85807e6da6e74ff17cd463a9835834b6fe41e3f547",
+          "source": "project:_bmad-output/planning-artifacts/architecture/architecture-pet-mall-bmad-2026-11-06/ARCHITECTURE-SPINE.md",
+          "purpose": "X planning"
+        },
+        {
+          "path": "_bmad-output/planning-artifacts/epics.md",
+          "size_bytes": 73505,
+          "sha256": "a73d5fbff60e0699a6b6d9867bab1a51f7f8eac1075b3c4fbc0ea6db6d65d541",
+          "source": "project:_bmad-output/planning-artifacts/epics.md",
+          "purpose": "X planning"
+        },
+        {
+          "path": "_bmad-output/planning-artifacts/prds/prd-pet-mall-bmad-2026-11-05/prd.md",
+          "size_bytes": 13037,
+          "sha256": "450ce3b96885b8b1c437cf1e7de56d3c7c15c5cbd009cbded1215ebeea22ade6",
+          "source": "project:_bmad-output/planning-artifacts/prds/prd-pet-mall-bmad-2026-11-05/prd.md",
+          "purpose": "X planning"
+        },
+        {
+          "path": "_bmad-output/planning-artifacts/ux-designs/ux-pet-mall-bmad-2026-11-06/DESIGN.md",
+          "size_bytes": 8387,
+          "sha256": "713790a1d2f1fc013c42a0dfb1bdf18e99a6f045e5cbc838fe17b60af8d60b2e",
+          "source": "project:_bmad-output/planning-artifacts/ux-designs/ux-pet-mall-bmad-2026-11-06/DESIGN.md",
+          "purpose": "X planning"
+        },
+        {
+          "path": "_bmad-output/planning-artifacts/ux-designs/ux-pet-mall-bmad-2026-11-06/EXPERIENCE.md",
+          "size_bytes": 14651,
+          "sha256": "21b05c74426f79259069b536129bd9c52b08e66250cb96c027c8f14cad47186f",
+          "source": "project:_bmad-output/planning-artifacts/ux-designs/ux-pet-mall-bmad-2026-11-06/EXPERIENCE.md",
+          "purpose": "X planning"
+        },
+        {
+          "path": "_bmad-output/planning-artifacts/ux-designs/ux-pet-mall-bmad-2026-11-06/mockups/key-cart.html",
+          "size_bytes": 16286,
+          "sha256": "06b49e85796c04b77a4211707d36717b7fb69e4ccaab4fcb812cfdd09b0179f7",
+          "source": "project:_bmad-output/planning-artifacts/ux-designs/ux-pet-mall-bmad-2026-11-06/mockups/key-cart.html",
+          "purpose": "X planning"
+        },
+        {
+          "path": "_bmad-output/planning-artifacts/ux-designs/ux-pet-mall-bmad-2026-11-06/mockups/key-checkout.html",
+          "size_bytes": 16059,
+          "sha256": "44c5d766171893c45ee13a0891de0c04e756a9672d4c5b94539d4462077cdb13",
+          "source": "project:_bmad-output/planning-artifacts/ux-designs/ux-pet-mall-bmad-2026-11-06/mockups/key-checkout.html",
+          "purpose": "X planning"
+        },
+        {
+          "path": "_bmad-output/planning-artifacts/ux-designs/ux-pet-mall-bmad-2026-11-06/mockups/key-home.html",
+          "size_bytes": 11474,
+          "sha256": "055405808f555dc3e2400e3a3b23ad7d0b162f5f56f6ab45858fb22e449c96a8",
+          "source": "project:_bmad-output/planning-artifacts/ux-designs/ux-pet-mall-bmad-2026-11-06/mockups/key-home.html",
+          "purpose": "X planning"
+        },
+        {
+          "path": "_bmad-output/specs/spec-pet-mall-bmad/SPEC.md",
+          "size_bytes": 7353,
+          "sha256": "84e01950fc6de6f415887ab0ab8fb9ef7325fc3ea200702bbc1c888a51a85039",
+          "source": "project:_bmad-output/specs/spec-pet-mall-bmad/SPEC.md",
+          "purpose": "X planning"
+        },
+        {
+          "path": "apps/server/package.json",
+          "size_bytes": 384,
+          "sha256": "b904e35c41a222881f4fcc943ab31d48079b9da7b958fc39e395cd4b1742ae9b",
+          "source": "project:apps/server/package.json",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/server/src/app.ts",
+          "size_bytes": 3995,
+          "sha256": "a23bce98b79724c7e664bf76e110fa9f349cbb67e42777d14edddebdfdadb1cc",
+          "source": "new for candidate",
+          "purpose": "X instructions"
+        },
+        {
+          "path": "apps/server/src/catalog.ts",
+          "size_bytes": 5450,
+          "sha256": "7b65573972d559d3ce80b51736ee6f9a8a4ffe088afae00253c78e8a68ce6b02",
+          "source": "project:apps/server/src/catalog.ts",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/server/src/errors.ts",
+          "size_bytes": 398,
+          "sha256": "b4e9820cec9d5a0e6ffdef9ef490d6ab6aecd482804528b59c087c1616ef8ddf",
+          "source": "project:apps/server/src/errors.ts",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/server/src/index.ts",
+          "size_bytes": 878,
+          "sha256": "6675e56cede25295fd958268e8369817383aa87f7d15ceecc74dd9063e4326e9",
+          "source": "project:apps/server/src/index.ts",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/server/src/run-boundary.ts",
+          "size_bytes": 1271,
+          "sha256": "7d3a8ff3283242ebc5be8da8240efeee63844c00267f78483c2c93a4072d7b6f",
+          "source": "new for candidate",
+          "purpose": "X instructions"
+        },
+        {
+          "path": "apps/server/src/store.ts",
+          "size_bytes": 982,
+          "sha256": "82e0ebf7255d054b2c8f0cd1766c33e17cd820ac0ff75c5f7f6a07fa9ca93fe8",
+          "source": "new for candidate",
+          "purpose": "X instructions"
+        },
+        {
+          "path": "apps/server/tsconfig.json",
+          "size_bytes": 302,
+          "sha256": "e31297368a51551fe737d69b456606603c3b720157909ba8ea349ab73f526be7",
+          "source": "project:apps/server/tsconfig.json",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/index.html",
+          "size_bytes": 387,
+          "sha256": "d477b06a3e1e2b560e051e208208cea9a4d01a41c05257481401d53deb8728e3",
+          "source": "project:apps/web/index.html",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/package.json",
+          "size_bytes": 523,
+          "sha256": "f032ee771e2bef7b10a92ea125a4a9de45b6acb7127ef86064d2f2ebe4a727ad",
+          "source": "project:apps/web/package.json",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/favicon.svg",
+          "size_bytes": 9522,
+          "sha256": "61bc9a161de58248288e6905425d7180f0624c2865007b97d763fdac12043a66",
+          "source": "project:apps/web/public/favicon.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/icons.svg",
+          "size_bytes": 5031,
+          "sha256": "b45fa506195cfcdef406ba9f0c77b36ddc1a7c224040926ec70abc2fdea7b93a",
+          "source": "project:apps/web/public/icons.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/bed-1.svg",
+          "size_bytes": 531,
+          "sha256": "7fd685f315f2f23de0228b18ac6df45312c1fe95dd18969c4f77472529c3547f",
+          "source": "project:apps/web/public/products/bed-1.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/bed-2.svg",
+          "size_bytes": 531,
+          "sha256": "5b1553da5812a5415bbddf9187f7d53943fea9f29444b4553b52ae692a0fb328",
+          "source": "project:apps/web/public/products/bed-2.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/bed-3.svg",
+          "size_bytes": 531,
+          "sha256": "fcd24aabb059f56e8bff2029b887208516b7b0724c1e6dbf8455dc4079a64ab9",
+          "source": "project:apps/web/public/products/bed-3.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/bed-4.svg",
+          "size_bytes": 531,
+          "sha256": "365ee81430e048bb62ebd7c4ca3084ec8e5ce2ea4a5a56580ebc7e0670c2bc3a",
+          "source": "project:apps/web/public/products/bed-4.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/bed-5.svg",
+          "size_bytes": 531,
+          "sha256": "5e3ad087981336b66ad9b91a59082fa8458c2a1858986e654850690f2fa93cdd",
+          "source": "project:apps/web/public/products/bed-5.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/bed-6.svg",
+          "size_bytes": 531,
+          "sha256": "86154c74aa4bf50ab962bf44b8e581cce04a9763f36b520dd0a3e33c83548fde",
+          "source": "project:apps/web/public/products/bed-6.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/bowl-1.svg",
+          "size_bytes": 578,
+          "sha256": "60bae284fdac62010c1b6e4db1d3c5140cea9e7faa7f71ba827756882939c18a",
+          "source": "project:apps/web/public/products/bowl-1.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/bowl-2.svg",
+          "size_bytes": 578,
+          "sha256": "d96689f0b5e9d260e2c5ad782132c73f98e38b6f86971e61b6734c8dcf4a4954",
+          "source": "project:apps/web/public/products/bowl-2.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/bowl-3.svg",
+          "size_bytes": 578,
+          "sha256": "ec1394d0ec66554c87baf2aacec2691749dc45672c5ec45e569298b1286cad9b",
+          "source": "project:apps/web/public/products/bowl-3.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/bowl-4.svg",
+          "size_bytes": 578,
+          "sha256": "c85d0074ff91cd170168bafcb30cb080bddbc08e591e1efdaa3396f1445c015c",
+          "source": "project:apps/web/public/products/bowl-4.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/bowl-5.svg",
+          "size_bytes": 578,
+          "sha256": "d6b733fa38ff44900d847b3a7880808af8c2524e08e59053fdb34f60b1ac7a71",
+          "source": "project:apps/web/public/products/bowl-5.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/bowl-6.svg",
+          "size_bytes": 578,
+          "sha256": "700e6e8669d574d06fcf74c94cd823912661b4c7bfce5bf048b197b698fc3da4",
+          "source": "project:apps/web/public/products/bowl-6.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/brush-1.svg",
+          "size_bytes": 550,
+          "sha256": "be00ca596dd849f3fa8d8076d7b85bec612a4709580a4798571298c02e275990",
+          "source": "project:apps/web/public/products/brush-1.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/brush-2.svg",
+          "size_bytes": 550,
+          "sha256": "b04f80ac5098e2af8c06bb3a22e01e288243d4aa6dd81849d1ab78c2648f168e",
+          "source": "project:apps/web/public/products/brush-2.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/brush-3.svg",
+          "size_bytes": 550,
+          "sha256": "92ff7c4d615972caf6a68e7db4af787200b75154c047b9b36a36c33e0cbeed91",
+          "source": "project:apps/web/public/products/brush-3.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/brush-4.svg",
+          "size_bytes": 550,
+          "sha256": "c9b0155d56722be814a439f996c910c7c55476adc772de006aa415d2e9cbe5bb",
+          "source": "project:apps/web/public/products/brush-4.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/brush-5.svg",
+          "size_bytes": 550,
+          "sha256": "b4526071f985fa8c60b658684de3f15ff939636ac4f83edc4a5e744daa8f97c4",
+          "source": "project:apps/web/public/products/brush-5.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/brush-6.svg",
+          "size_bytes": 550,
+          "sha256": "ce5b38939dfa6599925867bbeed8ae65566bf8b4ebe446adfeae9635c57743ee",
+          "source": "project:apps/web/public/products/brush-6.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/care-1.svg",
+          "size_bytes": 542,
+          "sha256": "a1e5009f0c0a2e4fff749637068c7c295bac8449523245859aa2f20207af227b",
+          "source": "project:apps/web/public/products/care-1.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/care-2.svg",
+          "size_bytes": 542,
+          "sha256": "08e93b333faf05680e846fab1ff4daa24edc55f5409232d35e9deaa78cb9ba1a",
+          "source": "project:apps/web/public/products/care-2.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/care-3.svg",
+          "size_bytes": 542,
+          "sha256": "02719edf1ad34fdef40a1b0c7972d77c28737a8181073a25e3e4fd43e28d3bee",
+          "source": "project:apps/web/public/products/care-3.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/care-4.svg",
+          "size_bytes": 542,
+          "sha256": "73635dc4f1eb171c5a812db7d9db6155a5a725509680ab0c8da8709c03513313",
+          "source": "project:apps/web/public/products/care-4.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/care-5.svg",
+          "size_bytes": 542,
+          "sha256": "5b0726e40fd4195161d12f245629fd451be6c6cdc9ae5b2565e9125a75e78e71",
+          "source": "project:apps/web/public/products/care-5.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/care-6.svg",
+          "size_bytes": 542,
+          "sha256": "7f1cd7d8628699cb1178f18975c1368413069317c220f189c77195f500997562",
+          "source": "project:apps/web/public/products/care-6.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/clean-1.svg",
+          "size_bytes": 556,
+          "sha256": "68daa12ca170ee78c225996a0d95ccd4906676c79d9b6cfb21cf67f99eb08e16",
+          "source": "project:apps/web/public/products/clean-1.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/clean-2.svg",
+          "size_bytes": 556,
+          "sha256": "63278cb8dc937b5b6f17f26aede8940227a11fe7d9adab6392e26fea30177556",
+          "source": "project:apps/web/public/products/clean-2.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/clean-3.svg",
+          "size_bytes": 556,
+          "sha256": "9e43ac46e03bfe188e40fd0074c2625b7a3a87f01dc35a74b04ca2b3abd1b064",
+          "source": "project:apps/web/public/products/clean-3.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/clean-4.svg",
+          "size_bytes": 556,
+          "sha256": "8fa40ab72517368b4b35f7ec780cf8af10427b90f3ad19ad92ad7263682aa393",
+          "source": "project:apps/web/public/products/clean-4.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/clean-5.svg",
+          "size_bytes": 556,
+          "sha256": "fb7ca17c73f60fdae66fd47ae92146892fb67f0bb799c6698613e193db3cb1ad",
+          "source": "project:apps/web/public/products/clean-5.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/clean-6.svg",
+          "size_bytes": 556,
+          "sha256": "75aa3c3a5f4b633cc47caee152c7a48efb3583519811fcea43ca334625d56ae8",
+          "source": "project:apps/web/public/products/clean-6.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/clothes-1.svg",
+          "size_bytes": 500,
+          "sha256": "f005022a57400e6c6ce39776d83f448e8c1f293ae041189584f29588c51e1306",
+          "source": "project:apps/web/public/products/clothes-1.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/clothes-2.svg",
+          "size_bytes": 500,
+          "sha256": "bc0d252572c6422d717183bf1b75410c51eee54cf989e1f3ef5c5cb67d58f853",
+          "source": "project:apps/web/public/products/clothes-2.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/clothes-3.svg",
+          "size_bytes": 500,
+          "sha256": "87d01ed945fb1aaaf58552c2ffcff00c39bd083dee22759e94c85b0d03102109",
+          "source": "project:apps/web/public/products/clothes-3.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/clothes-4.svg",
+          "size_bytes": 500,
+          "sha256": "d021e42f5f764c0156a4fce9e99e3e8902a68c12b2da95cd056365b0e1b3dd17",
+          "source": "project:apps/web/public/products/clothes-4.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/clothes-5.svg",
+          "size_bytes": 500,
+          "sha256": "33bb487f969217cfb340dc3579d6ece8042e361267fc88306dd6cab8e5087ba0",
+          "source": "project:apps/web/public/products/clothes-5.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/clothes-6.svg",
+          "size_bytes": 500,
+          "sha256": "7267fe4bb4743b8d1fb7a478313c53219fd1d1eb6ee4f23ba2f9441eeadaaec6",
+          "source": "project:apps/web/public/products/clothes-6.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/environment-1.svg",
+          "size_bytes": 555,
+          "sha256": "bff7cd2a9cfee491c8477c322b190f2e671a7360e1a9bc9b30a53627bf4af40f",
+          "source": "project:apps/web/public/products/environment-1.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/environment-2.svg",
+          "size_bytes": 555,
+          "sha256": "20345a5e9170fc80f9f90bc11262e744d12a743653268a8b85726021528f3365",
+          "source": "project:apps/web/public/products/environment-2.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/environment-3.svg",
+          "size_bytes": 555,
+          "sha256": "6f0e6655d2da6730368ffc22675325303e42eeaa429e2acce8aa734ed56ee052",
+          "source": "project:apps/web/public/products/environment-3.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/environment-4.svg",
+          "size_bytes": 555,
+          "sha256": "ca0431bbfd2a109687dafc5a9a993bb5c05982b05d8d8cc68c091423a831ded3",
+          "source": "project:apps/web/public/products/environment-4.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/environment-5.svg",
+          "size_bytes": 555,
+          "sha256": "550769d1f56f4e505ecd1b3f9259b5e7b5c52854addf9387a69c454d4cfa6bbb",
+          "source": "project:apps/web/public/products/environment-5.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/environment-6.svg",
+          "size_bytes": 555,
+          "sha256": "ea2b581f2048256b4d5a22536b0878d0939c35b4cdb2761e6f7033d439f8ce5d",
+          "source": "project:apps/web/public/products/environment-6.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/fence-1.svg",
+          "size_bytes": 550,
+          "sha256": "914cfab084bc4808d3f5b8ab4b116f9a7ed5d621af07cebd55d9a8f64d53367e",
+          "source": "project:apps/web/public/products/fence-1.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/fence-2.svg",
+          "size_bytes": 550,
+          "sha256": "f5e943f2c97e62eba455b1c13871d79ed3255b33cbf9971c1b2e925534b7a065",
+          "source": "project:apps/web/public/products/fence-2.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/fence-3.svg",
+          "size_bytes": 550,
+          "sha256": "293506d1b152b4fd5af9266e90436bfba4f2d1ec88e8f585f3a4b67bb5b63dd1",
+          "source": "project:apps/web/public/products/fence-3.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/fence-4.svg",
+          "size_bytes": 550,
+          "sha256": "a9a096ffd31e0f7d1dc9238d3676f711209c61586607ac0030d66224facb2496",
+          "source": "project:apps/web/public/products/fence-4.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/fence-5.svg",
+          "size_bytes": 550,
+          "sha256": "5f5e413e97949c4a3500875c122668376dffd410a959b4f86ec14cef2bbc18c4",
+          "source": "project:apps/web/public/products/fence-5.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/fence-6.svg",
+          "size_bytes": 550,
+          "sha256": "494ceb7a2346022d20b31f5127516a704dffd39befd42ae67e020c6157d3bbad",
+          "source": "project:apps/web/public/products/fence-6.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/food-1.svg",
+          "size_bytes": 570,
+          "sha256": "7e0cddac9ddad61a2fe1a1273fd4bb243be2909158d2f0b00bb590b539930d03",
+          "source": "project:apps/web/public/products/food-1.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/food-2.svg",
+          "size_bytes": 570,
+          "sha256": "e3d85e088f1a8339a47889769de4f067e1463445a3b3adce1e0a6e6175425f9b",
+          "source": "project:apps/web/public/products/food-2.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/food-3.svg",
+          "size_bytes": 570,
+          "sha256": "ee6f4e1b831366b700127a27c50bd3756e001005608510b0eaefb311edf5dce4",
+          "source": "project:apps/web/public/products/food-3.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/food-4.svg",
+          "size_bytes": 570,
+          "sha256": "5ce2bbce6abc063cf31acbd5264b548ae1ad305ec091390a1b08c0904a08414b",
+          "source": "project:apps/web/public/products/food-4.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/food-5.svg",
+          "size_bytes": 570,
+          "sha256": "c4d53a2d960a5fdb9d413cd45b81397ab83fb204f07b88485c9ab0a2d5250f81",
+          "source": "project:apps/web/public/products/food-5.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/food-6.svg",
+          "size_bytes": 570,
+          "sha256": "32b5eef5e1b1f4d7af89411dc9782650585e5c9f627c558a7cb39323ab5770ee",
+          "source": "project:apps/web/public/products/food-6.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/leash-1.svg",
+          "size_bytes": 499,
+          "sha256": "f299925b135af78aac908114ca0c600921ce4e1e49c8a4e5c46bce7031a49c87",
+          "source": "project:apps/web/public/products/leash-1.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/leash-2.svg",
+          "size_bytes": 499,
+          "sha256": "0cf24da68dccc111ba82327b3995b782c46bbd26da43aa38ce6e0d467aaee719",
+          "source": "project:apps/web/public/products/leash-2.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/leash-3.svg",
+          "size_bytes": 499,
+          "sha256": "a71d57d3f0aaeb7339f9531287d813a9d47be87eed8524c89685b847ff2cad3a",
+          "source": "project:apps/web/public/products/leash-3.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/leash-4.svg",
+          "size_bytes": 499,
+          "sha256": "fb4ce947c168908975fc4f1aa03693cfcc9d27d7aeed97b5457196721dc9d9f8",
+          "source": "project:apps/web/public/products/leash-4.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/leash-5.svg",
+          "size_bytes": 499,
+          "sha256": "bf40654c7bab6b74423f8d178128d92423cafa5e8bebd2d998f862fdcc1f71e4",
+          "source": "project:apps/web/public/products/leash-5.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/leash-6.svg",
+          "size_bytes": 499,
+          "sha256": "7dfcdd291e85e5c62fdeb052c0ba9b40c3c3037953d203b7adee1de872e61fe5",
+          "source": "project:apps/web/public/products/leash-6.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/nutrition-1.svg",
+          "size_bytes": 555,
+          "sha256": "7a1914879fe9abbeb748d2fed3dc448395d87dc8f08459668a09ae1a9e0563fa",
+          "source": "project:apps/web/public/products/nutrition-1.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/nutrition-2.svg",
+          "size_bytes": 555,
+          "sha256": "8949fb71d3499b739cda9c5d8d78da1fb0e23f7d8f79ee9692a55f9765c45c88",
+          "source": "project:apps/web/public/products/nutrition-2.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/nutrition-3.svg",
+          "size_bytes": 555,
+          "sha256": "cc1cf63f5a5a038c25cf28cd0e9de92dd2f3eac0b25bc69077897c370c73291f",
+          "source": "project:apps/web/public/products/nutrition-3.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/nutrition-4.svg",
+          "size_bytes": 555,
+          "sha256": "47d88798b0ea3a1c0c4127c1e35354fd7cb559ea9568679f9e9443caf2e78518",
+          "source": "project:apps/web/public/products/nutrition-4.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/nutrition-5.svg",
+          "size_bytes": 555,
+          "sha256": "9fd23e4d614244040c44dc3b598b245f969f0705ab04fe64f64db0f60ae55fe3",
+          "source": "project:apps/web/public/products/nutrition-5.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/nutrition-6.svg",
+          "size_bytes": 555,
+          "sha256": "f2f60fcd5c8be6ca5ad23994cb1a3753080f9f858b78ebdd1b2e5c5c7e924469",
+          "source": "project:apps/web/public/products/nutrition-6.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/snack-1.svg",
+          "size_bytes": 527,
+          "sha256": "8dfd004ecb5184a0e3986a8a33b64240452e86094fe1dbec0acfb40c1f2df62c",
+          "source": "project:apps/web/public/products/snack-1.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/snack-2.svg",
+          "size_bytes": 527,
+          "sha256": "07edef6d73771f384a7fe192b0430de22f7cb5d77d63dc70bfbd94bb6f2711d6",
+          "source": "project:apps/web/public/products/snack-2.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/snack-3.svg",
+          "size_bytes": 527,
+          "sha256": "028c566306f5352f41c4af5a91ae4de23212bc994532dea83ee6a87262c4032e",
+          "source": "project:apps/web/public/products/snack-3.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/snack-4.svg",
+          "size_bytes": 527,
+          "sha256": "adeb41115b050c7715a9a385b6f6835cbf2be723a350e04900b4ad269e60aad5",
+          "source": "project:apps/web/public/products/snack-4.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/snack-5.svg",
+          "size_bytes": 527,
+          "sha256": "1a83f524b48b3cbb0586328563e98acd6ba9a52ac08186dedc9d86427072d296",
+          "source": "project:apps/web/public/products/snack-5.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/snack-6.svg",
+          "size_bytes": 527,
+          "sha256": "38fec7d61e96c9710d57b77d3b7efdbee2b8ea3783690b332ed626df2fa7fcb2",
+          "source": "project:apps/web/public/products/snack-6.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/toy-1.svg",
+          "size_bytes": 500,
+          "sha256": "b9221f83d6d4cf2425dc8ddb40b0e83adbea6ef7c176f0b294694a3cd1e36d8a",
+          "source": "project:apps/web/public/products/toy-1.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/toy-2.svg",
+          "size_bytes": 500,
+          "sha256": "391b738cb04cac8f2ce749da8f8240e6cb0b0dded4167786041a16412ac76aeb",
+          "source": "project:apps/web/public/products/toy-2.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/toy-3.svg",
+          "size_bytes": 500,
+          "sha256": "e7c09f2c2f82aa4418c141c08d02accc8911a147d00bbdc35a7f2351c84269b9",
+          "source": "project:apps/web/public/products/toy-3.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/toy-4.svg",
+          "size_bytes": 500,
+          "sha256": "e10b6bf63da8ec67433cd068958421a314052c9bb4ce87f6f0808e69246cd4f5",
+          "source": "project:apps/web/public/products/toy-4.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/toy-5.svg",
+          "size_bytes": 500,
+          "sha256": "9524feeb371308a622765ba22159919d196242e5db6e0f39879cc367e8b75110",
+          "source": "project:apps/web/public/products/toy-5.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/toy-6.svg",
+          "size_bytes": 500,
+          "sha256": "58c6e3e17705d16580b07d34195639e522d1e971860f83274b9a1c54ae6371a6",
+          "source": "project:apps/web/public/products/toy-6.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/wash-1.svg",
+          "size_bytes": 569,
+          "sha256": "eff9e53ff3e2ccff75b3dab786291d7c7a947bfd29fb7dc181f648b52531adb3",
+          "source": "project:apps/web/public/products/wash-1.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/wash-2.svg",
+          "size_bytes": 569,
+          "sha256": "c899a5798d65af64848d2fa04adeadeb9f77a167a172895b60ae9ececd084c01",
+          "source": "project:apps/web/public/products/wash-2.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/wash-3.svg",
+          "size_bytes": 569,
+          "sha256": "d819d994b59eeb3ff6d3a29c0f8daae83c3a12ab2b61fc14727859975f531ab8",
+          "source": "project:apps/web/public/products/wash-3.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/wash-4.svg",
+          "size_bytes": 569,
+          "sha256": "31613f676c0145618317931cfce6b0e4b830a6492da3d404dcab6275528fe8ee",
+          "source": "project:apps/web/public/products/wash-4.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/wash-5.svg",
+          "size_bytes": 569,
+          "sha256": "d20d726bbb7d585401689a198a62f8c90382024af8b1cc58aa42644aabc81473",
+          "source": "project:apps/web/public/products/wash-5.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/public/products/wash-6.svg",
+          "size_bytes": 569,
+          "sha256": "044dfa2beea3b16643fe6dc9b05ec56cf79316ed67991fd66023ea1769e7fc79",
+          "source": "project:apps/web/public/products/wash-6.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/src/App.vue",
+          "size_bytes": 10467,
+          "sha256": "04e4c147d469f0fd46400d8e23c1cac218f85de94cd83f2c86dcddb8949edff8",
+          "source": "project:apps/web/src/App.vue",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/src/assets/hero.png",
+          "size_bytes": 13057,
+          "sha256": "881ffbcaafc212e49addad08846a5b82761355fa20624253af3477ba33262c5c",
+          "source": "project:apps/web/src/assets/hero.png",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/src/assets/vite.svg",
+          "size_bytes": 8709,
+          "sha256": "5be21acd42eb7b896e517f4e0f0f11eb5c5d9e54fbbcebe9453f033008fcca6f",
+          "source": "project:apps/web/src/assets/vite.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/src/assets/vue.svg",
+          "size_bytes": 496,
+          "sha256": "5532db34f1c52841881bab8aeca6c3e8d092bd21a689a65f4d8f8cf8041eef9d",
+          "source": "project:apps/web/src/assets/vue.svg",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/src/catalog-state.ts",
+          "size_bytes": 2090,
+          "sha256": "07fc555ade848b047f9ddc5221de15b16a9987e1064a3093f6f3c4a6ed15fb2f",
+          "source": "project:apps/web/src/catalog-state.ts",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/src/components/ProductCard.vue",
+          "size_bytes": 972,
+          "sha256": "aa7423d08c9d655ad5a7623fac7572a6af615f41538884ab19f7eca4262a5887",
+          "source": "project:apps/web/src/components/ProductCard.vue",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/src/components/ProductImage.vue",
+          "size_bytes": 584,
+          "sha256": "904656adc4b0dce7b43daadb3577a0975845eac47cbfd82e8616f141255cce14",
+          "source": "project:apps/web/src/components/ProductImage.vue",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/src/http.ts",
+          "size_bytes": 5156,
+          "sha256": "5dfbfe2b0700b25d92838db87739785cfe6080a238e9c35144b66efe9b608256",
+          "source": "project:apps/web/src/http.ts",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/src/main.ts",
+          "size_bytes": 111,
+          "sha256": "ae6eb9de53e72b97ee4c88fe88d2e982bf060266b2b82a0aa29ec859fa342019",
+          "source": "project:apps/web/src/main.ts",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/src/style.css",
+          "size_bytes": 6569,
+          "sha256": "c3290059d96fa0f7bf672fef65663e5d39b84649742267567ae03c8c52cca0a0",
+          "source": "project:apps/web/src/style.css",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/src/tokens.css",
+          "size_bytes": 712,
+          "sha256": "7123ae87eca8062803c97758eeca488e4551e1d7f7f3085acf697a4b45891772",
+          "source": "project:apps/web/src/tokens.css",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/tsconfig.app.json",
+          "size_bytes": 430,
+          "sha256": "ca8e94740608e82b7e0e6e899153badb1faa05f5733d878e2b0370ec62c188c5",
+          "source": "project:apps/web/tsconfig.app.json",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/tsconfig.json",
+          "size_bytes": 119,
+          "sha256": "770b4140bbb581e2dfd9ea9946ffc9c75a1d86ba7d2db5f77c83e37cbdf9d808",
+          "source": "project:apps/web/tsconfig.json",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/tsconfig.node.json",
+          "size_bytes": 558,
+          "sha256": "d366cc0827139db39c61815f22491bbfda56c654354a42ad7795143d314e45e8",
+          "source": "project:apps/web/tsconfig.node.json",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/vite.config.ts",
+          "size_bytes": 273,
+          "sha256": "7a356dde8edd80be12cfb8c519277c91bd0bfcbdf4dd826cf98221f31d764e0a",
+          "source": "project:apps/web/vite.config.ts",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "package-lock.json",
+          "size_bytes": 83775,
+          "sha256": "48bf1f931c0ebf7d73b68c91332e564cee2313bbf7b8abe33347f2a4063236bd",
+          "source": "organizer: sanitized package metadata",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "package.json",
+          "size_bytes": 616,
+          "sha256": "0cb8039d6e84f4188f9ed7a5740ae9d5297494838f2f6cc38bf1a1507fced4fa",
+          "source": "organizer: sanitized package metadata",
+          "purpose": "common dependencies and scripts"
+        },
+        {
+          "path": "packages/contracts/package.json",
+          "size_bytes": 248,
+          "sha256": "cf093b15f77cafd1412ae99526605c1c9024a8b9d44c305e0e5077f816d8ddb7",
+          "source": "project:packages/contracts/package.json",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "packages/contracts/src/index.ts",
+          "size_bytes": 7067,
+          "sha256": "4f835b8a5d2605b57fd79c764124474e646970a517e3fd3ff635a6fc2cf1aff1",
+          "source": "project:packages/contracts/src/index.ts",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "packages/contracts/tsconfig.json",
+          "size_bytes": 173,
+          "sha256": "4c0199225bf92a7f2583fc2210e10c0bec88e9a86e0c9e43b953b8a02d35812b",
+          "source": "project:packages/contracts/tsconfig.json",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "project-rules.md",
+          "size_bytes": 233,
+          "sha256": "d9aa171e58eac0c83c09b4f6a92e8375bcf4d07e703fefa885a6f1a2211e65c6",
+          "source": "new for candidate",
+          "purpose": "X instructions"
+        },
+        {
+          "path": "README.md",
+          "size_bytes": 289,
+          "sha256": "1fd6795e26c1bea996946de4cbcbbcd49ecb3e3c1eef7071003d3f7a70604d7b",
+          "source": "new for candidate",
+          "purpose": "X instructions"
+        },
+        {
+          "path": "scripts/dev.mjs",
+          "size_bytes": 1656,
+          "sha256": "525da4e7c9f80b5f8eb5eb164fafc342e3a360db5e304cab405c10a669c522f9",
+          "source": "project:scripts/dev.mjs",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "task.md",
+          "size_bytes": 130,
+          "sha256": "11ceea96003a6f4554b908338ddf8eba05a94c3829bbea488fe56db942daba5c",
+          "source": "new for candidate",
+          "purpose": "X instructions"
+        },
+        {
+          "path": "tests/smoke/basic.test.mjs",
+          "size_bytes": 645,
+          "sha256": "902edeebc895e97f7e3ad66d2abd6e428a35c04fc3f4b70caefeb654f93c084f",
+          "source": "new",
+          "purpose": "common non-business session smoke test"
+        }
+      ],
+      "actual_prompt": "experiments/A/results/X-prompt.txt",
+      "session": "/root/course_cart",
+      "proposed_prompt_file": "C:\\Users\\ASUS\\AppData\\Local\\Temp\\course-mall-g1u9pl66\\X-prompt.txt",
+      "proposed_prompt_sha256": "9fd2fd23fb81677c59a3a35a59ddeae759d41152ff1d9b71dbd8fff0f761fdf4",
+      "started_at": "2026-11-08T12:42:15.436607+00:00",
+      "finished_at": "2026-11-08T12:56:51.267347+00:00",
+      "result": "experiments/A/results/X",
+      "actual_prompt_sha256": "9fd2fd23fb81677c59a3a35a59ddeae759d41152ff1d9b71dbd8fff0f761fdf4"
+    },
+    "Y": {
+      "status": "implementation_finished",
+      "candidate_root": "experiments/A/preparation/Y",
+      "candidate_file_count": 24,
+      "root": "C:\\Users\\ASUS\\AppData\\Local\\Temp\\course-mall-g1u9pl66\\Y",
+      "files": [
+        {
+          "path": "apps/server/package.json",
+          "size_bytes": 384,
+          "sha256": "b904e35c41a222881f4fcc943ab31d48079b9da7b958fc39e395cd4b1742ae9b",
+          "source": "project:apps/server/package.json",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/server/src/app.ts",
+          "size_bytes": 1503,
+          "sha256": "8195db99bb0676d9721d110e4e917b40ce31b288433bf2ddc77b368233bcc41f",
+          "source": "new for candidate",
+          "purpose": "Y task, runtime guidance or fixed read-only fixture"
+        },
+        {
+          "path": "apps/server/src/index.ts",
+          "size_bytes": 878,
+          "sha256": "6675e56cede25295fd958268e8369817383aa87f7d15ceecc74dd9063e4326e9",
+          "source": "project:apps/server/src/index.ts",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/server/src/run-boundary.ts",
+          "size_bytes": 1271,
+          "sha256": "7d3a8ff3283242ebc5be8da8240efeee63844c00267f78483c2c93a4072d7b6f",
+          "source": "new for candidate",
+          "purpose": "Y task, runtime guidance or fixed read-only fixture"
+        },
+        {
+          "path": "apps/server/src/store.ts",
+          "size_bytes": 115,
+          "sha256": "666ba6c896bc761d2d4cd53d81d31bdb851727b79c5da823dcbad2d9d9b46100",
+          "source": "new for candidate",
+          "purpose": "Y task, runtime guidance or fixed read-only fixture"
+        },
+        {
+          "path": "apps/server/tsconfig.json",
+          "size_bytes": 302,
+          "sha256": "e31297368a51551fe737d69b456606603c3b720157909ba8ea349ab73f526be7",
+          "source": "project:apps/server/tsconfig.json",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/index.html",
+          "size_bytes": 387,
+          "sha256": "d477b06a3e1e2b560e051e208208cea9a4d01a41c05257481401d53deb8728e3",
+          "source": "project:apps/web/index.html",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/package.json",
+          "size_bytes": 523,
+          "sha256": "f032ee771e2bef7b10a92ea125a4a9de45b6acb7127ef86064d2f2ebe4a727ad",
+          "source": "project:apps/web/package.json",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/src/App.vue",
+          "size_bytes": 79,
+          "sha256": "0719213785293c61e779ec15b5392db6156572946ade8d936aca23e262ffc339",
+          "source": "new for candidate",
+          "purpose": "Y task, runtime guidance or fixed read-only fixture"
+        },
+        {
+          "path": "apps/web/src/main.ts",
+          "size_bytes": 111,
+          "sha256": "ae6eb9de53e72b97ee4c88fe88d2e982bf060266b2b82a0aa29ec859fa342019",
+          "source": "project:apps/web/src/main.ts",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/src/style.css",
+          "size_bytes": 49,
+          "sha256": "1b9489e11a720ad77eadf046e07a7d95a459a9c76b132bc06c69ff802405ce26",
+          "source": "new for candidate",
+          "purpose": "Y task, runtime guidance or fixed read-only fixture"
+        },
+        {
+          "path": "apps/web/tsconfig.app.json",
+          "size_bytes": 430,
+          "sha256": "ca8e94740608e82b7e0e6e899153badb1faa05f5733d878e2b0370ec62c188c5",
+          "source": "project:apps/web/tsconfig.app.json",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/tsconfig.json",
+          "size_bytes": 119,
+          "sha256": "770b4140bbb581e2dfd9ea9946ffc9c75a1d86ba7d2db5f77c83e37cbdf9d808",
+          "source": "project:apps/web/tsconfig.json",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/tsconfig.node.json",
+          "size_bytes": 558,
+          "sha256": "d366cc0827139db39c61815f22491bbfda56c654354a42ad7795143d314e45e8",
+          "source": "project:apps/web/tsconfig.node.json",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "apps/web/vite.config.ts",
+          "size_bytes": 273,
+          "sha256": "7a356dde8edd80be12cfb8c519277c91bd0bfcbdf4dd826cf98221f31d764e0a",
+          "source": "project:apps/web/vite.config.ts",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "package-lock.json",
+          "size_bytes": 83775,
+          "sha256": "48bf1f931c0ebf7d73b68c91332e564cee2313bbf7b8abe33347f2a4063236bd",
+          "source": "organizer: sanitized package metadata",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "package.json",
+          "size_bytes": 616,
+          "sha256": "0cb8039d6e84f4188f9ed7a5740ae9d5297494838f2f6cc38bf1a1507fced4fa",
+          "source": "organizer: sanitized package metadata",
+          "purpose": "common dependencies and scripts"
+        },
+        {
+          "path": "packages/contracts/package.json",
+          "size_bytes": 248,
+          "sha256": "cf093b15f77cafd1412ae99526605c1c9024a8b9d44c305e0e5077f816d8ddb7",
+          "source": "project:packages/contracts/package.json",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "packages/contracts/src/index.ts",
+          "size_bytes": 12,
+          "sha256": "f761c91419d0a89422a0004ef1a92929dd4d2d5e5c16758654d8b0467d1998c6",
+          "source": "new for candidate",
+          "purpose": "Y task, runtime guidance or fixed read-only fixture"
+        },
+        {
+          "path": "packages/contracts/tsconfig.json",
+          "size_bytes": 173,
+          "sha256": "4c0199225bf92a7f2583fc2210e10c0bec88e9a86e0c9e43b953b8a02d35812b",
+          "source": "project:packages/contracts/tsconfig.json",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "README.md",
+          "size_bytes": 659,
+          "sha256": "36cac7b909fd5703b1d1dc30e62afc03940b3c561ff0553b9b9318ae6fe2d8d5",
+          "source": "new for candidate",
+          "purpose": "Y task, runtime guidance or fixed read-only fixture"
+        },
+        {
+          "path": "scripts/dev.mjs",
+          "size_bytes": 1656,
+          "sha256": "525da4e7c9f80b5f8eb5eb164fafc342e3a360db5e304cab405c10a669c522f9",
+          "source": "project:scripts/dev.mjs",
+          "purpose": "common runtime or X browsing prerequisite"
+        },
+        {
+          "path": "task.md",
+          "size_bytes": 1432,
+          "sha256": "1730ef3678dfea72b4a43e391dff36104124bd4dcf76a1a6e194b0fc9f1985da",
+          "source": "new for candidate",
+          "purpose": "Y task, runtime guidance or fixed read-only fixture"
+        },
+        {
+          "path": "tests/smoke/basic.test.mjs",
+          "size_bytes": 645,
+          "sha256": "902edeebc895e97f7e3ad66d2abd6e428a35c04fc3f4b70caefeb654f93c084f",
+          "source": "new",
+          "purpose": "common non-business session smoke test"
+        }
+      ],
+      "actual_prompt": "experiments/A/results/Y-prompt.txt",
+      "session": "/root/course_address",
+      "proposed_prompt_file": "C:\\Users\\ASUS\\AppData\\Local\\Temp\\course-mall-g1u9pl66\\Y-prompt.txt",
+      "proposed_prompt_sha256": "a394e381cbcd5ac4341ba003b3afa910137a7da40ee58d64ec2aca37031769d0",
+      "started_at": "2026-11-08T12:38:19.565708+00:00",
+      "followups": [
+        {
+          "path": "experiments/A/results/Y-followup.txt",
+          "sent_at": "2026-11-08T12:40:11.292152+00:00",
+          "sha256": "6f75f37ba47a3dd8bd80791da68918ed766f5ed0b4163cc7bd5e70a4ff8ad13a"
+        }
+      ],
+      "finished_at": "2026-11-08T12:42:59.712039+00:00",
+      "result": "experiments/A/results/Y",
+      "actual_prompt_sha256": "a394e381cbcd5ac4341ba003b3afa910137a7da40ee58d64ec2aca37031769d0"
+    }
+  },
+  "file_entry_required_fields": [
+    "relative_path",
+    "size_bytes",
+    "sha256",
+    "source",
+    "purpose"
+  ],
+  "control_documents": {
+    "note": "仅组织者保存；正式冻结时填写摘要，不向实施者投递",
+    "files": [
+      {
+        "path": "experiments/A/protocol.md",
+        "sha256": null
+      },
+      {
+        "path": "experiments/A/input-manifest.md",
+        "sha256": null
+      },
+      {
+        "path": "experiments/A/review-rubric.md",
+        "sha256": null
+      },
+      {
+        "path": "experiments/A/isolation-record.md",
+        "sha256": null
+      }
+    ]
+  },
+  "isolation": {
+    "status": "not_strict_by_user_choice",
+    "record": "experiments/A/isolation-record.md",
+    "evidence": null,
+    "Y_released": true
+  },
+  "release_gates": {
+    "actual_inputs_enumerated_and_hashed": true,
+    "skeleton_and_independent_fixtures_runnable": true,
+    "tested_features_absent": false,
+    "rubric_frozen_outside_implementation_inputs": false,
+    "Y_visibility_and_history_verified": false,
+    "actual_prompt_delivery_verified": false,
+    "environment_evidence_complete": false,
+    "confirmation_evidence_complete": true
+  },
+  "missing_evidence": [
+    "候选共同骨架及 Y 固定夹具已在临时副本运行；仍需人工语义审查与实际受限环境复验",
+    "简化输入的文件哈希和首轮提示已记录；自动注入及各会话实际读取范围未独立核验",
+    "Y 独立受限环境、历史/工具/可见范围和拒绝访问探测",
+    "实际操作者、同日同宿主同模型及工具配置证据",
+    "严格隔离和评审表编码前摘要未留证；简化输入时间已记录，聊天导出标识可补充"
+  ],
+  "change_log": [
+    {
+      "at": "2026-11-08T12:36:27.121368+00:00",
+      "event": "freeze simplified candidate inputs before tested feature coding",
+      "limitation": "No enforced isolation; delivery and exact model settings not yet verified."
+    },
+    {
+      "at": "2026-11-08T12:38:19.565708+00:00",
+      "event": "Y implementation session started with no inherited conversation",
+      "limitation": "File-system access is not restricted; automatic system context and exact model version not independently verified."
+    },
+    {
+      "at": "2026-11-08T12:42:15.436607+00:00",
+      "event": "organizer started X before Y completed; user requested a practical coursework result",
+      "limitation": "Execution overlaps; elapsed time is not directly comparable. Y and X can potentially access other material."
+    },
+    {
+      "at": "2026-11-08T12:42:59.712039+00:00",
+      "event": "Y implementation reported completed",
+      "verification": "npm test: build and 2 tests passed; actual browser and 200 percent zoom not checked"
+    },
+    {
+      "at": "2026-11-08T12:56:51.267347+00:00",
+      "event": "X implementation reported completed",
+      "verification": "typecheck and npm test passed; build and 2 tests, browser and zoom not checked in experimental copy"
+    }
+  ],
+  "simplified_release": {
+    "strict_isolation_required": false,
+    "same_conditions_verified": false,
+    "reason": "user accepted non-strict isolation for coursework; results are exploratory"
+  }
+}

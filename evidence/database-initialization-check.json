@@ -1,0 +1,67 @@
+{
+  "executed_at_utc": "2026-11-15T07:43:08.469521+00:00",
+  "sql_file": "pet_final.sql",
+  "sql_sha256": "6cb5815b3a8bb8818cc5b4a0adabef1874d1f5c112ccb917d8fc0f8620086639",
+  "test_scope": "Fresh disposable MySQL database, repeated import, schema guard, demo logins and catalog reads.",
+  "checks": [
+    {
+      "name": "fresh SQL import succeeds",
+      "passed": true
+    },
+    {
+      "name": "13 application tables created",
+      "passed": true
+    },
+    {
+      "name": "demo rows and empty sessions/orders match",
+      "passed": true
+    },
+    {
+      "name": "repeat import does not duplicate data",
+      "passed": true
+    },
+    {
+      "name": "migration hashes match application",
+      "passed": true
+    },
+    {
+      "name": "application starts against SQL-created database",
+      "passed": true
+    },
+    {
+      "name": "admin demo password works with real Spring encoder",
+      "passed": true
+    },
+    {
+      "name": "publisher demo password works with real Spring encoder",
+      "passed": true
+    },
+    {
+      "name": "applicant demo password works with real Spring encoder",
+      "passed": true
+    },
+    {
+      "name": "secondApplicant demo password works with real Spring encoder",
+      "passed": true
+    },
+    {
+      "name": "catalog exposes 14 categories and all 28 products",
+      "passed": true
+    },
+    {
+      "name": "pet list exposes 6 seed records",
+      "passed": true
+    },
+    {
+      "name": "packaged frontend image is served",
+      "passed": true
+    },
+    {
+      "name": "private MySQL password not serialized as SQL value",
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "temporary_database_removed": true,
+  "existing_application_database_modified": false
+}

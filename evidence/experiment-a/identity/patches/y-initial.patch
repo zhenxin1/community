@@ -1,0 +1,430 @@
+diff --git a/scripts/test-identity.ps1 b/scripts/test-identity.ps1
+index e2dacbf..0d99b60 100644
+--- a/scripts/test-identity.ps1
++++ b/scripts/test-identity.ps1
+@@ -1,4 +1,4 @@
+-param([ValidateSet('pet_adoption_community_test','pet_adoption_experiment_x_test','pet_adoption_experiment_y_test')][string]$TestDatabase='pet_adoption_community_test')
++param([ValidateSet('pet_adoption_experiment_y_test')][string]$TestDatabase='pet_adoption_experiment_y_test')
+ $ErrorActionPreference = 'Stop'
+ if (-not $env:JAVA_HOME) { throw 'Set JAVA_HOME to Java 17' }
+ $config = @{}
+diff --git a/src/main/java/com/example/petadoptioncommunity/operations/Offline.java b/src/main/java/com/example/petadoptioncommunity/operations/Offline.java
+index 9d9547e..6e01436 100644
+--- a/src/main/java/com/example/petadoptioncommunity/operations/Offline.java
++++ b/src/main/java/com/example/petadoptioncommunity/operations/Offline.java
+@@ -27,17 +27,26 @@ public final class Offline {
+  }
+  private static void migrate()throws Exception{
+   var expected=new Properties();try(var in=Offline.class.getResourceAsStream("/db/migrations/checksums.properties")){expected.load(in);}
+-  byte[] sql;try(var in=Offline.class.getResourceAsStream("/db/migrations/V001_identity.sql")){sql=in.readAllBytes();}
+-  String checksum=HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(sql));
+-  if(!checksum.equals(expected.getProperty("V001_identity.sql")))throw new IllegalStateException("Migration checksum mismatch");
++  String[] files={"V001_identity.sql","V002_notifications.sql"};
++  var scripts=new ArrayList<byte[]>();var checksums=new ArrayList<String>();
++  for(String file:files){byte[] sql;try(var in=Offline.class.getResourceAsStream("/db/migrations/"+file)){sql=in.readAllBytes();}
++   String checksum=HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(sql));
++   if(!checksum.equals(expected.getProperty(file)))throw new IllegalStateException("Migration checksum mismatch");scripts.add(sql);checksums.add(checksum);
++  }
+   try(var connection=DriverManager.getConnection(required("DB_URL"),required("DB_USERNAME"),required("DB_PASSWORD"));var statement=connection.createStatement()){
+-   String catalog=connection.getCatalog();
+-   if(catalog==null||catalog.isBlank()||Set.of("mysql","sys","information_schema","performance_schema").contains(catalog.toLowerCase(Locale.ROOT)))throw new IllegalStateException("Refusing system or missing database");
+-   statement.execute("SET time_zone = '+00:00'");
+-   var tables=connection.getMetaData().getTables(connection.getCatalog(),null,"schema_version",new String[]{"TABLE"});
+-   if(tables.next()){try(var rows=statement.executeQuery("SELECT version,checksum FROM schema_version")){if(rows.next()&&rows.getInt(1)==1&&checksum.equals(rows.getString(2))&&!rows.next()){result("SCHEMA_ALREADY_CURRENT");return;}}throw new IllegalStateException("Partial/mismatched schema. Stop and restore backup; never skip version.");}
+-   for(String part:new String(sql,StandardCharsets.UTF_8).split(";"))if(!part.isBlank())statement.execute(part);
+-   try(var insert=connection.prepareStatement("INSERT INTO schema_version VALUES(1,?,UTC_TIMESTAMP(3))")){insert.setString(1,checksum);insert.executeUpdate();}
++   if(!"pet_adoption_experiment_y_test".equals(connection.getCatalog()))throw new IllegalStateException("Refusing non-y test database");
++   statement.execute("SET time_zone = '+00:00'");int applied=0;
++   try(var tables=connection.getMetaData().getTables(connection.getCatalog(),null,"schema_version",new String[]{"TABLE"})){
++    if(tables.next())try(var rows=statement.executeQuery("SELECT version,checksum FROM schema_version ORDER BY version")){
++     while(rows.next()){if(applied>=files.length||rows.getInt(1)!=applied+1||!checksums.get(applied).equals(rows.getString(2)))throw new IllegalStateException("Partial/mismatched schema");applied++;}
++     if(applied==0)throw new IllegalStateException("Partial schema");
++    }
++   }
++   if(applied==files.length){result("SCHEMA_ALREADY_CURRENT");return;}
++   for(int i=applied;i<files.length;i++){
++    for(String part:new String(scripts.get(i),StandardCharsets.UTF_8).split(";"))if(!part.isBlank())statement.execute(part);
++    try(var insert=connection.prepareStatement("INSERT INTO schema_version VALUES(?,?,UTC_TIMESTAMP(3))")){insert.setInt(1,i+1);insert.setString(2,checksums.get(i));insert.executeUpdate();}
++   }
+    result("MIGRATED");
+   }
+  }
+diff --git a/src/main/java/com/example/petadoptioncommunity/operations/SchemaGuard.java b/src/main/java/com/example/petadoptioncommunity/operations/SchemaGuard.java
+index ee99730..9f931d6 100644
+--- a/src/main/java/com/example/petadoptioncommunity/operations/SchemaGuard.java
++++ b/src/main/java/com/example/petadoptioncommunity/operations/SchemaGuard.java
+@@ -11,6 +11,8 @@ public class SchemaGuard implements ApplicationRunner {
+  public void run(ApplicationArguments args)throws Exception{
+   Properties expected=new Properties();try(var in=getClass().getResourceAsStream("/db/migrations/checksums.properties")){expected.load(in);}
+   var rows=db.queryForList("SELECT version,checksum FROM schema_version ORDER BY version");
+-  if(rows.size()!=1||((Number)rows.get(0).get("version")).intValue()!=1||!expected.getProperty("V001_identity.sql").equals(rows.get(0).get("checksum")))throw new IllegalStateException("Schema mismatch. Stop; execute documented offline migration/recovery.");
++  String[] files={"V001_identity.sql","V002_notifications.sql"};
++  if(rows.size()!=files.length)throw new IllegalStateException("Schema mismatch");
++  for(int i=0;i<files.length;i++)if(((Number)rows.get(i).get("version")).intValue()!=i+1||!expected.getProperty(files[i]).equals(rows.get(i).get("checksum")))throw new IllegalStateException("Schema mismatch. Stop; execute documented offline migration/recovery.");
+  }
+ }
+diff --git a/src/main/java/com/example/petadoptioncommunity/security/SecurityConfiguration.java b/src/main/java/com/example/petadoptioncommunity/security/SecurityConfiguration.java
+index f1e75ff..4dfc7e1 100644
+--- a/src/main/java/com/example/petadoptioncommunity/security/SecurityConfiguration.java
++++ b/src/main/java/com/example/petadoptioncommunity/security/SecurityConfiguration.java
+@@ -24,7 +24,7 @@ public class SecurityConfiguration {
+  @Bean org.springframework.security.core.userdetails.UserDetailsService noDefaultUsers(){return username -> {throw new org.springframework.security.core.userdetails.UsernameNotFoundException("No password authentication provider");};}
+  @Bean SecurityFilterChain chain(HttpSecurity http,IdentityService identity)throws Exception{
+   http.csrf(c->c.disable()).cors(c->c.disable()).requestCache(c->c.disable()).sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+-  http.authorizeHttpRequests(a->a.requestMatchers(org.springframework.http.HttpMethod.POST,"/api/v1/auth/register","/api/v1/auth/login","/api/v1/auth/logout").permitAll().requestMatchers("/api/v1/me","/api/v1/me/password").authenticated().requestMatchers("/api/v1/admin/**").hasRole("ADMIN").anyRequest().denyAll());
++  http.authorizeHttpRequests(a->a.requestMatchers(org.springframework.http.HttpMethod.POST,"/api/v1/auth/register","/api/v1/auth/login","/api/v1/auth/logout").permitAll().requestMatchers("/api/v1/me","/api/v1/me/password","/api/v1/me/notifications","/api/v1/me/notifications/**").authenticated().requestMatchers("/api/v1/admin/**").hasRole("ADMIN").anyRequest().denyAll());
+   http.exceptionHandling(e->e.authenticationEntryPoint((q,r,x)->error(r,401,"UNAUTHENTICATED","请先登录")).accessDeniedHandler((q,r,x)->error(r,403,"FORBIDDEN","无权限")));
+   http.addFilterBefore(new OncePerRequestFilter(){
+    protected void doFilterInternal(HttpServletRequest q,HttpServletResponse r,FilterChain chain)throws ServletException,IOException{
+diff --git a/src/main/java/com/example/petadoptioncommunity/web/NotificationsController.java b/src/main/java/com/example/petadoptioncommunity/web/NotificationsController.java
+new file mode 100644
+index 0000000..adb5d76
+--- /dev/null
++++ b/src/main/java/com/example/petadoptioncommunity/web/NotificationsController.java
+@@ -0,0 +1,20 @@
++package com.example.petadoptioncommunity.web;
++import com.example.petadoptioncommunity.identity.IdentityPort;
++import org.springframework.jdbc.core.JdbcTemplate;
++import org.springframework.security.core.annotation.AuthenticationPrincipal;
++import org.springframework.web.bind.annotation.*;
++import java.util.*;
++@RestController @RequestMapping("/api/v1/me/notifications")
++public class NotificationsController {
++ private final JdbcTemplate db;private final IdentityPort identity;
++ public NotificationsController(JdbcTemplate db,IdentityPort identity){this.db=db;this.identity=identity;}
++ public record Notification(String id,String title,String content,String createdAt,String readAt){}
++ private final org.springframework.jdbc.core.RowMapper<Notification> mapper=(r,n)->new Notification(r.getString("id"),r.getString("title"),r.getString("content"),r.getTimestamp("created_at").toInstant().toString(),r.getTimestamp("read_at")==null?null:r.getTimestamp("read_at").toInstant().toString());
++ @GetMapping public Object list(@AuthenticationPrincipal IdentityPort.Actor actor,@RequestParam(required=false) String unread){
++  if(unread!=null&&!Set.of("true","false").contains(unread))throw new ApiFailure(400,"VALIDATION_ERROR","筛选参数无效");
++  return identity.withActiveActor(actor,List.of(),()->db.query("SELECT * FROM e4_notification WHERE user_id=?"+("true".equals(unread)?" AND read_at IS NULL":"")+" ORDER BY created_at DESC,id DESC",mapper,actor.userId()));
++ }
++ private Notification owned(IdentityPort.Actor actor,String id){var rows=db.query("SELECT * FROM e4_notification WHERE user_id=? AND id=?",mapper,actor.userId(),id);if(rows.isEmpty())throw new ApiFailure(404,"NOT_FOUND","通知不存在");return rows.get(0);}
++ @GetMapping("/{id}") public Object detail(@AuthenticationPrincipal IdentityPort.Actor actor,@PathVariable String id){return identity.withActiveActor(actor,List.of(),()->owned(actor,id));}
++ @PostMapping("/{id}/read") public Object read(@AuthenticationPrincipal IdentityPort.Actor actor,@PathVariable String id){return identity.withActiveActor(actor,List.of(),()->{owned(actor,id);db.update("UPDATE e4_notification SET read_at=COALESCE(read_at,UTC_TIMESTAMP(3)) WHERE user_id=? AND id=?",actor.userId(),id);return owned(actor,id);});}
++}
+diff --git a/src/main/resources/db/migrations/V002_notifications.sql b/src/main/resources/db/migrations/V002_notifications.sql
+new file mode 100644
+index 0000000..bdf5351
+--- /dev/null
++++ b/src/main/resources/db/migrations/V002_notifications.sql
+@@ -0,0 +1,7 @@
++CREATE TABLE e4_notification (
++ id CHAR(36) CHARACTER SET ascii COLLATE ascii_bin PRIMARY KEY,
++ user_id CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
++ title VARCHAR(200) NOT NULL, content TEXT NOT NULL,
++ created_at DATETIME(3) NOT NULL, read_at DATETIME(3),
++ FOREIGN KEY(user_id) REFERENCES e4_user(id), INDEX(user_id,created_at,id)
++) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+diff --git a/src/main/resources/db/migrations/checksums.properties b/src/main/resources/db/migrations/checksums.properties
+index ecf0d11..5983b32 100644
+--- a/src/main/resources/db/migrations/checksums.properties
++++ b/src/main/resources/db/migrations/checksums.properties
+@@ -1 +1,2 @@
+ V001_identity.sql=d3d6c24919827c6eaf71ff06ade6264c189a23ccadaad5cd12951b2ffa2b5f13
++V002_notifications.sql=34faaca1b56964ab402131ebc38929b563611c4a2e672d4c14fb19cbcae2dbbe
+diff --git a/src/test/java/com/example/petadoptioncommunity/IdentityMysqlTest.java b/src/test/java/com/example/petadoptioncommunity/IdentityMysqlTest.java
+index 8093dda..a48bc12 100644
+--- a/src/test/java/com/example/petadoptioncommunity/IdentityMysqlTest.java
++++ b/src/test/java/com/example/petadoptioncommunity/IdentityMysqlTest.java
+@@ -18,12 +18,12 @@ class IdentityMysqlTest {
+  static ConfigurableApplicationContext app;static IdentityService service;static JdbcTemplate db;static String url;
+  @BeforeAll static void start()throws Exception{
+   TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+-  var allowed=Set.of("pet_adoption_community_test","pet_adoption_experiment_x_test","pet_adoption_experiment_y_test");
++  var allowed=Set.of("pet_adoption_experiment_y_test");
+   var configured=URI.create(System.getenv("DB_URL").substring(5)).getPath().substring(1);
+   if(!allowed.contains(configured))throw new IllegalStateException("Refusing non-test URL");
+   try(var c=DriverManager.getConnection(System.getenv("DB_URL"),System.getenv("DB_USERNAME"),System.getenv("DB_PASSWORD"));var st=c.createStatement()){
+    try(var r=st.executeQuery("SELECT DATABASE()")){r.next();if(!allowed.contains(r.getString(1))||!configured.equals(r.getString(1)))throw new IllegalStateException("Refusing non-test database");}
+-   st.execute("DROP TABLE IF EXISTS e4_session");st.execute("DROP TABLE IF EXISTS e4_user");st.execute("DROP TABLE IF EXISTS schema_version");
++   st.execute("DROP TABLE IF EXISTS e4_notification");st.execute("DROP TABLE IF EXISTS e4_session");st.execute("DROP TABLE IF EXISTS e4_user");st.execute("DROP TABLE IF EXISTS schema_version");
+   }
+   Offline.main(new String[]{"migrate"});Offline.main(new String[]{"migrate"});
+   app=new SpringApplicationBuilder(PetAdoptionCommunityApplication.class).run("--server.port=0","--spring.profiles.active=test");
+@@ -130,12 +130,14 @@ class IdentityMysqlTest {
+   assertEquals(201,registered.statusCode());assertEquals("no-store",registered.headers().firstValue("Cache-Control").orElseThrow());
+   var mapper=new tools.jackson.databind.ObjectMapper();var user=mapper.readTree(registered.body());assertEquals(6,user.size());assertEquals("http_success",user.get("account").asText());assertEquals("http_success",user.get("nickname").asText());assertEquals("USER",user.get("role").asText());assertEquals("ACTIVE",user.get("status").asText());UUID.fromString(user.get("id").asText());assertTrue(user.get("createdAt").asText().matches(".*\\.\\d{3}Z"));assertFalse(registered.body().contains("Secret123"));
+   var logged=post("/api/v1/auth/login","{\"account\":\"http_success\",\"password\":\"Secret123\"}",null);assertEquals(200,logged.statusCode());var login=mapper.readTree(logged.body());assertEquals(3,login.size());assertEquals(user.get("id").asText(),login.get("user").get("id").asText());String token=login.get("accessToken").asText();var actor=service.requireActive("Bearer "+token);assertEquals(user.get("id").asText(),actor.userId());assertFalse(actor.toString().contains(token));assertNotEquals(token,actor.sessionKey());assertTrue(login.get("expiresAt").asText().matches(".*\\.\\d{3}Z"));
+-  var metadata=db.queryForMap("SELECT version,checksum,applied_at FROM schema_version");var guard=app.getBean(com.example.petadoptioncommunity.operations.SchemaGuard.class);var args=new org.springframework.boot.DefaultApplicationArguments(new String[0]);
++  var metadata=db.queryForList("SELECT version,checksum,applied_at FROM schema_version ORDER BY version");var guard=app.getBean(com.example.petadoptioncommunity.operations.SchemaGuard.class);var args=new org.springframework.boot.DefaultApplicationArguments(new String[0]);
++  assertEquals(2,metadata.size());
+   try{
+-   db.update("UPDATE schema_version SET checksum=?","0".repeat(64));assertThrows(IllegalStateException.class,()->guard.run(args));
+-   db.update("UPDATE schema_version SET checksum=?,version=2",metadata.get("checksum"));assertThrows(IllegalStateException.class,()->guard.run(args));
+-   db.update("INSERT INTO schema_version VALUES(1,?,UTC_TIMESTAMP(3))",metadata.get("checksum"));assertThrows(IllegalStateException.class,()->guard.run(args));
+-  }finally{db.update("DELETE FROM schema_version");db.update("INSERT INTO schema_version VALUES(?,?,?)",metadata.get("version"),metadata.get("checksum"),metadata.get("applied_at"));}
++   db.update("UPDATE schema_version SET checksum=? WHERE version=1","0".repeat(64));assertThrows(IllegalStateException.class,()->guard.run(args));
++   db.update("UPDATE schema_version SET checksum=? WHERE version=1",metadata.get(0).get("checksum"));
++   db.update("DELETE FROM schema_version WHERE version=2");assertThrows(IllegalStateException.class,()->guard.run(args));
++   db.update("INSERT INTO schema_version VALUES(3,?,UTC_TIMESTAMP(3))",metadata.get(1).get("checksum"));assertThrows(IllegalStateException.class,()->guard.run(args));
++  }finally{db.update("DELETE FROM schema_version");for(var row:metadata)db.update("INSERT INTO schema_version VALUES(?,?,?)",row.get("version"),row.get("checksum"),row.get("applied_at"));}
+   guard.run(args);
+  }
+  @Test void absoluteThirtyMinuteExpiryDoesNotSlide()throws Exception{
+@@ -238,4 +240,43 @@ class IdentityMysqlTest {
+    System.out.println("ROTATION_LOCK42 first encode paused under account/session locks; second transaction observed in data_lock_waits/data_locks; first committed; second current-hash verification rejected");
+   }finally{release.countDown();pool.shutdownNow();}
+  }
++ @Test void myNotificationsHttp()throws Exception{
++  service.register("notify_owner","Secret123","Secret123");service.register("notify_other","Secret123","Secret123");
++  var login=service.login("notify_owner","Secret123");var otherLogin=service.login("notify_other","Secret123");
++  var actor=service.requireActive("Bearer "+login.accessToken());var other=service.requireActive("Bearer "+otherLogin.accessToken());
++  String own=UUID.randomUUID().toString(),foreign=UUID.randomUUID().toString();
++  assertEquals("[]",meHttp("GET","/me/notifications",null,login.accessToken()).body());
++  db.update("INSERT INTO e4_notification VALUES(?,?,?,?,UTC_TIMESTAMP(3),NULL)",own,actor.userId(),"Owner title","Owner content");
++  db.update("INSERT INTO e4_notification VALUES(?,?,?,?,UTC_TIMESTAMP(3),NULL)",foreign,other.userId(),"Private title","Private content");
++  var list=meHttp("GET","/me/notifications?unread=true",null,login.accessToken());assertEquals(200,list.statusCode());assertTrue(list.body().contains(own));assertFalse(list.body().contains("Private"));
++  var json=new tools.jackson.databind.ObjectMapper();var listed=json.readTree(list.body());assertEquals(1,listed.size());var notification=listed.get(0);
++  assertEquals(own,notification.get("id").asText());assertEquals("Owner title",notification.get("title").asText());assertEquals("Owner content",notification.get("content").asText());
++  assertEquals(db.queryForObject("SELECT created_at FROM e4_notification WHERE id=?",Timestamp.class,own).toInstant(),java.time.Instant.parse(notification.get("createdAt").asText()));assertTrue(notification.get("readAt").isNull());
++  var detail=json.readTree(meHttp("GET","/me/notifications/"+own,null,login.accessToken()).body());assertEquals(notification,detail);
++
++  for(String id:List.of(foreign,UUID.randomUUID().toString())){
++   assertEquals(404,meHttp("GET","/me/notifications/"+id,null,login.accessToken()).statusCode());
++   assertEquals(404,meHttp("POST","/me/notifications/"+id+"/read",null,login.accessToken()).statusCode());
++  }
++  assertEquals(200,meHttp("GET","/me/notifications/"+own,null,login.accessToken()).statusCode());assertNull(db.queryForObject("SELECT read_at FROM e4_notification WHERE id=?",Timestamp.class,own));
++  var marked=meHttp("POST","/me/notifications/"+own+"/read",null,login.accessToken());assertEquals(200,marked.statusCode());
++  var readNotification=json.readTree(marked.body());assertEquals("Owner title",readNotification.get("title").asText());assertEquals("Owner content",readNotification.get("content").asText());assertEquals(notification.get("createdAt"),readNotification.get("createdAt"));
++  assertEquals(db.queryForObject("SELECT read_at FROM e4_notification WHERE id=?",Timestamp.class,own).toInstant(),java.time.Instant.parse(readNotification.get("readAt").asText()));
++  assertEquals(marked.body(),meHttp("POST","/me/notifications/"+own+"/read",null,login.accessToken()).body());
++  assertEquals(marked.body(),meHttp("GET","/me/notifications/"+own,null,login.accessToken()).body());
++  assertEquals("[]",meHttp("GET","/me/notifications?unread=true",null,login.accessToken()).body());
++  assertTrue(meHttp("GET","/me/notifications?unread=false",null,login.accessToken()).body().contains(own));
++  assertNull(db.queryForObject("SELECT read_at FROM e4_notification WHERE id=?",Timestamp.class,foreign));
++  for(String path:List.of("/me/notifications","/me/notifications/"+own)){
++   var req=HttpRequest.newBuilder(URI.create(url+"/api/v1"+path)).GET().build();assertEquals(401,HttpClient.newHttpClient().send(req,HttpResponse.BodyHandlers.ofString()).statusCode());
++  }
++  assertEquals(401,post("/api/v1/me/notifications/"+own+"/read",null,null).statusCode());
++ }
++ @Test void upgradeV001PreservesAccounts()throws Exception{
++  var before=db.queryForList("SELECT * FROM e4_user ORDER BY id");
++  db.execute("DROP TABLE e4_notification");db.update("DELETE FROM schema_version WHERE version=2");
++  Offline.main(new String[]{"migrate"});Offline.main(new String[]{"migrate"});
++  assertEquals(before,db.queryForList("SELECT * FROM e4_user ORDER BY id"));
++  assertEquals(2,db.queryForObject("SELECT COUNT(*) FROM schema_version",Integer.class));
++ }
+ }
+diff --git a/vue1/package.json b/vue1/package.json
+index 4461382..0f2ce40 100644
+--- a/vue1/package.json
++++ b/vue1/package.json
+@@ -5,7 +5,8 @@
+   "scripts": {
+     "serve": "vue-cli-service serve",
+     "build": "vue-cli-service build",
+-    "lint": "vue-cli-service lint"
++    "lint": "vue-cli-service lint",
++    "test": "node tests/account-flow.js && node tests/profile-flow.js && node tests/profile-adapter.js && node tests/unicode-parity.js && node tests/notifications-flow.js"
+   },
+   "dependencies": {
+     "core-js": "^3.8.3",
+diff --git a/vue1/src/App.vue b/vue1/src/App.vue
+index b3dea10..3632041 100644
+--- a/vue1/src/App.vue
++++ b/vue1/src/App.vue
+@@ -25,7 +25,7 @@
+         <small>原密码非空且最多32个字符；新密码8—32个Unicode字符且含字母数字，不裁剪空白。</small>
+         <button :disabled="busy">更换密码并退出所有会话</button>
+       </form>
+-      <p>本人通知：待后续故事接入</p>
++      <MyNotifications />
+       <button disabled>领养管理 · 待集成</button><button disabled>社区管理 · 待集成</button><button disabled>订单管理 · 待集成</button>
+     </section>
+     <form v-else @submit.prevent="submit">
+@@ -43,11 +43,13 @@
+   </main>
+ </template>
+ <script>
++import MyNotifications from './components/MyNotifications.vue'
+ import { session, clearSession, setSession } from './state/session'
+ import { request } from './api/client'
+ import { normalizeAccount, validAccount, validPassword } from './validation/account'
+ export default {
+   name: 'App',
++  components: { MyNotifications },
+   data: () => ({ session, registering: false, account: '', password: '', confirmation: '', busy: false, message: '', frozen: null, profile: null, profileLoading: false, nickname: '', bio: '', review: null, oldPassword: '', newPassword: '', confirmNewPassword: '' }),
+   watch: { 'session.accessToken': { flush: 'sync', handler () { this.resetAccountState() } } },
+   methods: {
+diff --git a/vue1/src/components/MyNotifications.vue b/vue1/src/components/MyNotifications.vue
+new file mode 100644
+index 0000000..3e206fa
+--- /dev/null
++++ b/vue1/src/components/MyNotifications.vue
+@@ -0,0 +1,67 @@
++<template>
++  <section aria-label="本人通知">
++    <h2>本人通知</h2>
++    <label><input v-model="unread" type="checkbox">只看未读</label>
++    <button @click="load">刷新通知</button>
++    <p v-if="loading" role="status">通知加载中…</p>
++    <p v-else-if="error" role="alert">{{ error }} <button @click="load">重试</button></p>
++    <p v-else-if="items.length === 0">暂无通知</p>
++    <ul v-else><li v-for="item in items" :key="item.id"><button @click="open(item.id)">{{ item.title }} · {{ item.readAt ? '已读' : '未读' }}</button><time>{{ displayTime(item.createdAt) }}</time></li></ul>
++    <p v-if="detailLoading" role="status">详情加载中…</p>
++    <p v-else-if="detailError" role="alert">{{ detailError }} <button @click="open(selectedId)">重试详情</button></p>
++    <article v-else-if="detail"><h3>{{ detail.title }}</h3><p style="white-space: pre-wrap">{{ detail.content }}</p><p>{{ detail.readAt ? '已读' : '未读' }}</p><button v-if="!detail.readAt" :disabled="marking" @click="markRead">{{ marking ? '处理中…' : '标记已读' }}</button><p v-if="markError" role="alert">{{ markError }} <button :disabled="marking" @click="markRead">重试标记</button></p></article>
++  </section>
++</template>
++<script>
++import { request } from '../api/client'
++import { session } from '../state/session'
++export default {
++  name: 'MyNotifications',
++  data: () => ({ session, unread: false, items: [], loading: false, error: '', detail: null, selectedId: null, detailLoading: false, detailError: '', marking: false, markError: '', generation: 0, detailGeneration: 0, alive: true }),
++  watch: {
++    unread () { this.load() },
++    'session.accessToken': { flush: 'sync', handler () { this.load() } }
++  },
++  mounted () { this.load() },
++  beforeUnmount () { this.alive = false; this.generation++; this.detailGeneration++ },
++  methods: {
++    displayTime (time) { return new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', dateStyle: 'medium', timeStyle: 'medium' }).format(new Date(time)) },
++    async load () {
++      const generation = ++this.generation; const token = session.accessToken
++      this.detailGeneration++; this.detail = null; this.selectedId = null; this.detailLoading = false; this.detailError = ''; this.markError = ''; this.marking = false
++      this.items = []; this.error = ''; this.loading = !!token
++      if (!token) return
++      try {
++        const items = await request('/me/notifications?unread=' + this.unread, undefined, 'GET')
++        if (this.alive && generation === this.generation && token === session.accessToken) this.items = items
++      } catch (error) { if (this.alive && generation === this.generation && token === session.accessToken) this.error = error.message }
++      finally { if (this.alive && generation === this.generation && token === session.accessToken) this.loading = false }
++    },
++    async open (id) {
++      const generation = ++this.detailGeneration; const listGeneration = this.generation; const token = session.accessToken
++      this.selectedId = id; this.detail = null; this.detailError = ''; this.markError = ''; this.marking = false; this.detailLoading = true
++      const current = () => this.alive && generation === this.detailGeneration && listGeneration === this.generation && token === session.accessToken
++      try { const detail = await request('/me/notifications/' + encodeURIComponent(id), undefined, 'GET'); if (current()) this.detail = detail }
++      catch (error) { if (current()) this.detailError = error.message }
++      finally { if (current()) this.detailLoading = false }
++    },
++    async markRead () {
++      if (!this.detail || this.marking) return
++      const generation = this.detailGeneration; const listGeneration = this.generation; const token = session.accessToken; const id = this.detail.id
++      const current = () => this.alive && generation === this.detailGeneration && listGeneration === this.generation && token === session.accessToken
++      this.marking = true; this.markError = ''
++      try {
++        const updated = await request('/me/notifications/' + encodeURIComponent(id) + '/read')
++        if (this.alive && token === session.accessToken) {
++          if (listGeneration !== this.generation) await this.load()
++          else {
++            this.items = this.items.map(item => item.id === id ? updated : item).filter(item => !this.unread || !item.readAt)
++            if (current()) this.detail = updated
++          }
++        }
++      } catch (error) { if (current()) this.markError = error.message }
++      finally { if (current()) this.marking = false }
++    }
++  }
++}
++</script>
+diff --git a/vue1/tests/account-flow.js b/vue1/tests/account-flow.js
+index e324407..9929fa2 100644
+--- a/vue1/tests/account-flow.js
++++ b/vue1/tests/account-flow.js
+@@ -8,7 +8,7 @@ const fs = require('fs'); const vm = require('vm'); const assert = require('asse
+  const ctx = { session: {accessToken:'fixture-token'}, clearSession(){ctx.session={}}, AbortController, setTimeout, clearTimeout, TypeError, Error };
+  let captured;
+  ctx.fetch=async (url,options)=>{captured={url,options};return {status:204,ok:true}};
+- vm.createContext(ctx); vm.runInContext(fs.readFileSync(__dirname+'/../src/api/client.js','utf8').replace(/^import .*$/m,'').replace('export async function request','async function request'),ctx);
++ ctx.MyNotifications = {}; vm.createContext(ctx); vm.runInContext(fs.readFileSync(__dirname+'/../src/api/client.js','utf8').replace(/^import .*$/m,'').replace('export async function request','async function request'),ctx);
+  await ctx.request('/auth/logout'); assert.equal(captured.options.credentials,'omit'); assert.equal(captured.options.body,undefined); assert.equal(captured.options.headers['Content-Type'],undefined);
+  ctx.fetch=async()=>({status:401,ok:false,json:async()=>({message:'会话无效'})}); await assert.rejects(ctx.request('/test')); assert.equal(ctx.session.accessToken,undefined);
+  ctx.fetch=async()=>{throw new TypeError('network')}; await assert.rejects(ctx.request('/auth/logout'),/结果未确认/);
+diff --git a/vue1/tests/notifications-flow.js b/vue1/tests/notifications-flow.js
+new file mode 100644
+index 0000000..241ef7c
+--- /dev/null
++++ b/vue1/tests/notifications-flow.js
+@@ -0,0 +1,64 @@
++const fs = require('fs'); const vm = require('vm'); const assert = require('assert');
++(async () => {
++  const session = { accessToken: 'A' }; let queue = [];
++  const ctx = { session, Intl, Date, request: (...args) => new Promise((resolve, reject) => queue.push({ args, resolve, reject })) };
++  vm.createContext(ctx);
++  vm.runInContext(fs.readFileSync(__dirname + '/../src/components/MyNotifications.vue', 'utf8').split('<script>')[1].split('</script>')[0].replace(/^import .*$/gm, '').replace('export default', 'var component ='), ctx);
++  const state = Object.assign(ctx.component.data(), ctx.component.methods);
++  let first = state.load(); state.unread = true; let second = state.load();
++  queue[1].resolve([{ id: 'new', title: 'new', readAt: null }]); await second; queue[0].resolve([{ id: 'stale' }]); await first;
++  assert.equal(state.items[0].id, 'new'); assert.equal(state.loading, false); queue = [];
++  let pending = state.open('new'); queue[0].resolve({ id: 'new', content: '<script>private</script>', readAt: null }); await pending;
++  assert.equal(state.detail.readAt, null); assert.equal(queue[0].args[2], 'GET'); queue = [];
++  pending = state.markRead(); queue[0].resolve({ id: 'new', readAt: '2026-11-11T00:00:00Z' }); await pending;
++  assert.equal(state.items.length, 0); assert.ok(state.detail.readAt); queue = [];
++  pending = state.load(); queue[0].reject(Error('network failed')); await pending; assert.equal(state.error, 'network failed'); assert.equal(state.loading, false); queue = [];
++  pending = state.load(); queue[0].resolve([]); await pending; assert.equal(state.error, ''); assert.equal(state.items.length, 0); queue = [];
++  pending = state.open('retry'); queue[0].reject(Error('detail failed')); await pending;
++  assert.equal(state.detailError, 'detail failed'); assert.equal(state.detailLoading, false); queue = [];
++  pending = state.open(state.selectedId); queue[0].resolve({ id: 'retry', readAt: null }); await pending;
++  assert.equal(state.detailError, ''); queue = [];
++  pending = state.markRead(); queue[0].reject(Error('mark failed')); await pending;
++  assert.equal(state.markError, 'mark failed'); assert.equal(state.marking, false); assert.equal(state.detail.readAt, null); queue = [];
++  pending = state.markRead(); queue[0].resolve({ id: 'retry', readAt: 'read' }); await pending;
++  assert.equal(state.markError, ''); assert.equal(state.detail.readAt, 'read'); queue = [];
++  // Changing detail must preserve the successful write in the list without replacing the new detail.
++  state.unread = false; state.items = [{ id: 'old', readAt: null }, { id: 'next', readAt: null }]; state.detail = state.items[0];
++  pending = state.markRead(); let opening = state.open('next');
++  queue[1].resolve({ id: 'next', readAt: null }); await opening;
++  queue[0].resolve({ id: 'old', readAt: 'read' }); await pending;
++  assert.equal(state.items[0].readAt, 'read'); assert.equal(state.detail.id, 'next'); queue = [];
++  // A refresh started before the write committed must be superseded by a post-commit query.
++  state.detail = { id: 'old', readAt: null }; pending = state.markRead(); let refreshing = state.load();
++  queue[1].resolve([{ id: 'old', readAt: null }]); await refreshing;
++  queue[0].resolve({ id: 'old', readAt: 'read' }); await new Promise(resolve => setImmediate(resolve));
++  assert.equal(queue.length, 3); queue[2].resolve([{ id: 'old', readAt: 'read' }]); await pending;
++  assert.equal(state.items[0].readAt, 'read'); queue = [];
++  state.detail = { id: 'old', readAt: null }; pending = state.markRead(); state.unread = true; refreshing = state.load();
++  queue[0].resolve({ id: 'old', readAt: 'read' }); await new Promise(resolve => setImmediate(resolve));
++  assert.equal(queue[2].args[0], '/me/notifications?unread=true');
++  queue[2].resolve([]); await pending; queue[1].resolve([{ id: 'old', readAt: null }]); await refreshing;
++  assert.equal(state.items.length, 0); queue = [];
++  // A successful old-session write must neither update nor refresh the new session.
++  state.detail = { id: 'old', readAt: null }; pending = state.markRead(); session.accessToken = 'B'; refreshing = state.load();
++  queue[1].resolve([{ id: 'B', readAt: null }]); await refreshing; queue[0].resolve({ id: 'old', readAt: 'read' }); await pending;
++  assert.equal(queue.length, 2); assert.equal(state.items[0].id, 'B'); queue = []; session.accessToken = 'A';
++  pending = state.open('private'); session.accessToken = 'B'; let next = state.load(); queue[0].resolve({ id: 'private' }); await pending; assert.equal(state.detail, null); queue[1].resolve([]); await next; queue = [];
++  pending = state.load(); ctx.component.beforeUnmount.call(state); queue[0].resolve([{ id: 'late' }]); await pending; assert.equal(state.items.length, 0);
++  // Mount the actual options object with Vue's reactive state and watcher scheduler.
++  const { createRenderer, reactive, nextTick } = require('vue');
++  ctx.session = reactive({ accessToken: 'live' }); queue = [];
++  const renderer = createRenderer({
++    createElement: () => ({}), createText: () => ({}), createComment: () => ({}),
++    insert () {}, remove () {}, setText () {}, setElementText () {}, patchProp () {},
++    parentNode: () => null, nextSibling: () => null
++  });
++  const app = renderer.createApp({ ...ctx.component, render: () => null }); const live = app.mount({});
++  assert.equal(queue[0].args[0], '/me/notifications?unread=false');
++  queue[0].resolve([{ id: 'initial', readAt: null }]); await new Promise(resolve => setImmediate(resolve)); await nextTick();
++  live.unread = true; await nextTick();
++  assert.equal(queue.length, 2); assert.equal(queue[1].args[0], '/me/notifications?unread=true');
++  queue[1].resolve([]); await new Promise(resolve => setImmediate(resolve)); await nextTick(); assert.equal(live.items.length, 0); assert.equal(live.loading, false);
++  app.unmount();
++  console.log('PASS notifications: reactive filter watcher, failures/retries, mark/detail/refresh/session races, stale responses and unmount');
++})().catch(error => { console.error(error); process.exitCode = 1 });
+diff --git a/vue1/tests/profile-adapter.js b/vue1/tests/profile-adapter.js
+index 3b5cff0..39bf8b1 100644
+--- a/vue1/tests/profile-adapter.js
++++ b/vue1/tests/profile-adapter.js
+@@ -2,7 +2,7 @@ const fs = require('fs'); const vm = require('vm'); const assert = require('asse
+ (async () => {
+  const session = { user: { nickname: 'fixture' }, accessToken: 'A' };
+  const ctx = { session, clearSession () { session.accessToken = null; session.user = null }, validPassword: () => true, Intl, Date, AbortController, setTimeout, clearTimeout, TypeError, fetch: async () => { throw Error('unexpected') } };
+- vm.createContext(ctx);
++ ctx.MyNotifications = {}; vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(__dirname + '/../src/api/client.js','utf8').replace(/^import .*$/gm,'').replace('export async','async'),ctx);
+  const source = fs.readFileSync(__dirname + '/../src/App.vue','utf8');
+  vm.runInContext(source.split('<script>')[1].split('</script>')[0].replace(/^import .*$/gm,'').replace('export default','var component ='),ctx);
+diff --git a/vue1/tests/profile-flow.js b/vue1/tests/profile-flow.js
+index 0925ae1..00058be 100644
+--- a/vue1/tests/profile-flow.js
++++ b/vue1/tests/profile-flow.js
+@@ -1,7 +1,7 @@
+ const fs = require('fs'); const vm = require('vm'); const assert = require('assert');
+ (async () => {
+  const ctx = { session: { user: { nickname: 'old' }, accessToken: 'fixture' }, clearSession () { ctx.session.user = null; ctx.session.accessToken = '' }, validPassword: p => Array.from(p).length >= 8 && Array.from(p).length <= 32, request: async () => { throw Error('unexpected') }, Intl, Date };
+- vm.createContext(ctx);
++ ctx.MyNotifications = {}; vm.createContext(ctx);
+  const source = fs.readFileSync(__dirname + '/../src/App.vue', 'utf8');
+  assert.ok(!source.includes('v-html'));
+  vm.runInContext(source.split('<script>')[1].split('</script>')[0].replace(/^import .*$/gm, '').replace('export default', 'var component ='), ctx);
