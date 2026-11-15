@@ -1,0 +1,3 @@
+package com.example.petadoptioncommunity.media;
+import org.springframework.web.bind.annotation.*;import org.springframework.web.multipart.MultipartFile;import org.springframework.security.core.annotation.AuthenticationPrincipal;import com.example.petadoptioncommunity.identity.IdentityPort;
+@RestController @RequestMapping("/api/v1/uploads") public class MediaController {private final MediaService service;public MediaController(MediaService s){service=s;}@PostMapping public Object upload(@AuthenticationPrincipal IdentityPort.Actor a,@RequestParam("file")MultipartFile file){return service.upload(a,file);}}
