@@ -1,0 +1,12 @@
+**/node_modules/
+**/target/
+**/dist/
+**/.idea/
+**/application-local.properties
+.local/
+**/logs/
+**/.env*
+*.zip
+**/src/main/resources/static/
+**/__pycache__/
+*.pyc

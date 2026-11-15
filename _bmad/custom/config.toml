@@ -1,0 +1,6 @@
+# Team configuration; overrides installer defaults.
+[core]
+user_name = "PetHaven Team"
+project_name = "PetHaven"
+communication_language = "Chinese"
+document_output_language = "Chinese"

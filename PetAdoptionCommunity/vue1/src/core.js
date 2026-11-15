@@ -1,0 +1,9 @@
+import {ref} from 'vue';import {defineStore} from 'pinia';
+export const flash=ref('');export const flashError=ref(false);let timer;
+export function toast(message,error=false){flash.value=message;flashError.value=error;clearTimeout(timer);timer=setTimeout(()=>flash.value='',6000)}
+export const useSession=defineStore('session',()=>{const token=ref(''),user=ref(null);function clear(){token.value='';user.value=null}return {token,user,clear}});
+export async function api(path,method='GET',body){const session=useSession();const headers={};if(session.token)headers.Authorization='Bearer '+session.token;if(body!==undefined&&!(body instanceof FormData))headers['Content-Type']='application/json';let response;try{response=await fetch('/api/v1'+path,{method,headers,body:body===undefined?undefined:body instanceof FormData?body:JSON.stringify(body),credentials:'omit',signal:AbortSignal.timeout(15000)})}catch{throw new Error(method==='GET'?'服务暂时不可用，请检查连接后重试':'结果未确认，请先刷新核对，重试时保留原操作标识')};if(response.status===204)return null;const result=await response.json();if(!response.ok){if(response.status===401&&session.token){session.clear();toast('会话已失效，请重新登录',true)}const err=new Error(result.reason?result.message+'：'+result.reason:result.message||'请求失败');err.status=response.status;err.data=result;throw err}return result}
+export function money(v){return (Number(v||0)/100).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2})}
+export function time(v){return v?new Date(v).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai'}):'—'}
+export const labels={AVAILABLE:'待领养',HANDOVER:'待交接',ADOPTED:'已领养',PENDING:'待处理',SELECTED:'待交接',SUCCESS:'领养成功',CANCELLED:'已取消',NOT_SELECTED:'未选中',PAID:'待发货',SHIPPED:'已发货',COMPLETED:'已完成',ACTIVE:'正常',FROZEN:'已冻结'};
+export async function upload(file){const data=new FormData();data.append('file',file);return (await api('/uploads','POST',data)).url}
