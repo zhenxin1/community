@@ -1,5 +1,7 @@
 # 寻爪 Pet Haven
 
+文档状态：`Done`。
+
 寻爪是宠物领养与用品购买 Web 系统，覆盖账号治理、宠物发布与领养交接、自营商城选购及订单履约。普通用户可以发布宠物、提交领养申请和购买用品；管理员负责账号处置、通知、商品库存维护和订单发货。
 
 ## 功能与业务边界
@@ -142,11 +144,13 @@ python tests/quality.py
 
 ## 课程产物与交付记录
 
+项目交付状态：`Done`。功能、课程文档与演示视频均已交付。
+
 项目包含21条FR、5条NFR、9条ADR、4个史诗、20个故事、14条实现规则和30项人机决策。十类产物及材料登记见[提交材料索引](docs/submission-index.md)。
 
 - 仓库：[zhenxin1/community](https://github.com/zhenxin1/community)。
 - 故事状态：[sprint-status.yaml](_bmad-output/implementation-artifacts/sprint-status.yaml)，20个故事均为`done`，完成依据为项目负责人确认。
-- 演示路线：[十分钟演示提纲](docs/demo-script.md)；实际视频链接尚未登记。
+- 演示视频：[演示视频 Release](https://github.com/zhenxin1/community/releases/tag/demo-video-20261116)（[下载 MP4](https://github.com/zhenxin1/community/releases/download/demo-video-20261116/pawpaw-community-demo.mp4)）；内容索引见[十分钟演示提纲](docs/demo-script.md)。
 - 实验A：[复盘与实验报告](retrospective.md)，附件位于`evidence/experiment-a/`。
 - 实验B：依据教师补充说明免做。
 

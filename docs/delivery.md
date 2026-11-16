@@ -1,5 +1,7 @@
 # 项目交付说明
 
+文档状态：`Done`。
+
 ## 交付组成
 
 交付仓库为[zhenxin1/community](https://github.com/zhenxin1/community)，内容包括产品与需求文档、架构及故事、源码、测试、决策日志、复盘、初始化SQL和运行脚本。十类课程产物的位置见[提交材料索引](submission-index.md)。
@@ -19,6 +21,6 @@
 | 质量 | [技术验证记录](../evidence/verification.md)及原始结果 |
 | 数据库 | [数据库说明](database.md)、迁移校验及SQL导入记录 |
 | 实验 | 冻结输入、初版、首评、执行时间与局限说明 |
-| 演示 | [演示提纲](demo-script.md)及单独登记的实际视频 |
+| 演示 | Done；[演示提纲](demo-script.md)、[演示视频 Release](https://github.com/zhenxin1/community/releases/tag/demo-video-20261116)及[下载 MP4](https://github.com/zhenxin1/community/releases/download/demo-video-20261116/pawpaw-community-demo.mp4) |
 
 技术证据包括5项JUnit、45项HTTP/MySQL业务检查和17项补充业务检查；浏览器记录覆盖商城履约与桌面、手机布局。故事人工接受、成员信息和演示视频的登记状态集中列于提交材料索引。

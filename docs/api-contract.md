@@ -1,4 +1,6 @@
 # 统一HTTP接口合同
+
+文档状态：`Done`。
 前缀 /api/v1，JSON采用camelCase，成功返回DTO或列表；失败返回{code,message,requestId}，冻结核验额外reason/actionAt。401未认证/会话失效，403权限拒绝，404不存在，409冲突，400非法输入，413上传超限，503数据库依赖不可用。未知JSON字段拒绝；整数不接受浮点截断。前端不能提交可信userId/role/price/payable。
 Authorization: Bearer <token>，仅内存保存，绝对30分钟，不刷新。退出POST无body返回204。资料与改密端点拒绝附加查询字段。
 

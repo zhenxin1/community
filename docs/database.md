@@ -1,5 +1,7 @@
 # 数据库与迁移
 
+文档状态：`Done`。
+
 应用使用专用MySQL8数据库`pet_final`，存储引擎为InnoDB，字符集为utf8mb4，时间使用UTC。
 迁移V001账号会话，V002通知，V003命令去重，V004领养商城。Offline显式迁移校验SHA-256，启动SchemaGuard核对全部版本。不自动DROP/清空/覆盖已执行迁移。备份与秘密配置留在.local不提交。
 

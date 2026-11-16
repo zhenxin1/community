@@ -1,5 +1,7 @@
 # 寻爪项目上下文与实现约束
 
+文档状态：`Done`。
+
 ## 适用范围
 
 本文件约束账号治理、宠物领养和商城各模块的实现、评审和后续维护。产品规则以[PRD](planning-artifacts/PRD.md)为准，技术取舍以[架构](planning-artifacts/architecture.md)为准，接口细节见[接口合同](../docs/api-contract.md)。规则用于减少跨模块默认假设，不替代需求本身。

@@ -1,6 +1,8 @@
 # 课程提交材料索引
 
-本索引对应课程讲义第33页的十类产物。路径均相对仓库根目录。
+文档状态：`Done`。
+
+本索引对应课程讲义第33页的十类产物，交付状态为`Done`。路径均相对仓库根目录，演示视频作为GitHub Release附件提供。
 
 | 序号 | 产物 | 具体位置 | 内容与课程要求 |
 |---|---|---|---|
@@ -13,7 +15,7 @@
 | 7 | 源码与测试 | [后端与前端](../PetAdoptionCommunity/)、[tests/](../tests/)、[evidence/](../evidence/) | 5项JUnit、45项HTTP/MySQL业务、17项补充业务及NFR对应证据 |
 | 8 | 决策日志 | [decision-log.md](../decision-log.md) | 30项决策，其中8项人工实质修改，记录判断、理由、影响及验证 |
 | 9 | 复盘 | [retrospective.md](../retrospective.md) | 项目度量、实验A结果与局限；实验B免做说明 |
-| 10 | 运行与演示 | [README.md](../README.md)、[演示提纲](demo-script.md)及实际视频 | 启动、职责登记、AI声明与10分钟演示要求 |
+| 10 | 运行与演示 | [README.md](../README.md)、[演示提纲](demo-script.md)、[演示视频 Release](https://github.com/zhenxin1/community/releases/tag/demo-video-20261116) | 启动、职责登记、AI声明与10分钟演示要求 |
 
 ## 实现与验证索引
 
@@ -28,7 +30,7 @@
 | Sprint版本演进 | Git保留初始状态与完成状态更新，具体演进通过该文件的git log核对 |
 | 成员分工 | 涂远豪：管理员后台；韩子玉：商城；胡勇：宠物领养；蔡鹏飞：数据库、系统验证与交付。具体职责见README |
 | AI模型版本 | Agent为Codex，模型为GPT6.1 Sol；使用范围见README |
-| 实际演示视频 | 仓库未登记视频路径或链接，演示提纲单独收录 |
+| 实际演示视频 | Done；[演示视频 Release](https://github.com/zhenxin1/community/releases/tag/demo-video-20261116)，附件为`pawpaw-community-demo.mp4`，[下载 MP4](https://github.com/zhenxin1/community/releases/download/demo-video-20261116/pawpaw-community-demo.mp4) |
 | 远程仓库 | [zhenxin1/community](https://github.com/zhenxin1/community) |
 
 技术检查结果与人工验收分开记录。实验A按原始首版、首次评审和实际时间报告，跨日、任务差异及隔离限制随结果说明；实验B依据教师补充说明免做。

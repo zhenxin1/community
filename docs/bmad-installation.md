@@ -1,5 +1,7 @@
 # BMAD工具环境
 
+文档状态：`Done`。
+
 ## 版本与目录
 
 项目工具版本为`bmad-method@6.12.4`，包含Core、BMM与29个Codex技能入口。安装元数据见`_bmad/_config/manifest.yaml`。

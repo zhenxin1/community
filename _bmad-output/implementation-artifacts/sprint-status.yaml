@@ -1,6 +1,7 @@
 project: PetHaven-final
 started: 2026-11-14
-phase: implementation-complete
+phase: complete
+project_status: done
 development_status:
   story-1.1: done
   story-1.2: done
@@ -29,4 +30,6 @@ verification:
   integration: 45-pass
   supplemental: 18-pass
   browser: completed
-recording: pending
+recording: completed
+recording_release: https://github.com/zhenxin1/community/releases/tag/demo-video-20261116
+recording_asset: https://github.com/zhenxin1/community/releases/download/demo-video-20261116/pawpaw-community-demo.mp4

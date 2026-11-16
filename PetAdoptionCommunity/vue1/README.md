@@ -1,5 +1,7 @@
 # 寻爪前端
 
+文档状态：`Done`。
+
 前端使用Vue3.5.45、Vue Router4.6.4、Pinia3.0.4和Vite8.3.8，依赖由package-lock.json锁定。
 
 ## 开发
