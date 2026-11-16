@@ -1,4 +1,5 @@
 # 数据库与迁移
+
 应用使用专用MySQL8数据库`pet_final`，存储引擎为InnoDB，字符集为utf8mb4，时间使用UTC。
 迁移V001账号会话，V002通知，V003命令去重，V004领养商城。Offline显式迁移校验SHA-256，启动SchemaGuard核对全部版本。不自动DROP/清空/覆盖已执行迁移。备份与秘密配置留在.local不提交。
 
@@ -21,11 +22,12 @@ erDiagram
 
 ## 单文件SQL初始化
 
-根目录`pet_final.sql`提供完整建库、建表与教学数据插入，表结构与下述V001—V004一致，并写入应用启动所需的迁移版本及SHA-256。新环境可直接在MySQL客户端执行`SOURCE D:/Code/temp/final/pet_final.sql;`，再按README配置连接、构建和启动，无须额外执行迁移或演示数据导入。
+根目录`pet_final.sql`提供完整建库、建表与教学数据插入，表结构与下述V001—V004一致，并写入应用启动所需的迁移版本及SHA-256。新环境可直接在MySQL客户端执行`SOURCE pet_final.sql;`，再按README配置连接、构建和启动，无须额外执行迁移或演示数据导入。
 
 脚本创建4个教学账号、6只宠物、14类28件商品及2条虚构地址。公开教学账密见README，不含本地数据库凭据或真实个人信息。演示数据仅在相关表为空时插入，不覆盖已有账号，不删除业务数据。独立临时库导入、重复导入和实际应用登录已验证，结果见`../evidence/database-initialization-check.json`。
 
 ## 物理表定义
+
 以下与实际迁移一致，金额BIGINT单位分，UUID使用ascii_bin，业务外键关联统一账号。
 ```sql
 CREATE TABLE schema_version (version INT PRIMARY KEY, checksum CHAR(64) NOT NULL, applied_at DATETIME(3) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -1,58 +1,98 @@
 # 寻爪 Pet Haven
-寻爪是面向宠物领养与用品购买的Web系统，包含用户与平台治理、宠物发布和双向交接、自营商城选购及履约。普通用户可以发布与申请不同宠物，管理员负责账号处置、商品维护和订单发货。
 
-## 技术与目录
-Java17 / Spring Boot4.1.2 / MyBatis4.0.0 / MySQL8；Vue3.5.45 / Router4.6.4 / Pinia3.0.4 / Vite8.3.8。Node本机验证24.15.0。
-`PetAdoptionCommunity`是后端，`vue1`是Vue源码；`scripts`负责构建/初始化/启动，`tests`为真实接口测试；`_bmad-output`为需求规划与故事，`evidence`记录实际验证。
-后端遵循Controller→Service→Mapper，账号治理、宠物领养和商城业务共享身份体系与MySQL数据库。PRD定义功能和验收规则，接口合同规定前后端交互，架构文档约束分层职责与事务边界。
+寻爪是宠物领养与用品购买 Web 系统，覆盖账号治理、宠物发布与领养交接、自营商城选购及订单履约。普通用户可以发布宠物、提交领养申请和购买用品；管理员负责账号处置、通知、商品库存维护和订单发货。
 
-## 环境准备
-需要JDK17、Node24（或满足Vite8引擎的版本）、MySQL8服务与命令行客户端、Python3（仅标准库管理脚本）、PowerShell。设置JAVA_HOME到JDK17并将java/node/npm/mysql/python加入PATH。本机JDK路径为`D:\Program Files\Java 17 for MC\jdk-17`，其他机器按实际安装修改。
-在本仓库根目录`D:\Code\temp\final`执行：
+## 功能与业务边界
+
+| 领域 | 主要功能 | 关键规则 |
+|---|---|---|
+| 账号与治理 | 注册登录、资料修改、改密、通知、冻结解冻 | 固定 USER/ADMIN；会话可撤销；敏感操作在服务端鉴权 |
+| 宠物领养 | 发布、组合筛选、联系、申请、选定、交接确认 | 每轮只选定一份申请；双方确认才成功；失败保留历史并恢复待领养 |
+| 商城选购 | 分类搜索、购物车勾选、地址、优惠、建单 | 服务端以整数分报价；订单保存商品、金额和地址快照 |
+| 商城履约 | 模拟付款、库存扣减、取消、后台发货和收货 | 付款时全单校验并原子扣库存；重复请求不重复扣减 |
+
+联系方式按宠物状态和当事关系返回；个人订单、地址和通知均检查归属。系统采用模拟支付和人工物流信息，不发生真实资金交易，不接入真实物流服务。具体范围见[产品简报](_bmad-output/planning-artifacts/product-brief.md)和[PRD](_bmad-output/planning-artifacts/PRD.md)。
+
+## 技术栈与目录
+
+| 组件 | 版本或约定 |
+|---|---|
+| Java / Spring Boot / MyBatis | 17 / 4.1.2 / 4.0.0 |
+| 数据库 | MySQL 8，InnoDB，utf8mb4，UTC |
+| Vue / Vue Router / Pinia | 3.5.45 / 4.6.4 / 3.0.4 |
+| Vite / plugin-vue | 8.3.8 / 6.0.10 |
+| 构建与辅助工具 | Node.js 24、Python 3、PowerShell、Maven Wrapper |
+
+后端使用 Spring MVC，职责依次为 Controller → Service → Mapper。Controller 处理请求和响应，Service 负责业务规则、授权和事务，Mapper 负责数据访问。
+
+```text
+PetAdoptionCommunity/
+  src/main/java/         后端业务与接口
+  src/main/resources/    配置、迁移及生产资源
+  src/test/java/         单元测试
+  vue1/                  Vue 前端
+_bmad-output/            产品、需求、架构、故事及Sprint状态
+docs/                    接口、数据库、追溯与交付说明
+tests/                   HTTP/MySQL业务和质量检查
+evidence/                测试结果、浏览器记录和实验A附件
+scripts/                 配置、构建、初始化及启动脚本
+pet_final.sql            单文件数据库结构及教学数据
+decision-log.md          人机决策日志
+retrospective.md         质量复盘与实验报告
+```
+
+## 环境与启动
+
+运行环境需要 JDK17、Node.js24、MySQL8、Python3 和 PowerShell。`java`、`node`、`npm`、`mysql`、`python`需可从终端调用，`JAVA_HOME`指向 JDK17安装目录。以下命令均从仓库根目录执行。
+
+### 脚本初始化方式
+
 ```powershell
-$env:JAVA_HOME='你的JDK17目录'
 python scripts/manage.py configure
 ./scripts/build.ps1
 python scripts/manage.py init
 python scripts/manage.py serve
 ```
-configure私密输入MySQL账号密码，仅写入已忽略`.local/runtime.json`。init只允许专用`pet_final`数据库，显式迁移并离线创建随机管理员；已存在ADMIN不覆盖密码，已有USER不提权。若已有本机配置和数据库，不必重复configure/init。
-本机已配置后也可在根目录直接运行`./scripts/start.ps1`（自动识别本机JDK17）。serve或start保持运行，打开 http://127.0.0.1:8080/ 。生产包同时提供Vue与API，不需要额外启动前端。
-另开终端初始化演示资料：
+
+`configure`交互输入数据库连接凭据，生成被 Git 忽略的本地配置。`init`创建专用数据库`pet_final`，按 V001—V004执行迁移，并离线初始化管理员；已有账号不会重置密码，普通账号不会被提升为管理员。`build.ps1`安装锁定的前端依赖、构建页面、运行后端单元测试并生成完整应用包。
+
+服务运行后，在另一终端执行：
+
 ```powershell
 python scripts/manage.py seed
 ./scripts/show-demo-accounts.ps1
 ```
-演示包含6只宠物、14类28件商品；admin为后台，linlin为发布者，xiaoyu/anan为申请人和买家。上述脚本方式的密码随机生成，仅在本地查看，不提交、不录屏。seed有本地标记防止重复导入，不覆盖现有账号或商品。
 
-## 使用根目录SQL初始化数据库
+演示资料包含6只宠物、14类28件商品和4个账号。脚本初始化的密码随机生成，仅保存在本地配置中；重复执行已有初始化不会重置密码或重复载入演示商品。
 
-`pet_final.sql`是一份完整的MySQL 8初始化脚本，包含建库、13张表、4条迁移校验记录和教学演示数据。新环境可使用SQL方式替代前述`init`与`seed`，两种初始化方式二选一。
+访问地址：**http://127.0.0.1:8080/**。应用包同时提供 Vue 页面与 API。已有本地配置及构建包时，可使用`./scripts/start.ps1`启动；启动脚本与其他应用实例共用8080端口，同一时刻仅运行一个实例。
 
-在仓库根目录打开MySQL客户端：
+### SQL初始化方式
+
+根目录[pet_final.sql](pet_final.sql)包含建库、13张表、4条迁移校验记录及教学数据。此方式与脚本的`init`、`seed`二选一。
+
+在仓库根目录打开客户端：
 
 ```powershell
 mysql --default-character-set=utf8mb4 -u root -p
 ```
 
-随后在MySQL提示符执行（其他目录按实际路径修改）：
+在 MySQL 提示符执行：
 
 ```sql
-SOURCE D:/Code/temp/final/pet_final.sql;
+SOURCE pet_final.sql;
 ```
 
-导入后，按环境准备步骤配置数据库连接并构建、启动即可，无须再执行`init`或`seed`。数据包括4个账号、6只待领养宠物、14类28件商品和2条虚构收货地址，不含会话、测试订单或本地数据库密码。
+导入后执行`configure`、`build.ps1`和`serve`，无需重复初始化。SQL不删除表、不清空业务记录；仅在相关表为空时插入演示数据，不覆盖已有账号密码。
 
 | SQL演示身份 | 账号 | 公开教学密码 |
 |---|---|---|
 | 管理员 | admin | Admin123456 |
-| 宠物发布者 | linlin | User123456 |
+| 发布者 | linlin | User123456 |
 | 买家与申请人 | xiaoyu | User123456 |
 | 另一申请人 | anan | User123456 |
 
-以上账号密码仅对应SQL在空库中创建的教学账号，不改变已有安装环境的账号密码。脚本不删除表、不清空业务记录；仅在迁移、账号、商品和宠物表均为空时插入演示数据。已有库重复导入不会重置账号或重复载入演示记录。
-
-自动化测试读取`.local/demo-credentials.json`。若采用SQL方式在新环境运行`tests/integration.py`或`tests/quality.py`，将该本地文件配置为以下内容；使用原有脚本初始化的环境继续保留自身随机凭据：
+以上仅为SQL在空库中创建的教学凭据。SQL方式运行自动化测试时，`.local/demo-credentials.json`应与这些账号对应；脚本方式使用其生成的随机凭据。配置格式如下：
 
 ```json
 {
@@ -63,51 +103,66 @@ SOURCE D:/Code/temp/final/pet_final.sql;
 }
 ```
 
-SQL导入与实际应用的14项检查结果见`evidence/database-initialization-check.json`。
+## 开发与测试
 
-## 日常开发
-终端一运行`python scripts/manage.py serve`。终端二进入`PetAdoptionCommunity/vue1`后执行`npm.cmd ci`、`npm.cmd run dev`，打开http://127.0.0.1:5173/。Vite将/api和/media代理至8080。
-**构建前先停止本项目Vite及后端进程**，避免Windows锁住Rolldown原生依赖或jar；不要终止未知进程。运行窗口Ctrl+C正常停止。数据库和上传重启保留，登录Bearer仅内存，刷新需重登。
+后端运行后，可在`PetAdoptionCommunity/vue1`目录执行：
 
-## 测试
-后端业务启动并初始化后，在根目录执行：
+```powershell
+npm.cmd ci
+npm.cmd run dev
+```
+
+前端开发地址为 http://127.0.0.1:5173/，`/api`和`/media`代理至8080。生产构建前需停止对应开发进程和占用应用包的实例，释放文件锁。
+
+在已初始化且运行的专用教学环境中，从仓库根目录执行：
+
 ```powershell
 python tests/integration.py
 python tests/quality.py
 ```
-测试只创建带qa标签的教学记录，不清空数据库；结束后下架测试商品，保留相关记录便于核对。先核对测试目标为本项目专用库，不能指向其他真实系统。构建脚本运行全部纯规则JUnit测试；HTTP集合在真实MySQL应用服务路径执行。结果见evidence/verification.md，不把构建成功等同业务正确。
 
-## 使用与边界
-用户可发布/筛选/联系/申请宠物，发布者选定后双方确认；失败恢复待领养。联系方式按状态及当事关系开放。商城购物车及未付款不占库存，成功付款才原子扣减；优惠最高档满减后八折，全部模拟，不发生真实支付。ADMIN只在订单付款后查看收货详情并发货。
-上传JPEG/PNG<=8MB，重编码保存`.local/uploads`；数据库迁移checksums防止改写已执行脚本。所有凭证、上传和本地日志不进入Git，缺失时按配置说明补齐。
+测试创建带`qa`标记的资料并保留验证记录，不清空数据库。质量结果包括5项JUnit、45项HTTP/MySQL业务检查、17项补充业务检查，以及独立SQL初始化检查。完整口径见[技术验证记录](evidence/verification.md)，需求与验证的对应关系见[追溯矩阵](docs/traceability.md)。
 
-## 课程交付与真实状态
-第33页清单见docs/submission-index.md；追溯见docs/traceability.md；接口/数据库说明见docs/api-contract.md、docs/database.md。4史诗20故事，9条ADR，14条项目规则；实验附件见evidence/experiment-a/。
-故事review表示已实现待负责人验收，不等于真人接受。尚需负责人补真实姓名分工、实际录制10分钟演示、确认实验A局限及GitHub远程/提交。docs/demo-script.md仅录屏提纲，不是视频。
-实验B按老师补充免做；实验A沿用原有真实证据并披露跨日、任务差异和隔离不足，不能宣称严格对照或编造收益。
+## 页面入口
 
-## AI使用声明与贡献说明
-开发中使用Codex辅助需求整理、方案比较、文档、代码、界面及测试。功能边界和架构选择需要团队评估，实际完成程度由源码、版本记录及测试证据核对。团队分工覆盖账号与平台治理、宠物发布与领养、商城选购与履约、系统验证与交付；四名成员姓名、负责事项及工作量由负责人核对后填写。
-Git署名、技术验证和人工接受分别记录，不将自动生成文档视为真实访谈或独立评审；实验结果、限制和未完成事项保留在复盘与提交清单中。
+页面使用Vue hash路由，例如`http://127.0.0.1:8080/#/pets`。
 
-## 在IDEA运行主类
-导入`PetAdoptionCommunity/pom.xml`，选择JDK17，运行`com.example.petadoptioncommunity.PetAdoptionCommunityApplication`。Working directory设为`D:\Code\temp\final\PetAdoptionCommunity`（其他机器用实际后端目录），以保持上传与资源路径一致。
-`python scripts/manage.py configure`会同时写入已忽略的`.local/runtime.json`和`.local/application-local.properties`；脚本与IDEA读取相同配置来源，环境变量仍可覆盖。无需将数据库密码写入Java或提交到Git。当前机器已同步，重新运行主类即可。主类与start.ps1不要同时占用8080。
-如出现`using password: NO`，表示没有读到本地连接密码，先核对上述私密文件和运行目录。迁移缺失与端口占用是不同故障，不通过关闭校验解决。
+| 路径 | 功能 |
+|---|---|
+| `/` | 首页与业务入口 |
+| `/login`、`/account` | 注册登录、资料、通知和改密 |
+| `/pets`、`/pets/:id`、`/pets/new` | 宠物查找、详情、联系和发布 |
+| `/adoptions` | 本人申请、收到的申请及交接处理 |
+| `/shop`、`/shop/:id` | 商品分类搜索及详情 |
+| `/cart`、`/checkout` | 勾选购物车、地址、报价和下单 |
+| `/orders` | 付款、取消、物流和收货 |
+| `/admin` | 用户、商品和订单管理 |
 
-## 主要页面和演示路线
-| 页面 | 路径 | 主要功能 |
+会话仅保存在页面内存中，刷新后重新登录。数据库凭据、演示凭据、上传、日志和构建输出均遵守Git忽略规则。上传支持JPEG/PNG，限制为8MB及2000万像素，解码后重新编码保存。
+
+## 课程产物与交付记录
+
+项目包含21条FR、5条NFR、9条ADR、4个史诗、20个故事、14条实现规则和30项人机决策。十类产物及材料登记见[提交材料索引](docs/submission-index.md)。
+
+- 仓库：[zhenxin1/community](https://github.com/zhenxin1/community)。
+- 故事状态：[sprint-status.yaml](_bmad-output/implementation-artifacts/sprint-status.yaml)。
+- 演示路线：[十分钟演示提纲](docs/demo-script.md)；实际视频链接尚未登记。
+- 实验A：[复盘与实验报告](retrospective.md)，附件位于`evidence/experiment-a/`。
+- 实验B：依据教师补充说明免做。
+
+## 团队分工登记
+
+| 责任领域 | 工作内容 | 成员登记 |
 |---|---|---|
-| 首页 | / | 领养与商城入口、伙伴推荐和流程说明 |
-| 寻找伙伴 | /pets | 名称、类别、地区、品种组合筛选 |
-| 宠物详情与发布 | /pets/:id、/pets/new | 照片说明、联系信息授权、发布与申请 |
-| 我的领养 | /adoptions | 本人申请、收到的申请、选定及交接确认 |
-| 账号 | /account | 资料、通知与改密 |
-| 商城 | /shop、/shop/:id | 分类搜索、详情、价格库存和加购 |
-| 购物车与结算 | /cart、/checkout | 勾选、地址、优惠报价与建单 |
-| 订单 | /orders | 模拟付款、取消、物流及收货 |
-| 管理中心 | /admin | 用户、商品与订单管理 |
-路径由Vue hash路由承载。普通用户在一个账号下既可发布也可申请他人宠物；管理员入口只有ADMIN可见且接口仍检查权限。
+| 账号与平台治理 | 身份、资料、权限、通知及管理规则 | 未登记 |
+| 宠物发布与领养 | 发布查找、申请、交接及失败恢复 | 未登记 |
+| 商城选购与履约 | 商品、购物车、报价、订单、库存和收发货 | 未登记 |
+| 系统验证与交付 | 测试、部署、产物追溯、复盘及演示 | 未登记 |
 
-## 验收建议
-先用发布者准备一只宠物，切换两名申请者申请，再由发布者选定与双方确认。另准备失败场景核对恢复及旧请求。商城选择两类商品、只勾选部分结算，核对地址与优惠，依次模拟付款失败、成功、发货、收货。最后检查账号冻结、通知和权限拒绝。完整10分钟讲解提纲见docs/demo-script.md。
+成员姓名及实际工作量尚未提供；上表列示责任领域，不作为个人工作量统计。
+
+## AI使用声明
+
+项目使用Codex辅助需求整理、方案比较、文档、代码、界面和测试。采用BMAD Method 6.12.4组织项目资料与技能入口。需求边界、方案取舍、测试结论和验收判断由项目团队负责。各阶段的精确AI模型标识未统一登记，不作版本推定。
+
+人机决策见[decision-log.md](decision-log.md)，测试结果与实验限制分别保存在技术验证记录及复盘中。实验首版、首评和修补结果独立留存，不以最终测试成绩替代实验初版数据。

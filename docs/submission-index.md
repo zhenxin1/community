@@ -1,20 +1,34 @@
 # 课程提交材料索引
 
-提交单位为仓库根目录的完整项目，包含规划、故事、源码、测试及证据。目录沿用BMAD规划与实施结构，根目录提供决策日志、复盘及运行说明。
+本索引对应课程讲义第33页的十类产物。路径均相对仓库根目录。
 
-| 序号 | 产物与具体位置 | 内容与数量 | 状态 |
+| 序号 | 产物 | 具体位置 | 内容与课程要求 |
 |---|---|---|---|
-| 1 | _bmad-output/planning-artifacts/product-brief.md | 问题、用户、旅程、范围、成功度量 | 已整理 |
-| 2 | _bmad-output/planning-artifacts/PRD.md | 21条FR、5条可测NFR、状态、权限和验收 | 已整理 |
-| 3 | 同目录architecture.md | 9条ADR，问题、采用、备选、否决理由、代价及验证 | 已整理 |
-| 4 | 同目录epics.md及implementation-artifacts/stories/ | 4史诗20故事，各4项可断言验收条件和任务 | review，待人工接受 |
-| 5 | _bmad-output/project-context.md | 固定版本及14条具体规则 | 已整理 |
-| 6 | _bmad-output/implementation-artifacts/sprint-status.yaml | 实际状态及Git版本证据 | 保持实际状态 |
-| 7 | PetAdoptionCommunity、tests、evidence | 源码、5项JUnit、45项业务及17项补充业务检查、浏览器记录 | 已执行的集合通过 |
-| 8 | decision-log.md | 30项人机决策，其中8项人工实质修改；包含阶段方案、判断依据、影响、验证及方案变化 | 决策、阶段状态与验证分别记录 |
-| 9 | retrospective.md | 度量、实验A数据与限制、质量复盘；实验B免做说明 | 已整理 |
-| 10 | README.md及实际10分钟录屏 | 环境、启动、分工和AI声明；提纲docs/demo-script.md | README已整理，实际录屏待完成 |
+| 1 | 产品简报 | [_bmad-output/planning-artifacts/product-brief.md](../_bmad-output/planning-artifacts/product-brief.md) | 问题、目标用户、使用旅程、成功度量与范围外 |
+| 2 | PRD | [PRD.md](../_bmad-output/planning-artifacts/PRD.md) | 21条编号FR、5条可测NFR、状态、权限与验收场景 |
+| 3 | 架构 | [architecture.md](../_bmad-output/planning-artifacts/architecture.md) | 9条ADR，包含采用方案、被否决备选、理由、代价与验证 |
+| 4 | 史诗与故事 | [epics.md](../_bmad-output/planning-artifacts/epics.md)、[stories/](../_bmad-output/implementation-artifacts/stories/) | 4史诗20故事，80项可验证验收条件 |
+| 5 | 项目上下文 | [project-context.md](../_bmad-output/project-context.md) | 固定技术版本与14条具体实现规则 |
+| 6 | Sprint状态 | [sprint-status.yaml](../_bmad-output/implementation-artifacts/sprint-status.yaml) | 记录故事状态；纳入Git，版本记录通过git log核对 |
+| 7 | 源码与测试 | [后端与前端](../PetAdoptionCommunity/)、[tests/](../tests/)、[evidence/](../evidence/) | 5项JUnit、45项HTTP/MySQL业务、17项补充业务及NFR对应证据 |
+| 8 | 决策日志 | [decision-log.md](../decision-log.md) | 30项决策，其中8项人工实质修改，记录判断、理由、影响及验证 |
+| 9 | 复盘 | [retrospective.md](../retrospective.md) | 项目度量、实验A结果与局限；实验B免做说明 |
+| 10 | 运行与演示 | [README.md](../README.md)、[演示提纲](demo-script.md)及实际视频 | 启动、职责登记、AI声明与10分钟演示要求 |
 
-## 配套说明
-docs/traceability.md提供FR到ADR、故事、代码及测试映射；api-contract.md与database.md提供接口和表结构；根目录pet_final.sql提供单文件建库、建表及教学数据初始化，导入验证见evidence/database-initialization-check.json。实验A附件与文件校验清单位于evidence/experiment-a/。evidence的原始失败与修补结果分别保存。
-最终交付前完成负责人验收、真实四人分工、录屏和可访问GitHub链接。原实验A的跨日、任务差异及隔离限制应随结果说明，不以其他测试数字替代。当前没有证据的事项不标成已完成。
+## 实现与验证索引
+
+[追溯矩阵](traceability.md)连接FR、ADR、故事、源码和测试。[接口合同](api-contract.md)定义请求与响应，[数据库说明](database.md)定义结构、迁移及事务边界。根目录[pet_final.sql](../pet_final.sql)提供单文件初始化，结果见[SQL验证记录](../evidence/database-initialization-check.json)。
+
+## 材料登记与证据边界
+
+| 项目 | 仓库登记情况 |
+|---|---|
+| 功能与质量材料 | 规划、实现、技术验证和实验附件已收录 |
+| 故事人工验收 | Sprint文件中的20个故事为review；人工接受未统一登记 |
+| Sprint版本演进 | 当前文件历史可核对1次提交；尚不足以证明多次状态演进 |
+| 成员分工 | 成员姓名及实际工作量未登记 |
+| AI模型版本 | 工具与使用范围已声明，精确模型版本未统一登记 |
+| 实际演示视频 | 仓库未登记视频路径或链接，演示提纲单独收录 |
+| 远程仓库 | [zhenxin1/community](https://github.com/zhenxin1/community) |
+
+技术检查结果与人工验收分开记录。实验A按原始首版、首次评审和实际时间报告，跨日、任务差异及隔离限制随结果说明；实验B依据教师补充说明免做。
