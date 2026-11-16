@@ -145,7 +145,7 @@ python tests/quality.py
 项目包含21条FR、5条NFR、9条ADR、4个史诗、20个故事、14条实现规则和30项人机决策。十类产物及材料登记见[提交材料索引](docs/submission-index.md)。
 
 - 仓库：[zhenxin1/community](https://github.com/zhenxin1/community)。
-- 故事状态：[sprint-status.yaml](_bmad-output/implementation-artifacts/sprint-status.yaml)。
+- 故事状态：[sprint-status.yaml](_bmad-output/implementation-artifacts/sprint-status.yaml)，20个故事均为`done`，完成依据为项目负责人确认。
 - 演示路线：[十分钟演示提纲](docs/demo-script.md)；实际视频链接尚未登记。
 - 实验A：[复盘与实验报告](retrospective.md)，附件位于`evidence/experiment-a/`。
 - 实验B：依据教师补充说明免做。
@@ -163,6 +163,12 @@ python tests/quality.py
 
 ## AI使用声明
 
-项目使用Codex辅助需求整理、方案比较、文档、代码、界面和测试。采用BMAD Method 6.12.4组织项目资料与技能入口。需求边界、方案取舍、测试结论和验收判断由项目团队负责。各阶段的精确AI模型标识未统一登记，不作版本推定。
+| 项目 | 登记内容 |
+|---|---|
+| Agent／开发工具 | Codex |
+| AI模型 | GPT6.1 Sol |
+| 方法与技能框架 | BMAD Method 6.12.4 |
+
+Codex与GPT6.1 Sol用于辅助需求整理、方案比较、文档、代码、界面和测试。BMAD组织项目资料与技能入口。需求边界、方案取舍、测试结论和验收判断由项目团队负责。
 
 人机决策见[decision-log.md](decision-log.md)，测试结果与实验限制分别保存在技术验证记录及复盘中。实验首版、首评和修补结果独立留存，不以最终测试成绩替代实验初版数据。
